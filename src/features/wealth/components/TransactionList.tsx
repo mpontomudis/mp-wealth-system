@@ -1,0 +1,198 @@
+// src/features/wealth/components/TransactionList.tsx
+import { useState } from 'react';
+import { useAuth } from '@/shared/hooks/useAuth';
+import { useTransactions } from '@/features/wealth/hooks/useTransactions';
+import { useDebounce } from '@/shared/hooks/useDebounce';
+import { Badge } from '@/shared/components/Badge';
+import { Input } from '@/shared/components/Input';
+import { Select } from '@/shared/components/Select';
+import { Button } from '@/shared/components/Button';
+import { EmptyState } from '@/shared/components/EmptyState';
+import { PageLoader } from '@/shared/components/LoadingSpinner';
+import { TransactionForm } from './TransactionForm';
+import { formatIDR, formatDate } from '@/shared/utils/formatters';
+import { DEFAULT_PAGE_SIZE } from '@/config/constants';
+import type { Tables, TransactionType } from '@/types/supabase';
+
+type Transaction = Tables<'transactions'>;
+
+interface TransactionListProps {
+  limit?: number;
+  showFilters?: boolean;
+}
+
+const TYPE_OPTIONS = [
+  { value: 'all', label: 'All Types' },
+  { value: 'income', label: 'Income' },
+  { value: 'expense', label: 'Expense' },
+  { value: 'transfer', label: 'Transfer' },
+];
+
+const AMOUNT_COLOR: Record<TransactionType, string> = {
+  income: 'text-mp-green',
+  expense: 'text-mp-red',
+  transfer: 'text-mp-blue',
+};
+
+const TYPE_BADGE: Record<TransactionType, 'success' | 'danger' | 'info'> = {
+  income: 'success',
+  expense: 'danger',
+  transfer: 'info',
+};
+
+const AMOUNT_PREFIX: Record<TransactionType, string> = {
+  income: '+',
+  expense: '−',
+  transfer: '',
+};
+
+export function TransactionList({ limit, showFilters = true }: TransactionListProps) {
+  const { user } = useAuth();
+  const { transactions, isLoading } = useTransactions(user?.id ?? '');
+  const [search, setSearch] = useState('');
+  const [typeFilter, setTypeFilter] = useState('all');
+  const [page, setPage] = useState(1);
+  const [editingTx, setEditingTx] = useState<Transaction | null>(null);
+
+  const debouncedSearch = useDebounce(search, 300);
+
+  if (isLoading) return <PageLoader />;
+
+  let filtered = transactions ?? [];
+
+  if (debouncedSearch) {
+    const q = debouncedSearch.toLowerCase();
+    filtered = filtered.filter(
+      (t) =>
+        t.description?.toLowerCase().includes(q),
+    );
+  }
+
+  if (typeFilter !== 'all') {
+    filtered = filtered.filter((t) => t.type === typeFilter);
+  }
+
+  const pageSize = DEFAULT_PAGE_SIZE;
+  const displayItems = limit
+    ? filtered.slice(0, limit)
+    : filtered.slice((page - 1) * pageSize, page * pageSize);
+  const totalPages = Math.ceil(filtered.length / pageSize);
+
+  return (
+    <div>
+      {showFilters && (
+        <div className="flex flex-wrap gap-3 mb-4">
+          <div className="flex-1 min-w-[180px]">
+            <Input
+              placeholder="Search transactions…"
+              value={search}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setPage(1);
+              }}
+            />
+          </div>
+          <div className="w-36">
+            <Select
+              options={TYPE_OPTIONS}
+              value={typeFilter}
+              onChange={(e) => {
+                setTypeFilter(e.target.value);
+                setPage(1);
+              }}
+            />
+          </div>
+        </div>
+      )}
+
+      {displayItems.length === 0 ? (
+        <EmptyState
+          title="No transactions"
+          description="No transactions match the current filters"
+        />
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-mp-border text-mp-text-secondary text-left">
+                <th className="pb-2 pr-4 font-medium">Date</th>
+                <th className="pb-2 pr-4 font-medium">Description</th>
+                <th className="pb-2 pr-4 font-medium text-right">Amount</th>
+                <th className="pb-2 pr-4 font-medium">Type</th>
+                <th className="pb-2 font-medium">AI</th>
+              </tr>
+            </thead>
+            <tbody>
+              {displayItems.map((tx) => (
+                <tr
+                  key={tx.id}
+                  onClick={() => setEditingTx(tx)}
+                  className="border-b border-mp-border/50 hover:bg-mp-background/50 cursor-pointer transition-colors"
+                >
+                  <td className="py-3 pr-4 text-mp-text-muted whitespace-nowrap">
+                    {formatDate(tx.transaction_date, 'short')}
+                  </td>
+                  <td className="py-3 pr-4 text-mp-text-primary max-w-[200px] truncate">
+                    {tx.description ?? '—'}
+                  </td>
+                  <td
+                    className={`py-3 pr-4 font-medium text-right whitespace-nowrap ${AMOUNT_COLOR[tx.type as TransactionType] ?? ''}`}
+                  >
+                    {AMOUNT_PREFIX[tx.type as TransactionType]}
+                    {formatIDR(tx.amount)}
+                  </td>
+                  <td className="py-3 pr-4">
+                    <Badge variant={TYPE_BADGE[tx.type as TransactionType] ?? 'neutral'}>
+                      {tx.type}
+                    </Badge>
+                  </td>
+                  <td className="py-3">
+                    {tx.ai_log_id && (
+                      <span aria-label="AI processed">
+                        <Cpu size={14} className="text-mp-blue" />
+                      </span>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {!limit && totalPages > 1 && (
+        <div className="flex items-center justify-between mt-4">
+          <p className="text-sm text-mp-text-muted">
+            Page {page} of {totalPages} ({filtered.length} total)
+          </p>
+          <div className="flex gap-2">
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={page === 1}
+            >
+              Previous
+            </Button>
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              disabled={page === totalPages}
+            >
+              Next
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {editingTx && (
+        <TransactionForm
+          transaction={editingTx}
+          isOpen={Boolean(editingTx)}
+          onClose={() => setEditingTx(null)}
+        />
+      )}
+    </div>
+  );
+}
