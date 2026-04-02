@@ -1,5 +1,6 @@
 // src/shared/components/Button.tsx
 import React from 'react';
+import { Loader2 } from 'lucide-react';
 import { cn } from '@/shared/utils/cn';
 
 type ButtonVariant = 'primary' | 'secondary' | 'danger' | 'ghost';

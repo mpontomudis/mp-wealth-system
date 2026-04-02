@@ -1,5 +1,6 @@
 // src/features/wealth/components/TransactionList.tsx
 import { useState } from 'react';
+import { Cpu } from 'lucide-react';
 import { useAuth } from '@/shared/hooks/useAuth';
 import { useTransactions } from '@/features/wealth/hooks/useTransactions';
 import { useDebounce } from '@/shared/hooks/useDebounce';

@@ -1,5 +1,6 @@
 // src/pages/TransactionsPage.tsx
 import { useState } from 'react';
+import { PlusCircle } from 'lucide-react';
 import { TransactionList } from '@/features/wealth/components/TransactionList';
 import { TransactionForm } from '@/features/wealth/components/TransactionForm';
 import { Button } from '@/shared/components/Button';

@@ -1,4 +1,5 @@
 ﻿// src/features/trading/components/BrokerCard.tsx
+import React from 'react';
 import { Wifi, WifiOff, TrendingUp, TrendingDown } from 'lucide-react';
 import { formatUSD, formatPercentage, formatDate, formatPL } from '@/shared/utils/formatters';
 import type { TradingAccountWithLatestMetrics } from '../services/trading.service';

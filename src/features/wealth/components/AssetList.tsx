@@ -1,5 +1,6 @@
 // src/features/wealth/components/AssetList.tsx
 import { useState } from 'react';
+import { PlusCircle } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { useAuth } from '@/shared/hooks/useAuth';
 import { useAssets } from '@/features/wealth/hooks/useAssets';
