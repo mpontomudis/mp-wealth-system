@@ -1,5 +1,6 @@
 // src/features/trading/components/AddTradingAccountModal.tsx
 import React, { useState } from 'react';
+import { Modal }  from '@/shared/components/Modal';
 import { Input }   from '@/shared/components/Input';
 import { Select }  from '@/shared/components/Select';
 import { Button }  from '@/shared/components/Button';
