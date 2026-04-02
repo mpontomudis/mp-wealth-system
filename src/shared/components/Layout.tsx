@@ -1,5 +1,6 @@
 // src/shared/components/Layout.tsx
 import { useState } from 'react';
+import { Outlet } from 'react-router-dom';
 import { Sidebar } from '@/shared/components/Sidebar';
 import { Navbar } from '@/shared/components/Navbar';
 
