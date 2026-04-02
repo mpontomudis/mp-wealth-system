@@ -1,5 +1,6 @@
 // src/features/wealth/components/TransactionForm.tsx
 import { useEffect } from 'react';
+import { useForm } from 'react-hook-form';
 import { useAuth } from '@/shared/hooks/useAuth';
 import { useTransactions } from '@/features/wealth/hooks/useTransactions';
 import { Modal } from '@/shared/components/Modal';
