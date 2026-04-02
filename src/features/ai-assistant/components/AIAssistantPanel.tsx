@@ -1,5 +1,6 @@
 // src/features/ai-assistant/components/AIAssistantPanel.tsx
 import { useAuth } from '@/shared/hooks/useAuth';
+import { useAILogs } from '@/features/ai-assistant/hooks/useAILogs';
 import { Card } from '@/shared/components/Card';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/shared/components/Tabs';
 import { Badge } from '@/shared/components/Badge';

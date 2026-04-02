@@ -1,5 +1,6 @@
 // src/features/trading/hooks/useBrokerProfiles.ts
 import { useQuery } from '@tanstack/react-query';
+import { getBrokerProfiles } from '../services/trading.service';
 import type { Tables } from '@/types/supabase';
 
 export function useBrokerProfiles() {

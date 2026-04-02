@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { Card } from '@/shared/components/Card';
 import { Button } from '@/shared/components/Button';
 import { Input } from '@/shared/components/Input';
+import { useAuth } from '@/shared/hooks/useAuth';
 
 function useLocalStorage<T>(key: string, defaultValue: T): [T, (v: T) => void] {
   const [value, setValue] = useState<T>(() => {

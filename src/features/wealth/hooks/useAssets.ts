@@ -1,5 +1,6 @@
 // src/features/wealth/hooks/useAssets.ts
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { getAssets, updateAsset } from '../services/wealth.service';
 import type { Tables, TablesUpdate } from '@/types/supabase';
 
 export function useAssets(userId: string) {

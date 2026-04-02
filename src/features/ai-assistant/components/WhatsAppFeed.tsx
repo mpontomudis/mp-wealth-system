@@ -1,5 +1,6 @@
 // src/features/ai-assistant/components/WhatsAppFeed.tsx
 import { MessageSquare } from 'lucide-react';
+import { useAuth } from '@/shared/hooks/useAuth';
 import { useWhatsAppMessages } from '@/features/ai-assistant/hooks/useWhatsAppMessages';
 import { Badge } from '@/shared/components/Badge';
 import { EmptyState } from '@/shared/components/EmptyState';

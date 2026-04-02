@@ -1,5 +1,7 @@
 // src/features/wealth/components/BalanceOverview.tsx
 import { useAuth } from '@/shared/hooks/useAuth';
+import { useAssets } from '@/features/wealth/hooks/useAssets';
+import { PageLoader } from '@/shared/components/LoadingSpinner';
 import { formatIDR, formatUSD } from '@/shared/utils/formatters';
 import type { AssetType } from '@/types/supabase';
 

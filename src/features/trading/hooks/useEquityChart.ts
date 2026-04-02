@@ -1,5 +1,6 @@
 // src/features/trading/hooks/useEquityChart.ts
 import { useQuery } from '@tanstack/react-query';
+import { getEquityHistory } from '../services/trading.service';
 
 export type EquityChartPoint = {
   time: string;

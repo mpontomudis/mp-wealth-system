@@ -1,5 +1,6 @@
 // src/shared/services/currency.service.ts
 import { supabase } from '@/config/supabase';
+import type { Tables } from '@/types/supabase';
 
 export type ExchangeRate = Tables<'exchange_rates'>;
 

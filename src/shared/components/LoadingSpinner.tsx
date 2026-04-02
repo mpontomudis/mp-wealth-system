@@ -1,5 +1,6 @@
 // src/shared/components/LoadingSpinner.tsx
 import { Loader2 } from 'lucide-react';
+import { cn } from '@/shared/utils/cn';
 
 type SpinnerSize = 'sm' | 'md' | 'lg';
 

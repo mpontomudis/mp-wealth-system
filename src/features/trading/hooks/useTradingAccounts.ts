@@ -1,5 +1,6 @@
 ﻿// src/features/trading/hooks/useTradingAccounts.ts
 import { useQuery } from '@tanstack/react-query';
+import { getTradingAccountsWithLatestMetrics } from '../services/trading.service';
 import type { TradingAccountWithLatestMetrics } from '../services/trading.service';
 
 export function useTradingAccounts(userId: string) {

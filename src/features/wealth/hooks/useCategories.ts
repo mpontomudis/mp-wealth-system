@@ -1,5 +1,6 @@
 // src/features/wealth/hooks/useCategories.ts
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { getCategories, createCategory } from '../services/wealth.service';
 import type { Tables, TablesInsert } from '@/types/supabase';
 
 export function useCategories(userId: string) {

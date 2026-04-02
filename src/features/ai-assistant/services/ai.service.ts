@@ -1,6 +1,6 @@
 // src/features/ai-assistant/services/ai.service.ts
 import { supabase } from '@/config/supabase';
-import type { TransactionType } from '@/types/supabase';
+import type { Tables, TablesInsert, TransactionType } from '@/types/supabase';
 
 // ─── Types ───────────────────────────────────────────────────
 

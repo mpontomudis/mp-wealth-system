@@ -1,5 +1,6 @@
 // src/features/wealth/hooks/useMonthlySummary.ts
 import { useQuery } from '@tanstack/react-query';
+import { getMonthlySummary } from '../services/wealth.service';
 import type { MonthlySummary } from '../services/wealth.service';
 
 export function useMonthlySummary(userId: string, year?: number, month?: number) {

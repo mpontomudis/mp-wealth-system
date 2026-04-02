@@ -1,5 +1,6 @@
 // src/features/ai-assistant/hooks/useOCRResults.ts
 import { useQuery } from '@tanstack/react-query';
+import { getOCRResults } from '../services/ai.service';
 import type { Tables } from '@/types/supabase';
 
 export function useOCRResults(aiLogId: string) {

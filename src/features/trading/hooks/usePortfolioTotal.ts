@@ -1,5 +1,6 @@
 // src/features/trading/hooks/usePortfolioTotal.ts
 import { useQuery } from '@tanstack/react-query';
+import { getPortfolioTotal } from '../services/trading.service';
 import type { PortfolioTotal } from '../services/trading.service';
 
 export function usePortfolioTotal(userId: string) {

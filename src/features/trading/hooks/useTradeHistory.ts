@@ -1,5 +1,6 @@
 // src/features/trading/hooks/useTradeHistory.ts
 import { useQuery } from '@tanstack/react-query';
+import { getTradeHistory } from '../services/trading.service';
 import type { Tables } from '@/types/supabase';
 
 export function useTradeHistory(accountId: string) {

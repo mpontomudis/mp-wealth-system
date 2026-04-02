@@ -1,5 +1,6 @@
 // src/features/ai-assistant/hooks/useAILogs.ts
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { getAILogs, createTransactionFromAI } from '../services/ai.service';
 import type { Tables } from '@/types/supabase';
 
 export function useAILogs(userId: string) {

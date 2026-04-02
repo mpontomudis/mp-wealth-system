@@ -1,5 +1,6 @@
 // src/features/ai-assistant/hooks/useWhatsAppMessages.ts
 import { useQuery } from '@tanstack/react-query';
+import { getWhatsAppMessages } from '../services/ai.service';
 import type { Tables } from '@/types/supabase';
 
 export function useWhatsAppMessages(userId: string) {
