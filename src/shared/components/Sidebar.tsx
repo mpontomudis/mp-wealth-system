@@ -9,6 +9,7 @@ import {
   BarChart3,
   Settings,
 } from 'lucide-react';
+import { NavLink } from 'react-router-dom';
 import { cn } from '@/shared/utils/cn';
 
 interface NavItem {
