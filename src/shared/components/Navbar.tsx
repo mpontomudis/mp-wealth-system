@@ -1,5 +1,6 @@
 // src/shared/components/Navbar.tsx
 import { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { Menu, LogOut } from 'lucide-react';
 import { useAuth } from '@/shared/hooks/useAuth';
 import { cn } from '@/shared/utils/cn';
