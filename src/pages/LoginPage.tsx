@@ -49,17 +49,14 @@ export default function LoginPage() {
 
       <div className="w-full max-w-md relative">
         {/* Logo / Header */}
-        <div className="text-center mb-8 animate-fade-in">
-          {/* Replace logo.png in /public to update the brand image */}
-          <div className="flex justify-center mb-4">
-            <img
-              src="/logo.png"
-              alt="MP Wealth"
-              className="h-12 object-contain"
-            />
-          </div>
-          <h1 className="text-2xl font-bold text-mp-text-primary">MP Wealth System</h1>
-          <p className="text-sm text-mp-text-muted mt-1">Sign in to your account</p>
+        <div className="flex flex-col items-center mb-8 animate-fade-in">
+          <img
+            src="/logo.png"
+            alt="MP Wealth"
+            className="h-20 w-20 object-contain mb-3 drop-shadow-xl"
+          />
+          <h1 className="text-2xl font-semibold tracking-tight text-white">MP Wealth System</h1>
+          <p className="text-sm text-gray-400">Sign in to your account</p>
         </div>
 
         {/* Card */}
