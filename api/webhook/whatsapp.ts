@@ -1,35 +1,54 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
 
-// Use process.env for serverless context (not import.meta.env which is Vite-only).
-// Set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY in Vercel project environment variables.
-// Fallback to VITE_* vars if that's what's configured in your Vercel project.
-const supabaseUrl = process.env.SUPABASE_URL ?? process.env.VITE_SUPABASE_URL ?? '';
-const supabaseKey =
-  process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.VITE_SUPABASE_ANON_KEY ?? '';
+// ---------------------------------------------------------------------------
+// Environment helper — throws at cold-start if a required variable is missing
+// rather than silently failing mid-request. Never use VITE_* here; those are
+// embedded by Vite at build time and are NOT available in Node serverless env.
+// ---------------------------------------------------------------------------
+function env(key: string): string {
+  const value = process.env[key];
+  if (!value) throw new Error(`Missing environment variable: ${key}`);
+  return value;
+}
 
-const supabase = createClient(supabaseUrl, supabaseKey);
+// Initialised once per cold start (Vercel reuses the module across invocations)
+const supabase = createClient(env('SUPABASE_URL'), env('SUPABASE_ANON_KEY'));
 
+// ---------------------------------------------------------------------------
+// Fonnte sends different field names depending on webhook version.
+// Normalise both variants: sender|from and message|text.
+// ---------------------------------------------------------------------------
 interface FonntePayload {
-  sender?: string;
-  message?: string;
+  sender?: string;   // v1 field
+  from?: string;     // v2 field alias
+  message?: string;  // v1 field
+  text?: string;     // v2 field alias
   timestamp?: string | number;
+  device?: string;
   [key: string]: unknown;
 }
 
+// ---------------------------------------------------------------------------
+// Handler
+// ---------------------------------------------------------------------------
 export default async function handler(req: VercelRequest, res: VercelResponse) {
+  // Only allow POST
   if (req.method !== 'POST') {
     return res.status(405).json({ success: false, error: 'Method not allowed' });
   }
 
   const body = req.body as FonntePayload;
 
-  console.log('Incoming WA:', body);
+  console.log('Incoming WA:', JSON.stringify(body, null, 2));
 
-  const sender = body?.sender;
-  const message = body?.message;
+  // Normalise field names from Fonnte v1 and v2
+  const sender = body?.sender ?? body?.from ?? '';
+  const message = body?.message ?? body?.text ?? '';
 
-  if (!sender || !message) {
+  // Ignore empty / bot-echo payloads
+  if (!sender.trim() || !message.trim()) {
+    console.warn('WA webhook: empty sender or message — ignored');
     return res.status(400).json({ success: false, error: 'Missing sender or message' });
   }
 
@@ -43,5 +62,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(500).json({ success: false, error: error.message });
   }
 
+  console.log(`WA message stored — from: ${sender}`);
   return res.status(200).json({ success: true });
 }
