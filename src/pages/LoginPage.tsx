@@ -49,13 +49,14 @@ export default function LoginPage() {
 
       <div className="w-full max-w-md relative">
         {/* Logo / Header */}
-        <div className="flex flex-col items-center mb-8 animate-fade-in gap-1">
+        <div className="flex flex-col items-center mb-6 animate-fade-in">
           <img
             src="/logo.png"
             alt="MP Wealth"
-            className="h-40 w-40 object-contain drop-shadow-2xl"
+            className="h-16 w-16 object-contain mb-3 drop-shadow-2xl"
           />
-          <p className="text-sm text-gray-400">Sign in to your account</p>
+          <h1 className="text-xl font-semibold tracking-tight text-white">MP Wealth System</h1>
+          <p className="text-sm text-gray-400 mt-1">Sign in to your account</p>
         </div>
 
         {/* Card */}
