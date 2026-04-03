@@ -57,9 +57,12 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
       >
         {/* Logo */}
         <div className="flex items-center gap-3 px-5 py-5 border-b border-white/10">
-          <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-gradient-to-br from-blue-500 to-purple-500 text-white font-bold text-sm shrink-0 shadow-[0_0_20px_rgba(59,130,246,0.4)]">
-            MP
-          </div>
+          {/* Replace logo.png in /public to update the brand image */}
+          <img
+            src="/logo.png"
+            alt="MP Wealth"
+            className="h-9 w-9 object-contain rounded-xl shrink-0 shadow-[0_0_20px_rgba(59,130,246,0.4)]"
+          />
           <div>
             <span className="text-sm font-semibold text-white block leading-tight">
               MP Wealth
