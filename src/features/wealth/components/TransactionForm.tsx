@@ -101,7 +101,6 @@ export function TransactionForm({ transaction, isOpen, onClose }: TransactionFor
         {
           ...data,
           amount: Number(data.amount),
-          user_id: user!.id,
           source: 'manual',
         },
         { onSuccess: onClose },

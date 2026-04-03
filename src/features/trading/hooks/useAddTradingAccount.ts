@@ -8,7 +8,7 @@ export function useAddTradingAccount(userId: string) {
 
   const mutation = useMutation({
     mutationFn: (payload: CreateTradingAccountPayload) =>
-      createTradingAccount(userId, payload),
+      createTradingAccount(payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['trading-accounts', userId] });
     },

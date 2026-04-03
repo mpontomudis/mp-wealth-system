@@ -1,5 +1,6 @@
 // src/features/ai-assistant/services/ai.service.ts
 import { supabase } from '@/config/supabase';
+import { getCurrentUser } from '@/lib/db';
 import type { Tables, TablesInsert, TransactionType } from '@/types/supabase';
 
 // ─── Types ───────────────────────────────────────────────────
@@ -156,8 +157,9 @@ export async function createTransactionFromAI(
   } = parsed;
 
   // Step 4: Build transaction insert payload
+  const user = await getCurrentUser();
   const payload: TablesInsert<'transactions'> = {
-    user_id: aiLog.user_id ?? '',
+    user_id: user.id,
     type,
     amount,
     currency,

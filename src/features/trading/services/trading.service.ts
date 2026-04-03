@@ -1,5 +1,6 @@
 ﻿// src/features/trading/services/trading.service.ts
 import { supabase } from '@/config/supabase';
+import { getCurrentUser } from '@/lib/db';
 import type { Tables } from '@/types/supabase';
 
 // ─── Types ───────────────────────────────────────────────────
@@ -307,13 +308,13 @@ export type CreateTradingAccountPayload = {
 };
 
 export async function createTradingAccount(
-  userId: string,
   payload: CreateTradingAccountPayload
 ): Promise<ServiceResponse<Tables<'trading_accounts'>>> {
+  const user = await getCurrentUser();
   const { data, error } = await supabase
     .from('trading_accounts')
     .insert({
-      user_id:          userId,
+      user_id:          user.id,
       broker_id:        payload.broker_id,
       account_number:   payload.account_number,
       account_name:     payload.account_name ?? null,

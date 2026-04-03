@@ -1,5 +1,6 @@
 ﻿// src/features/wealth/services/wealth.service.ts
 import { supabase } from '@/config/supabase';
+import { getCurrentUser } from '@/lib/db';
 import type { Tables, TablesInsert, TablesUpdate } from '@/types/supabase';
 import type { TransactionType } from '@/types/supabase';
 
@@ -92,11 +93,12 @@ export async function getTransactions(
 // ─── 2. createTransaction ─────────────────────────────────────
 
 export async function createTransaction(
-  payload: TablesInsert<'transactions'>
+  payload: Omit<TablesInsert<'transactions'>, 'user_id'>
 ): Promise<ServiceResponse<Tables<'transactions'>>> {
+  const user = await getCurrentUser();
   const { data, error } = await supabase
     .from('transactions')
-    .insert(payload)
+    .insert({ ...payload, user_id: user.id })
     .select(TRANSACTION_FIELDS)
     .single();
 
@@ -167,11 +169,12 @@ export async function getCategories(
 // ─── 6. createCategory ───────────────────────────────────────
 
 export async function createCategory(
-  payload: TablesInsert<'categories'>
+  payload: Omit<TablesInsert<'categories'>, 'user_id'>
 ): Promise<ServiceResponse<Tables<'categories'>>> {
+  const user = await getCurrentUser();
   const { data, error } = await supabase
     .from('categories')
-    .insert(payload)
+    .insert({ ...payload, user_id: user.id })
     .select(CATEGORY_FIELDS)
     .single();
 

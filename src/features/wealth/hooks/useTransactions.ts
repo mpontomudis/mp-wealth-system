@@ -25,7 +25,7 @@ export function useTransactions(userId: string, filters?: TransactionFilters) {
   });
 
   const create = useMutation({
-    mutationFn: async (payload: TablesInsert<'transactions'>) => {
+    mutationFn: async (payload: Omit<TablesInsert<'transactions'>, 'user_id'>) => {
       const response = await createTransaction(payload);
       if (response.error) throw response.error;
       return response.data;

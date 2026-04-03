@@ -19,7 +19,7 @@ export function useCategories(userId: string) {
   });
 
   const create = useMutation({
-    mutationFn: async (payload: TablesInsert<'categories'>) => {
+    mutationFn: async (payload: Omit<TablesInsert<'categories'>, 'user_id'>) => {
       const response = await createCategory(payload);
       if (response.error) throw response.error;
       return response.data;
