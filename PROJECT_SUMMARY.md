@@ -1,6 +1,6 @@
 # MP Wealth System v2.0.0
 
-> **Personal Financial Command Center** — Multi-broker MT5 trading monitor, wealth tracker, and AI-powered WhatsApp automation.
+> **Personal Financial Command Center** — Multi-broker trading tracker, wealth manager, and AI-ready dashboard.
 >
 > Owner: **Marlon Pontomudis** | Timezone: **WIT (Asia/Jayapura, GMT+9)**
 
@@ -11,48 +11,53 @@
 1. [Overview](#overview)
 2. [Tech Stack](#tech-stack)
 3. [Project Structure](#project-structure)
-4. [Database Schema](#database-schema)
-5. [Feature Modules](#feature-modules)
-6. [Shared Layer](#shared-layer)
-7. [Edge Functions (Serverless)](#edge-functions-serverless)
-8. [Authentication](#authentication)
-9. [Design System](#design-system)
-10. [Environment Variables](#environment-variables)
-11. [Development Setup](#development-setup)
-12. [Deployment](#deployment)
-13. [Build Status](#build-status)
+4. [Database Summary](#database-summary)
+5. [Current Features](#current-features)
+6. [Shared UI Components](#shared-ui-components)
+7. [Environment Variables](#environment-variables)
+8. [Development Setup](#development-setup)
+9. [Deployment](#deployment)
+10. [Known Issues](#known-issues)
+11. [Roadmap](#roadmap)
+12. [Development Status](#development-status)
 
 ---
 
 ## Overview
 
-MP Wealth System is a single-user personal finance dashboard combining:
+MP Wealth System is a fullstack personal finance and trading dashboard built for a single user. It combines three pillars:
 
-| Pillar | What it does |
+| Pillar | Description |
 |--------|-------------|
-| **Trading Monitor** | Tracks live MT5 accounts across 5 brokers via EA-pushed metrics snapshots |
-| **Wealth Tracker** | Records income/expense/transfer transactions, manages assets in IDR & USD |
-| **AI Assistant** | Parses WhatsApp messages from the owner using Claude AI to auto-create transactions |
+| **Trading Monitor** | Track multiple broker accounts, view equity/balance/P&L, manage trading accounts manually |
+| **Wealth Tracker** | Record income, expenses, and transfers; manage assets in IDR & USD |
+| **AI-Ready Architecture** | Database and service layer prepared for WhatsApp + OCR parsing (implementation pending) |
+
+### Key Goals
+
+- Multi-broker trading tracking (EXNESS, TICKMILL, ICM, XM, MIFX)
+- Wealth management with dual-currency support (IDR / USD)
+- Manual-first data entry before MT5 automation is activated
+- AI parsing of WhatsApp messages for automated transaction creation (future)
+- Single-user, production-grade system hosted on Vercel + Supabase
 
 ---
 
 ## Tech Stack
 
-| Layer | Technology |
-|-------|-----------|
-| Frontend framework | React 18 + TypeScript + Vite 5 |
-| Routing | React Router v6 |
-| Server state | TanStack Query v5 |
-| Client state | Zustand v4 |
-| Forms | React Hook Form v7 |
-| Styling | Tailwind CSS v3 (custom MP design tokens) |
-| Charts | Recharts v2 |
-| Icons | Lucide React |
-| Backend / DB | Supabase (PostgreSQL 15, RLS, Auth, Storage) |
-| Edge functions | Supabase Edge Functions (Deno runtime) |
-| AI | Anthropic Claude (`claude-haiku-4-5` for parsing, `claude-sonnet-4` for complex) |
-| WhatsApp | Fonnte API (Indonesian gateway) |
-| Exchange rates | open.er-api.com (free tier) |
+| Layer | Technology | Version |
+|-------|-----------|---------|
+| Frontend Framework | React + TypeScript | 18 / 5.3 |
+| Build Tool | Vite | 5.0 |
+| Routing | React Router | v6 |
+| Server State | TanStack React Query | v5 |
+| Client State | Zustand | v4 |
+| Forms | React Hook Form | v7 |
+| Styling | Tailwind CSS | v3 |
+| Charts | Recharts | v2 |
+| Icons | Lucide React | 0.303 |
+| Backend / Database | Supabase (PostgreSQL, Auth, Edge Functions) | latest |
+| Deployment | Vercel | — |
 
 ---
 
@@ -60,308 +65,205 @@ MP Wealth System is a single-user personal finance dashboard combining:
 
 ```
 mp-wealth-system/
+├── vercel.json                   # SPA routing config (filesystem + fallback)
+├── vite.config.ts                # Vite config (base: '/', outDir: dist/)
 ├── database/
-│   └── schema.sql                   # Canonical PostgreSQL schema (15 tables)
+│   └── schema.sql                # Full PostgreSQL schema (15 tables)
 │
-├── src/
-│   ├── App.tsx                      # Router + auth guards
-│   ├── main.tsx                     # React entry + QueryClientProvider
-│   ├── index.css                    # Tailwind directives + base styles
-│   ├── vite-env.d.ts                # Vite ImportMeta types
-│   │
-│   ├── types/
-│   │   └── supabase.ts              # All DB types (Tables<T>, enums, RPC rows)
-│   │
-│   ├── config/
-│   │   ├── supabase.ts              # Supabase client (typed, detectSessionInUrl)
-│   │   └── constants.ts             # Routes, brokers, categories, AI config
-│   │
-│   ├── shared/
-│   │   ├── components/              # 15 reusable UI components
-│   │   │   ├── Layout.tsx           # Sidebar + Navbar + Outlet shell
-│   │   │   ├── Sidebar.tsx          # Nav links with active state
-│   │   │   ├── Navbar.tsx           # WIT clock + user + sign out
-│   │   │   ├── Card.tsx             # Surface card with title/actions
-│   │   │   ├── Button.tsx           # 4 variants × 3 sizes + loading
-│   │   │   ├── Input.tsx            # Labeled + error + icon slots
-│   │   │   ├── Select.tsx           # Labeled select + options array
-│   │   │   ├── Modal.tsx            # Portal modal + Escape key + 4 sizes
-│   │   │   ├── Tabs.tsx             # Controlled/uncontrolled tab set
-│   │   │   ├── Badge.tsx            # 5-variant pill badge
-│   │   │   ├── StatCard.tsx         # KPI card with trend arrow
-│   │   │   ├── CurrencyDisplay.tsx  # Dual USD/IDR display
-│   │   │   ├── LoadingSpinner.tsx   # Spinner + PageLoader
-│   │   │   ├── EmptyState.tsx       # Icon + message + action slot
-│   │   │   └── ErrorBoundary.tsx    # React class error boundary
-│   │   │
-│   │   ├── hooks/
-│   │   │   ├── useAuth.ts           # Supabase session + onAuthStateChange
-│   │   │   ├── useExchangeRate.ts   # USD/IDR rate (1h stale time)
-│   │   │   ├── useDebounce.ts       # Generic debounce hook
-│   │   │   └── useLocalStorage.ts   # Typed localStorage hook
-│   │   │
-│   │   ├── services/
-│   │   │   └── currency.service.ts  # getLatestExchangeRate()
-│   │   │
-│   │   └── utils/
-│   │       ├── cn.ts                # Class name merger
-│   │       └── formatters.ts        # formatIDR, formatUSD, formatDate
-│   │
-│   ├── features/
-│   │   ├── trading/
-│   │   │   ├── services/
-│   │   │   │   └── trading.service.ts   # getTradingAccountsWithLatestMetrics(),
-│   │   │   │                            # getPortfolioTotal(), getTradeHistory()
-│   │   │   ├── hooks/
-│   │   │   │   ├── useTradingAccounts.ts
-│   │   │   │   ├── usePortfolioTotal.ts
-│   │   │   │   ├── useTradeHistory.ts
-│   │   │   │   └── useEquityChart.ts
-│   │   │   └── components/
-│   │   │       ├── TradingDashboard.tsx  # Main trading overview
-│   │   │       ├── BrokerCard.tsx        # Per-account metrics card
-│   │   │       └── EquityChart.tsx       # Equity history line chart
-│   │   │
-│   │   ├── wealth/
-│   │   │   ├── services/
-│   │   │   │   └── wealth.service.ts    # Transactions, assets, categories, RPC
-│   │   │   ├── hooks/
-│   │   │   │   ├── useTransactions.ts
-│   │   │   │   ├── useAssets.ts
-│   │   │   │   ├── useCategories.ts
-│   │   │   │   └── useMonthlySummary.ts
-│   │   │   └── components/
-│   │   │       ├── WealthDashboard.tsx   # StatCards + chart + tx/asset grid
-│   │   │       ├── BalanceOverview.tsx   # Net worth + asset type breakdown
-│   │   │       ├── TransactionList.tsx   # Filterable paginated table
-│   │   │       ├── TransactionForm.tsx   # Create/edit modal (React Hook Form)
-│   │   │       └── AssetList.tsx         # Asset grid + add modal
-│   │   │
-│   │   └── ai-assistant/
-│   │       ├── services/
-│   │       │   └── ai.service.ts        # AI logs, WhatsApp messages, OCR, tx creation
-│   │       ├── hooks/
-│   │       │   ├── useWhatsAppMessages.ts
-│   │       │   ├── useAILogs.ts
-│   │       │   └── useOCRResults.ts
-│   │       └── components/
-│   │           ├── AIAssistantPanel.tsx  # Tabbed panel (Feed / Logs / OCR)
-│   │           └── WhatsAppFeed.tsx      # Message list with status badges
-│   │
-│   └── pages/
-│       ├── LoginPage.tsx            # Email/password + magic link
-│       ├── DashboardPage.tsx        # Combined overview
-│       ├── TradingPage.tsx
-│       ├── WealthPage.tsx
-│       ├── TransactionsPage.tsx
-│       ├── AssetsPage.tsx
-│       ├── ReportsPage.tsx          # Monthly bar chart + summary table
-│       └── SettingsPage.tsx         # Profile, preferences, sign out
+├── mt5-ea/
+│   ├── MPWealthSystem_EA.mq5     # MQL5 EA for MT5 auto-sync (planned)
+│   └── README.md
 │
-└── supabase/
-    ├── config.toml                  # Local dev config + per-function verify_jwt
-    └── functions/
-        ├── _shared/
-        │   ├── cors.ts              # CORS headers + OPTIONS handler
-        │   ├── supabase-client.ts   # Service role client + response helpers
-        │   └── ai-parser.ts         # Claude Haiku transaction parser (shared)
-        ├── whatsapp-webhook/        # Receives Fonnte messages → AI parse
-        ├── ingest-metrics/          # MT5 EA metrics ingestion
-        ├── process-ai-message/      # Manual AI reprocess (JWT auth)
-        └── update-exchange-rate/    # Fetch & upsert USD/IDR rate
+├── supabase/
+│   ├── config.toml
+│   └── functions/                # Deno edge functions
+│       ├── _shared/              # cors, supabase-client, ai-parser utilities
+│       ├── whatsapp-webhook/
+│       ├── ingest-metrics/
+│       ├── process-ai-message/
+│       └── update-exchange-rate/
+│
+└── src/
+    ├── App.tsx                   # Router + RequireAuth / RedirectIfAuth guards
+    ├── main.tsx                  # React entry + QueryClientProvider
+    │
+    ├── config/
+    │   ├── supabase.ts           # Typed Supabase client
+    │   └── constants.ts          # Routes, broker codes, categories
+    │
+    ├── types/
+    │   └── supabase.ts           # Generated DB types (Tables<T>, enums, RPC)
+    │
+    ├── shared/
+    │   ├── components/           # 15 reusable UI components (see below)
+    │   ├── hooks/
+    │   │   ├── useAuth.ts        # Supabase session + onAuthStateChange
+    │   │   ├── useExchangeRate.ts
+    │   │   ├── useDebounce.ts
+    │   │   └── useLocalStorage.ts
+    │   ├── services/
+    │   │   └── currency.service.ts
+    │   └── utils/
+    │       ├── cn.ts             # Class name merger (clsx)
+    │       └── formatters.ts     # formatIDR, formatUSD, formatDate, formatPercent
+    │
+    ├── features/
+    │   ├── trading/
+    │   │   ├── components/       # TradingDashboard, BrokerCard, EquityChart,
+    │   │   │                     # AddTradingAccountModal
+    │   │   ├── hooks/            # useTradingAccounts, usePortfolioTotal,
+    │   │   │                     # useTradeHistory, useEquityChart,
+    │   │   │                     # useBrokerProfiles, useAddTradingAccount
+    │   │   └── services/
+    │   │       └── trading.service.ts
+    │   │
+    │   ├── wealth/
+    │   │   ├── components/       # WealthDashboard, BalanceOverview,
+    │   │   │                     # TransactionList, TransactionForm, AssetList
+    │   │   ├── hooks/            # useTransactions, useAssets,
+    │   │   │                     # useCategories, useMonthlySummary
+    │   │   └── services/
+    │   │       └── wealth.service.ts
+    │   │
+    │   └── ai-assistant/
+    │       ├── components/       # AIAssistantPanel, WhatsAppFeed
+    │       ├── hooks/            # useAILogs, useWhatsAppMessages, useOCRResults
+    │       └── services/
+    │           └── ai.service.ts
+    │
+    └── pages/
+        ├── LoginPage.tsx
+        ├── DashboardPage.tsx
+        ├── TradingPage.tsx
+        ├── WealthPage.tsx
+        ├── TransactionsPage.tsx
+        ├── AssetsPage.tsx
+        ├── ReportsPage.tsx
+        └── SettingsPage.tsx
 ```
 
 ---
 
-## Database Schema
+## Database Summary
 
-**15 tables** across 3 domains. PostgreSQL 15 on Supabase with RLS enabled.
+**15 tables** in PostgreSQL via Supabase. RLS is enabled on user-scoped tables.
 
-### Enums
+### Tables by Domain
 
-| Enum | Values |
-|------|--------|
-| `account_type` | `LIVE`, `DEMO` |
-| `data_source` | `EA`, `MetaApi`, `Manual` |
-| `trade_type` | `BUY`, `SELL` |
-| `transaction_type` | `income`, `expense`, `transfer` |
-| `transaction_source` | `manual`, `whatsapp`, `ai`, `bulk_upload` |
-| `asset_type` | `cash`, `bank`, `trading`, `investment`, `crypto` |
-| `message_type` | `text`, `image`, `audio`, `video`, `document` |
-| `processing_status` | `pending`, `processing`, `completed`, `failed` |
-| `validation_result` | `approved`, `rejected`, `modified` |
-| `log_level` | `INFO`, `WARNING`, `ERROR`, `DEBUG` |
+#### Trading
 
-### Tables
+| Table | Purpose |
+|-------|---------|
+| `broker_profiles` | Global broker catalog (shared, no user_id) |
+| `trading_accounts` | Per-user account config (broker, type, currency, leverage) |
+| `account_metrics_snapshots` | Live metrics pushed by MT5 EA (balance, equity, floating P&L) |
+| `trade_history` | Closed trade records |
+| `daily_summaries` | Aggregated daily account stats |
 
-#### Trading Domain
+#### Wealth
 
-| Table | Description | Key Columns |
-|-------|-------------|-------------|
-| `broker_profiles` | Global broker catalog (no user_id) | `broker_code` (EXNESS/TICKMILL/ICM/XM/MIFX), `broker_name` |
-| `trading_accounts` | Static account config | `account_number`, `broker_id`, `user_id`, `account_type`, `last_sync_at` |
-| `account_metrics_snapshots` | Live metrics pushed by EA | `account_id`, `balance`, `equity`, `floating_profit`, `margin_level`, `snapshot_time`, `is_valid` |
-| `trade_history` | Closed trade records | `ticket_number`, `symbol`, `trade_type`, `lot_size`, `open_price`, `net_profit` |
-| `open_positions` | Currently open trades | `ticket_number`, `symbol`, `trade_type`, `current_profit`, `is_active` |
+| Table | Purpose |
+|-------|---------|
+| `categories` | Income/expense categories with parent hierarchy |
+| `transactions` | All financial transactions (IDR/USD, manual + AI-sourced) |
+| `assets` | Tracked assets by type (cash, bank, trading, investment, crypto) |
+| `budgets` | Monthly budget targets per category |
 
-#### Wealth Domain
+#### AI / Integration
 
-| Table | Description | Key Columns |
-|-------|-------------|-------------|
-| `categories` | Income/expense categories | `name`, `type` (income/expense), `parent_category_id` |
-| `transactions` | All financial transactions | `type`, `amount`, `currency`, `ai_log_id`, `search_vector` (tsvector) |
-| `assets` | Owned assets | `asset_type`, `balance`, `balance_usd`, `currency` |
-| `budgets` | Budget targets | `category_id`, `amount`, `period`, `start_date` |
-
-#### AI / Integration Domain
-
-| Table | Description | Key Columns |
-|-------|-------------|-------------|
-| `whatsapp_messages` | Incoming Fonnte messages | `whatsapp_id`, `from_number`, `message_type`, `text_content`, `processing_status` |
-| `ai_logs` | Claude AI processing records | `input_content`, `parsed_data` (JSONB), `confidence_score`, `validation_result` |
-| `ocr_results` | Image OCR extraction | `raw_text`, `structured_data`, `confidence_score` |
+| Table | Purpose |
+|-------|---------|
+| `whatsapp_messages` | Incoming WhatsApp messages from Fonnte |
+| `ai_logs` | Claude AI parsing results (confidence score, parsed JSONB) |
+| `ocr_results` | Receipt/image OCR extraction results |
 
 #### Shared
 
-| Table | Description |
-|-------|-------------|
-| `exchange_rates` | USD/IDR daily rates (UNIQUE per date) |
-| `system_logs` | App-wide error/info logging |
+| Table | Purpose |
+|-------|---------|
+| `exchange_rates` | Daily USD/IDR rates |
+| `system_logs` | App-wide error and info logs |
 | `user_preferences` | Per-user settings (currency, theme) |
 
-### Key Design Decisions
+### Key Relationships
 
-- **`broker_profiles`** is a global catalog — no `user_id`. All users share the same broker list.
-- **`trading_accounts`** stores static config only. Live metrics live in `account_metrics_snapshots`.
-- **`is_online`** is derived in the frontend: `last_sync_at` within the last 10 minutes.
-- **`ai_logs.parsed_data`** is JSONB `{ amount, type, currency, description, confidence }`.
-- **`transactions.ai_log_id`** links back to the AI log that created it (not the reverse).
-- **Full-text search** on `transactions` via `search_vector` tsvector (updated by trigger, `indonesian` language config).
+- `trading_accounts.broker_id` → `broker_profiles.id`
+- `account_metrics_snapshots.account_id` → `trading_accounts.id`
+- `transactions.category_id` → `categories.id`
+- `transactions.ai_log_id` → `ai_logs.id`
+- `ai_logs.whatsapp_message_id` → `whatsapp_messages.id`
 
-### PostgreSQL Functions (RPC)
+### PostgreSQL RPC Functions
 
-| Function | Returns | Description |
-|----------|---------|-------------|
-| `get_portfolio_total(p_user_id)` | `PortfolioTotalRow` | Aggregates equity/balance across all accounts in USD + IDR |
-| `get_monthly_summary(p_user_id, p_year, p_month)` | `MonthlySummaryRow` | Income/expense totals for a given month |
+| Function | Description |
+|----------|-------------|
+| `get_portfolio_total(user_id)` | Aggregates equity/balance across all accounts in USD + IDR |
+| `get_monthly_summary(user_id, year, month)` | Income/expense totals for a given month |
 
 ---
 
-## Feature Modules
+## Current Features
+
+### Auth
+
+- Email + password login via Supabase Auth
+- Magic link (OTP email) support
+- Session persistence with auto token refresh
+- Protected routes via `RequireAuth` guard
+- Redirect if already authenticated via `RedirectIfAuth`
 
 ### Trading
 
-- **`getTradingAccountsWithLatestMetrics()`** — 2-query merge pattern: fetches accounts + all valid snapshots, picks the latest snapshot per `account_id` using a `Map`.
-- Broker colors keyed by `broker_code`: EXNESS `#00b386`, TICKMILL `#e63e2a`, ICM `#0066cc`, XM `#ff6600`, MIFX `#8b5cf6`.
-- `PortfolioTotalRow` fields: `total_equity_usd/idr`, `total_balance_usd/idr`, `total_profit_usd/idr`, `exchange_rate`, `last_updated`.
+- Broker profiles available (EXNESS, TICKMILL, ICM, XM, MIFX)
+- Trading accounts table ready — add/view accounts
+- Add Trading Account modal with form validation
+- Portfolio total overview (equity, balance, P&L)
+- Equity history chart (Recharts line chart)
+- Broker card per account with metrics display
 
 ### Wealth
 
-- Transactions support IDR and USD, with auto `amount_usd` calculation.
-- Categories support parent/child hierarchy via `parent_category_id`.
-- `MonthlySummaryRow` returns 6 fields: income/expense/net in both IDR and USD.
-- `assets.balance` = IDR amount, `assets.balance_usd` = USD equivalent.
+- Transactions: create, list, filter by type/date/category
+- Assets: view and add assets by type (cash, bank, trading, investment, crypto)
+- Dual-currency support (IDR primary, USD secondary)
+- Balance overview with net worth breakdown
+- Monthly income/expense summary
 
-### AI Assistant
+### Dashboard
 
-- WhatsApp messages arrive via Fonnte webhook → stored as `whatsapp_messages`.
-- Claude `claude-haiku-4-5` parses text for transaction intent.
-- Indonesian shorthand supported: `500ribu → 500000`, `1jt → 1000000`, `1.5jt → 1500000`.
-- Confidence threshold: **0.7** — below this, `parsed_data` is stored but not auto-created as transaction.
-- User reviews pending AI logs and approves/rejects via `validation_result`.
+- Portfolio overview cards (equity, balance, P&L)
+- Equity / balance / floating profit stat cards
+- Recharts charts for trading and wealth overview
 
----
+### Utilities
 
-## Shared Layer
-
-### Auth Flow
-
-```
-/login  ──[RedirectIfAuth]──► if user exists → /
-        └─► LoginPage
-               ├─ signInWithPassword() ──► navigate('/')
-               └─ signInWithOtp()      ──► magic link email
-                                              └─ click link
-                                                   └─ detectSessionInUrl parses token
-                                                        └─ onAuthStateChange SIGNED_IN
-                                                             └─ RedirectIfAuth → /
-
-Protected routes ──[RequireAuth]──► if no user → /login
-```
-
-### Hooks
-
-| Hook | Purpose |
-|------|---------|
-| `useAuth` | Session state + `signOut()`. Subscribes to `onAuthStateChange`. |
-| `useExchangeRate` | Latest USD/IDR rate. 1-hour stale time. Falls back to `15,750`. |
-| `useDebounce<T>` | Debounces any value by N ms. Used for search inputs. |
-| `useLocalStorage<T>` | Typed `localStorage` with JSON serialization. |
+- `formatIDR()` — Indonesian Rupiah with `Rp` prefix
+- `formatUSD()` — US Dollar with `$` prefix
+- `formatDate()` — localized date formatting
+- `formatPercent()` — percentage with sign
+- `cn()` — conditional class name merging
 
 ---
 
-## Edge Functions (Serverless)
+## Shared UI Components
 
-All functions run on **Deno** runtime. Shared utilities in `_shared/`.
-
-### `whatsapp-webhook` — `verify_jwt: false`
-- **GET**: Fonnte verification, returns `200 ok`
-- **POST**: Receives Fonnte payload, filters to owner's phone number only, stores `whatsapp_messages`, calls Claude inline, stores `ai_logs`
-- Always returns `200` to prevent Fonnte retries
-
-### `ingest-metrics` — `verify_jwt: false`
-- **POST**: MT5 EA sends account metrics
-- Auth: `x-api-key` header
-- Lookup chain: `broker_code → broker_id → account_id`
-- Inserts `account_metrics_snapshots` + updates `trading_accounts.last_sync_at`
-
-### `process-ai-message` — `verify_jwt: true`
-- **POST**: `{ whatsapp_message_id }`
-- Manually reprocesses a message through Claude AI
-- Creates new `ai_logs` row, updates `processing_status`
-
-### `update-exchange-rate` — `verify_jwt: false`
-- **GET/POST**: Fetch USD/IDR from `open.er-api.com/v6/latest/USD`
-- Auth: `x-api-key` header
-- Upserts `exchange_rates` (ON CONFLICT by date)
-- Can be triggered by Supabase pg_cron scheduler
-
----
-
-## Authentication
-
-| Mechanism | Implementation |
-|-----------|---------------|
-| Email + password | `supabase.auth.signInWithPassword()` |
-| Magic link | `supabase.auth.signInWithOtp({ email })` |
-| Session persistence | `persistSession: true` in Supabase client |
-| Magic link token | `detectSessionInUrl: true` auto-parses `#access_token` fragment |
-| Auto refresh | `autoRefreshToken: true` |
-| Sign out | `supabase.auth.signOut()` via `useAuth().signOut()` |
-
----
-
-## Design System
-
-Custom Tailwind tokens defined in `tailwind.config.js`:
-
-| Token | Value | Usage |
-|-------|-------|-------|
-| `mp-primary` | `#0A1F44` | Sidebar, buttons, active states |
-| `mp-green` | `#10b981` | Income, profit, success |
-| `mp-red` | `#ef4444` | Expense, loss, danger |
-| `mp-blue` | `#3b82f6` | Transfer, info, USD amounts |
-| `mp-gold` | `#f59e0b` | Warning, pending |
-| `mp-purple` | `#8b5cf6` | AI, analytics |
-| `mp-background` | `#f8fafc` | Page background |
-| `mp-surface` | `#ffffff` | Cards, modals |
-| `mp-border` | `#e2e8f0` | Dividers, input borders |
-| `mp-text-primary` | `#0f172a` | Headings, body |
-| `mp-text-secondary` | `#475569` | Labels, sublabels |
-| `mp-text-muted` | `#94a3b8` | Placeholder, hints |
-
-**Card standard:** `bg-mp-surface rounded-xl shadow-md p-6`  
-**Font:** Inter (Google Fonts)
+| Component | Description |
+|-----------|-------------|
+| `Layout` | Sidebar + Navbar + Outlet shell |
+| `Sidebar` | Navigation links with active state (NavLink) |
+| `Navbar` | Page title (from route) + sign out button |
+| `Button` | 4 variants (primary, secondary, danger, ghost) × 3 sizes + loading state |
+| `Input` | Labeled input with error message and icon slot |
+| `Select` | Labeled select with options array and error |
+| `Modal` | Portal modal with Escape key + 4 sizes (sm/md/lg/xl) |
+| `Card` | Surface card with optional title and action slot |
+| `Tabs` | Controlled/uncontrolled tab navigation |
+| `Badge` | 5-variant status pill (success/danger/warning/info/neutral) |
+| `StatCard` | KPI card with trend indicator |
+| `CurrencyDisplay` | Dual IDR/USD display component |
+| `LoadingSpinner` | Inline spinner + full-page loader |
+| `EmptyState` | Icon + message + optional action button |
+| `ErrorBoundary` | React class error boundary for crash recovery |
 
 ---
 
@@ -374,13 +276,15 @@ VITE_SUPABASE_URL=https://your-project.supabase.co
 VITE_SUPABASE_ANON_KEY=your-anon-key
 ```
 
-### Edge Function Secrets (via `supabase secrets set`)
+> All environment variables use `import.meta.env` — no `process.env` anywhere in the codebase.
+
+### Edge Function Secrets (`supabase secrets set`)
 
 ```env
-ANTHROPIC_API_KEY=sk-ant-...          # Claude AI for WhatsApp parsing
-INGEST_API_KEY=your-random-secret     # MT5 EA + exchange rate auth
-WHATSAPP_VERIFY_TOKEN=your-token      # Fonnte webhook verification
-OWNER_PHONE_NUMBER=628123456789       # Owner's WhatsApp (no + prefix)
+ANTHROPIC_API_KEY=sk-ant-...
+INGEST_API_KEY=your-random-secret
+WHATSAPP_VERIFY_TOKEN=your-token
+OWNER_PHONE_NUMBER=628xxxxxxxx
 ```
 
 ---
@@ -388,110 +292,107 @@ OWNER_PHONE_NUMBER=628123456789       # Owner's WhatsApp (no + prefix)
 ## Development Setup
 
 ```bash
-# 1. Install dependencies
+# Install dependencies
 npm install
 
-# 2. Copy env file and fill in your Supabase credentials
+# Copy and fill in environment variables
 cp .env.example .env
 
-# 3. Apply database schema (in Supabase SQL editor or CLI)
-supabase db push
-# or manually run: database/schema.sql
-
-# 4. Start dev server
+# Start dev server
 npm run dev
 # → http://localhost:5173
 
-# 5. Type check
+# Type check
 npm run type-check
 
-# 6. Build for production
+# Build for production
 npm run build
-```
-
-### Supabase Local Dev
-
-```bash
-supabase start           # Starts local Postgres + API on ports in config.toml
-supabase functions serve # Runs edge functions locally (requires Deno)
 ```
 
 ---
 
 ## Deployment
 
-### Frontend (Vercel / Netlify)
+### Platform: Vercel
 
-```bash
-npm run build
-# Output: dist/
-# Set environment variables: VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY
+- Vite builds to `dist/`
+- Set `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` in Vercel environment variables
+
+### `vercel.json` (SPA Routing Fix)
+
+```json
+{
+  "routes": [
+    { "handle": "filesystem" },
+    { "src": "/(.*)", "dest": "/" }
+  ]
+}
 ```
 
-### Edge Functions
+- `handle: filesystem` — serves real static files (JS/CSS/images) first
+- `src: /(.*)` → `dest: /` — fallback to `index.html` for all client-side routes
+- This fixes the `"Expected a JavaScript module but got text/html"` error that occurs when JS assets are incorrectly intercepted by the SPA fallback
 
-```bash
-# Set all secrets first
-supabase secrets set ANTHROPIC_API_KEY=sk-ant-...
-supabase secrets set INGEST_API_KEY=your-key
-supabase secrets set OWNER_PHONE_NUMBER=628xxxxxxx
-supabase secrets set WHATSAPP_VERIFY_TOKEN=your-token
+### Vite Config
 
-# Deploy all functions
-supabase functions deploy
-
-# Or deploy individually
-supabase functions deploy whatsapp-webhook
-supabase functions deploy ingest-metrics
-supabase functions deploy process-ai-message
-supabase functions deploy update-exchange-rate
-```
-
-### Fonnte Webhook Config
-
-Set webhook URL in Fonnte dashboard:
-```
-https://<project>.supabase.co/functions/v1/whatsapp-webhook
-```
-
-### MT5 EA Config
-
-The EA posts to:
-```
-https://<project>.supabase.co/functions/v1/ingest-metrics
-Headers: x-api-key: <INGEST_API_KEY>
-```
-
-### Exchange Rate Scheduler (pg_cron)
-
-```sql
--- Run daily at 08:00 WIT (23:00 UTC previous day)
-SELECT cron.schedule(
-  'update-exchange-rate',
-  '0 23 * * *',
-  $$SELECT net.http_post(
-    url := 'https://<project>.supabase.co/functions/v1/update-exchange-rate',
-    headers := '{"x-api-key": "<INGEST_API_KEY>"}'::jsonb
-  )$$
-);
+```ts
+base: '/'         // correct asset paths
+outDir: 'dist'    // Vercel expects dist/
+sourcemap: false  // production build
 ```
 
 ---
 
-## Build Status
+## Known Issues
 
-| Step | Status | Description |
-|------|--------|-------------|
-| 1 — Database | ✅ Done | `database/schema.sql` — 15 tables, ENUMs, RLS, triggers, RPC functions |
-| 2 — Types | ✅ Done | `src/types/supabase.ts` — 954 lines, all tables + enums + RPC types |
-| 3 — Config | ✅ Done | Supabase client, constants, broker codes, categories |
-| 4 — Services | ✅ Done | Trading, wealth, AI service layers |
-| 5 — Hooks | ✅ Done | TanStack Query hooks for all features |
-| 6 — Shared UI | ✅ Done | 15 reusable components + utilities |
-| 7 — Features | ✅ Done | Trading, Wealth, AI feature components |
-| 8 — Pages | ✅ Done | 8 pages + React Router v6 + auth guards |
-| 9 — Edge Functions | ✅ Done | 4 Deno functions + 3 shared utilities |
-| 10 — MT5 EA | ✅ Done | `mt5-ea/MPWealthSystem_EA.mq5` — MQL5 EA, timer-based push, WebRequest |
-| 11 — Deploy | 🔲 Pending | Testing + Vercel/Netlify deployment |
+- No real trading data yet — dashboard shows zeros until manual entries are added
+- MT5 EA integration not yet active — `ingest-metrics` edge function is built but EA is not deployed
+- AI assistant (WhatsApp parsing) is built but not yet configured with Fonnte webhook
+- Exchange rates require manual trigger or pg_cron scheduler setup
+- No bulk import for historical transactions yet
 
-**TypeScript:** `tsc --noEmit` passes with zero errors.
+---
+
+## Roadmap
+
+### Phase 1 — Now (Manual Input)
+
+- Manual trading account entry and P&L tracking
+- Wealth transactions and assets population
+- Dashboard population with real data
+- Reports page with monthly breakdown
+
+### Phase 2 — Next
+
+- Advanced reports and analytics
+- Export to CSV / PDF
+- UX improvements and mobile responsiveness
+- Budget vs actuals tracking
+
+### Phase 3 — Future Automation
+
+- MT5 EA deployment to live brokers
+- Auto-sync of trading metrics via `ingest-metrics`
+- WhatsApp + AI parsing via Fonnte + Claude
+- OCR receipt scanning for expense entry
+
+---
+
+## Development Status
+
+| Layer | Status | Notes |
+|-------|--------|-------|
+| Database Schema | ✅ Complete | 15 tables, RLS, triggers, RPC functions |
+| TypeScript Types | ✅ Complete | All tables, enums, RPC types generated |
+| Supabase Config | ✅ Complete | Client, constants, broker catalog |
+| Service Layer | ✅ Complete | Trading, wealth, AI, currency services |
+| TanStack Query Hooks | ✅ Complete | All features covered |
+| Shared UI Components | ✅ Complete | 15 components |
+| Feature Components | ✅ Complete | Trading, Wealth, AI panels |
+| Pages & Routing | ✅ Complete | 8 pages + auth guards |
+| Edge Functions | ✅ Complete | 4 Deno functions built |
+| Frontend Deployment | ✅ Live on Vercel | vercel.json SPA routing fixed |
+| MT5 EA Integration | ⏳ Pending | EA built, not yet deployed to brokers |
+| WhatsApp / AI Parsing | ⏳ Pending | Architecture ready, webhook not configured |
+| Real Data Population | ⏳ Pending | Manual entry in progress |
+
