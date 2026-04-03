@@ -53,6 +53,15 @@ interface FonntePayload {
 // ---------------------------------------------------------------------------
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
+    // GET — health check / browser test
+    if (req.method === 'GET') {
+      return res.status(200).json({
+        status: 'ok',
+        endpoint: '/api/webhooks/whatsapp',
+        message: 'WhatsApp webhook is live. Send POST to receive messages.',
+      });
+    }
+
     if (req.method !== 'POST') {
       return res.status(405).json({ success: false, error: 'Method not allowed' });
     }
