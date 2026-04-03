@@ -31,22 +31,23 @@ export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
           ref={ref}
           id={selectId}
           className={cn(
-            'w-full rounded-lg border bg-white/5 backdrop-blur-sm text-mp-text-primary text-sm px-3 py-2 transition-all duration-200 focus:outline-none focus:ring-2 appearance-none',
+            'w-full rounded-lg border text-white text-sm px-3 py-2 transition-all duration-200',
+            'bg-[#0f172a] focus:outline-none focus:ring-2 appearance-none cursor-pointer',
             error
               ? 'border-mp-red/60 focus:ring-mp-red/30 focus:border-mp-red'
-              : 'border-white/10 focus:ring-mp-primary/30 focus:border-white/20',
+              : 'border-white/10 focus:ring-indigo-500/50 focus:border-white/20',
             'disabled:opacity-50 disabled:cursor-not-allowed',
             className,
           )}
           {...props}
         >
           {placeholder && (
-            <option value="" disabled>
+            <option value="" disabled style={{ backgroundColor: '#0f172a', color: '#9ca3af' }}>
               {placeholder}
             </option>
           )}
           {options.map((opt) => (
-            <option key={opt.value} value={opt.value}>
+            <option key={opt.value} value={opt.value} style={{ backgroundColor: '#0f172a', color: 'white' }}>
               {opt.label}
             </option>
           ))}
