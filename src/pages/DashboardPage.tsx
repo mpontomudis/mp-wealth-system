@@ -54,17 +54,32 @@ export default function DashboardPage() {
 
   return (
     <div className="p-6 flex flex-col gap-6">
-      <div>
-        <h1 className="text-2xl font-bold text-mp-text-primary">
-          {getGreeting()}, Marlon 👋
-        </h1>
-        <p className="text-sm text-mp-text-muted mt-1">
-          Here's your financial overview for today.
-        </p>
+      {/* Header */}
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold text-white">
+            {getGreeting()}, Marlon{' '}
+            <span className="inline-block animate-pulse-slow">👋</span>
+          </h1>
+          <p className="text-sm text-gray-400 mt-1">
+            Here's your financial overview for today.
+          </p>
+        </div>
+        <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl border border-white/10 bg-white/5 backdrop-blur-sm text-xs text-gray-400">
+          <span className="h-1.5 w-1.5 rounded-full bg-mp-green animate-pulse-slow" />
+          Live
+        </div>
       </div>
 
-      <h2 className="text-lg font-semibold text-mp-text-secondary -mb-4">Quick Overview</h2>
+      {/* Section label */}
+      <div className="flex items-center gap-3 -mb-2">
+        <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-widest">
+          Quick Overview
+        </h2>
+        <div className="flex-1 h-px bg-white/[0.06]" />
+      </div>
 
+      {/* Stat cards */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
           title="Portfolio Value"
@@ -98,6 +113,7 @@ export default function DashboardPage() {
         />
       </div>
 
+      {/* Charts row */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <div className={portfolioLoading ? 'opacity-50 pointer-events-none' : ''}>
           <TradingDashboard userId={user?.id ?? ''} />
@@ -105,42 +121,65 @@ export default function DashboardPage() {
 
         <Card title="Wealth — Income vs Expenses">
           {summaryLoading ? (
-            <div className="h-[300px] flex items-center justify-center text-mp-text-muted text-sm">
-              Loading chart…
+            <div className="h-[300px] flex items-center justify-center text-gray-400 text-sm">
+              <div className="flex items-center gap-2">
+                <div className="h-4 w-4 rounded-full border-2 border-white/10 border-t-blue-500 animate-spin" />
+                Loading chart…
+              </div>
             </div>
           ) : (
             <ResponsiveContainer width="100%" height={300}>
               <LineChart data={chartData} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#1e2a3a" />
-                <XAxis dataKey="month" tick={{ fill: '#94a3b8', fontSize: 12 }} />
+                <defs>
+                  <linearGradient id="incomeGradient" x1="0" y1="0" x2="1" y2="0">
+                    <stop offset="0%" stopColor="#10b981" stopOpacity={0.8} />
+                    <stop offset="100%" stopColor="#34d399" stopOpacity={1} />
+                  </linearGradient>
+                  <linearGradient id="expenseGradient" x1="0" y1="0" x2="1" y2="0">
+                    <stop offset="0%" stopColor="#ef4444" stopOpacity={0.8} />
+                    <stop offset="100%" stopColor="#f87171" stopOpacity={1} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
+                <XAxis dataKey="month" tick={{ fill: '#6b7280', fontSize: 11 }} axisLine={false} tickLine={false} />
                 <YAxis
-                  tick={{ fill: '#94a3b8', fontSize: 12 }}
+                  tick={{ fill: '#6b7280', fontSize: 11 }}
                   tickFormatter={(v: number) => `${v}M`}
+                  axisLine={false}
+                  tickLine={false}
                 />
                 <Tooltip
                   formatter={(value: number) => [`Rp ${value.toFixed(1)}M`, '']}
                   contentStyle={{
-                    backgroundColor: '#0f172a',
-                    border: '1px solid #1e293b',
-                    borderRadius: '8px',
+                    backgroundColor: 'rgba(2, 6, 23, 0.95)',
+                    border: '1px solid rgba(255,255,255,0.10)',
+                    borderRadius: '12px',
+                    backdropFilter: 'blur(20px)',
+                    boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
                   }}
+                  labelStyle={{ color: '#9ca3af', fontSize: 12 }}
+                  itemStyle={{ color: '#e5e7eb' }}
                 />
-                <Legend />
+                <Legend
+                  wrapperStyle={{ paddingTop: '16px', fontSize: '12px', color: '#6b7280' }}
+                />
                 <Line
                   type="monotone"
                   dataKey="income"
-                  stroke="#10b981"
-                  strokeWidth={2}
+                  stroke="url(#incomeGradient)"
+                  strokeWidth={2.5}
                   dot={false}
                   name="Income"
+                  strokeLinecap="round"
                 />
                 <Line
                   type="monotone"
                   dataKey="expenses"
-                  stroke="#ef4444"
-                  strokeWidth={2}
+                  stroke="url(#expenseGradient)"
+                  strokeWidth={2.5}
                   dot={false}
                   name="Expenses"
+                  strokeLinecap="round"
                 />
               </LineChart>
             </ResponsiveContainer>

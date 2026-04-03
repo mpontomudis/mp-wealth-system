@@ -30,13 +30,26 @@ function Card({
   title?: string;
 }) {
   return (
-    <div className={`bg-white rounded-xl shadow-md p-6 ${className}`}>
-      {title && (
-        <h3 className="text-sm font-semibold text-mp-text-secondary uppercase tracking-wide mb-4">
-          {title}
-        </h3>
-      )}
-      {children}
+    <div
+      className={`relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl shadow-[0_0_40px_rgba(0,0,0,0.3)] p-6 transition-all duration-300 hover:border-white/20 ${className}`}
+    >
+      {/* Glow overlay */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 bg-gradient-to-br from-blue-500/5 via-transparent to-purple-500/5"
+      />
+      <div
+        aria-hidden
+        className="pointer-events-none absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent"
+      />
+      <div className="relative">
+        {title && (
+          <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wide mb-4">
+            {title}
+          </h3>
+        )}
+        {children}
+      </div>
     </div>
   );
 }
@@ -99,10 +112,10 @@ function StatCard({
 function StatusBadge({ online }: { online: boolean }) {
   return (
     <span
-      className={`inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full ${
+      className={`inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full border ${
         online
-          ? 'bg-emerald-50 text-mp-green'
-          : 'bg-slate-100 text-mp-text-muted'
+          ? 'bg-mp-green/10 text-mp-green border-mp-green/20'
+          : 'bg-white/5 text-gray-400 border-white/10'
       }`}
     >
       {online ? (
@@ -132,7 +145,7 @@ function EquityChartPanel({ accountId }: { accountId: string }) {
   return (
     <ResponsiveContainer width="100%" height={220}>
       <LineChart data={formatted} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
-        <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
         <XAxis
           dataKey="label"
           tick={{ fontSize: 11, fill: '#94a3b8' }}
@@ -154,10 +167,12 @@ function EquityChartPanel({ accountId }: { accountId: string }) {
           ]}
           labelFormatter={(label: string) => `Date: ${label}`}
           contentStyle={{
-            background: 'rgba(255,255,255,0.95)',
-            border: '1px solid #e2e8f0',
-            borderRadius: 8,
+            background: 'rgba(2, 6, 23, 0.95)',
+            border: '1px solid rgba(255,255,255,0.10)',
+            borderRadius: 12,
             fontSize: 12,
+            backdropFilter: 'blur(16px)',
+            boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
           }}
         />
         <Line
@@ -210,7 +225,7 @@ function TradeHistoryTable({ accountId }: { accountId: string }) {
           {trades.map((trade) => {
             const isProfit = (trade.profit ?? 0) >= 0;
             return (
-              <tr key={trade.id} className="hover:bg-slate-50 transition-colors">
+              <tr key={trade.id} className="hover:bg-white/[0.03] transition-colors">
                 <td className="py-3 font-medium text-mp-text-primary">{trade.symbol}</td>
                 <td className="py-3">
                   <span
@@ -339,10 +354,10 @@ export function TradingDashboard({ userId }: TradingDashboardProps) {
                 <button
                   key={account.id}
                   onClick={() => setSelectedAccountId(account.id)}
-                  className={`text-left rounded-xl border-2 p-5 transition-all ${
+                  className={`text-left rounded-xl border p-5 backdrop-blur-sm transition-all duration-300 hover:scale-[1.02] ${
                     isSelected
-                      ? 'border-mp-primary bg-mp-primary/5'
-                      : 'border-mp-border bg-white hover:border-mp-primary/40'
+                      ? 'border-mp-primary/40 bg-mp-primary/10 shadow-[0_0_20px_rgba(59,130,246,0.15)]'
+                      : 'border-white/10 bg-white/5 hover:border-white/20 hover:bg-white/10'
                   }`}
                 >
                   <div className="flex items-start justify-between mb-3">

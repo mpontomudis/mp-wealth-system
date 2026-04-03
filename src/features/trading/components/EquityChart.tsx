@@ -36,16 +36,18 @@ function CustomTooltip({ active, payload, label }: TooltipProps<number, string>)
   const balance = payload.find((p) => p.dataKey === 'balance');
 
   return (
-    <div className="bg-white border border-mp-border rounded-xl shadow-lg px-4 py-3 text-sm min-w-[160px]">
-      <p className="text-xs font-medium text-mp-text-muted mb-2">{label}</p>
+    <div
+      className="relative overflow-hidden rounded-xl border border-white/10 bg-black/80 backdrop-blur-xl px-4 py-3 text-sm min-w-[160px] shadow-[0_8px_32px_rgba(0,0,0,0.5)]"
+    >
+      <p className="text-xs font-medium text-gray-400 mb-2">{label}</p>
 
       {equity && (
         <div className="flex items-center justify-between gap-6">
-          <span className="flex items-center gap-1.5 text-mp-text-secondary">
+          <span className="flex items-center gap-1.5 text-gray-400">
             <span className="inline-block w-2.5 h-2.5 rounded-full bg-mp-blue" />
             Equity
           </span>
-          <span className="font-semibold text-mp-text-primary">
+          <span className="font-semibold text-white">
             {formatUSD(equity.value ?? 0)}
           </span>
         </div>
@@ -53,11 +55,11 @@ function CustomTooltip({ active, payload, label }: TooltipProps<number, string>)
 
       {balance && (
         <div className="flex items-center justify-between gap-6 mt-1">
-          <span className="flex items-center gap-1.5 text-mp-text-secondary">
+          <span className="flex items-center gap-1.5 text-gray-400">
             <span className="inline-block w-2.5 h-2.5 rounded-full bg-mp-green" />
             Balance
           </span>
-          <span className="font-semibold text-mp-text-primary">
+          <span className="font-semibold text-white">
             {formatUSD(balance.value ?? 0)}
           </span>
         </div>
@@ -65,13 +67,13 @@ function CustomTooltip({ active, payload, label }: TooltipProps<number, string>)
 
       {equity && balance && (
         <>
-          <div className="border-t border-mp-border mt-2 pt-2">
+          <div className="border-t border-white/10 mt-2 pt-2">
             {(() => {
               const pl = (equity.value ?? 0) - (balance.value ?? 0);
               const positive = pl >= 0;
               return (
                 <div className="flex items-center justify-between gap-6">
-                  <span className="text-mp-text-muted">P/L</span>
+                  <span className="text-gray-500">P/L</span>
                   <span className={`font-semibold ${positive ? 'text-mp-green' : 'text-mp-red'}`}>
                     {positive ? '+' : ''}{formatUSD(pl)}
                   </span>
@@ -111,7 +113,7 @@ function ChartGradients() {
 function EmptyChart({ height }: { height: number }) {
   return (
     <div
-      className="flex items-center justify-center rounded-xl bg-slate-50 text-mp-text-muted text-sm"
+      className="flex items-center justify-center rounded-xl border border-white/10 bg-white/5 text-gray-400 text-sm"
       style={{ height }}
     >
       No equity data available.

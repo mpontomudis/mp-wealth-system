@@ -59,22 +59,29 @@ export function Modal({ isOpen, onClose, title, children, size = 'md' }: ModalPr
       {/* Dialog */}
       <div
         className={cn(
-          'relative w-full bg-mp-surface rounded-xl shadow-xl z-10',
+          'relative w-full rounded-2xl z-10 overflow-hidden',
+          'bg-white/5 backdrop-blur-2xl border border-white/10',
+          'shadow-[0_0_60px_rgba(0,0,0,0.5)]',
           sizeClasses[size],
         )}
       >
+        {/* Top highlight */}
+        <div
+          aria-hidden
+          className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/15 to-transparent pointer-events-none"
+        />
         {/* Header */}
         {title && (
-          <div className="flex items-center justify-between px-6 pt-5 pb-4 border-b border-mp-border">
-            <h2 id="modal-title" className="text-base font-semibold text-mp-text-primary">
+          <div className="flex items-center justify-between px-6 pt-5 pb-4 border-b border-white/10">
+            <h2 id="modal-title" className="text-base font-semibold text-white">
               {title}
             </h2>
             <button
               onClick={onClose}
-              className="p-1 rounded-lg text-mp-text-muted hover:bg-mp-background transition-colors"
+              className="p-1.5 rounded-lg text-gray-400 hover:bg-white/10 hover:text-white transition-all duration-200"
               aria-label="Close modal"
             >
-              <X size={18} />
+              <X size={17} />
             </button>
           </div>
         )}
@@ -83,10 +90,10 @@ export function Modal({ isOpen, onClose, title, children, size = 'md' }: ModalPr
         {!title && (
           <button
             onClick={onClose}
-            className="absolute top-4 right-4 p-1 rounded-lg text-mp-text-muted hover:bg-mp-background transition-colors z-10"
+            className="absolute top-4 right-4 p-1.5 rounded-lg text-gray-400 hover:bg-white/10 hover:text-white transition-all duration-200 z-10"
             aria-label="Close modal"
           >
-            <X size={18} />
+            <X size={17} />
           </button>
         )}
 

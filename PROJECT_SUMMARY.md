@@ -395,4 +395,3 @@ sourcemap: false  // production build
 | MT5 EA Integration | ⏳ Pending | EA built, not yet deployed to brokers |
 | WhatsApp / AI Parsing | ⏳ Pending | Architecture ready, webhook not configured |
 | Real Data Population | ⏳ Pending | Manual entry in progress |
-

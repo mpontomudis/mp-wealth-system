@@ -12,7 +12,7 @@ export function Layout() {
       <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
       <Navbar onMenuToggle={() => setSidebarOpen((prev) => !prev)} />
       <main className="pt-16 lg:ml-60 min-h-screen">
-        <div className="p-4 lg:p-6">
+        <div className="p-4 lg:p-6 animate-fade-in">
           <Outlet />
         </div>
       </main>

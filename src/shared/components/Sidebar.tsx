@@ -39,7 +39,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
       {/* Mobile overlay */}
       {isOpen && (
         <div
-          className="fixed inset-0 bg-black/30 z-20 lg:hidden"
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-20 lg:hidden"
           onClick={onClose}
           aria-hidden="true"
         />
@@ -48,22 +48,32 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
       {/* Sidebar panel */}
       <aside
         className={cn(
-          'fixed top-0 left-0 h-full w-60 bg-mp-surface border-r border-mp-border z-30 flex flex-col transition-transform duration-200',
+          'fixed top-0 left-0 h-full w-60 z-30 flex flex-col transition-transform duration-300 ease-out',
+          'bg-white/5 backdrop-blur-2xl border-r border-white/10',
+          'shadow-[inset_-1px_0_0_rgba(255,255,255,0.05)]',
           'lg:translate-x-0',
           isOpen ? 'translate-x-0' : '-translate-x-full',
         )}
       >
         {/* Logo */}
-        <div className="flex items-center gap-3 px-5 py-5 border-b border-mp-border">
-          <div className="flex items-center justify-center w-9 h-9 rounded-full bg-mp-primary text-white font-bold text-sm shrink-0">
+        <div className="flex items-center gap-3 px-5 py-5 border-b border-white/10">
+          <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-gradient-to-br from-blue-500 to-purple-500 text-white font-bold text-sm shrink-0 shadow-[0_0_20px_rgba(59,130,246,0.4)]">
             MP
           </div>
-          <span className="text-sm font-semibold text-mp-text-primary">Wealth System</span>
+          <div>
+            <span className="text-sm font-semibold text-white block leading-tight">
+              MP Wealth
+            </span>
+            <span className="text-[10px] text-gray-400">System v2.0</span>
+          </div>
         </div>
 
         {/* Nav */}
         <nav className="flex-1 overflow-y-auto py-4 px-3" aria-label="Main navigation">
-          <ul className="flex flex-col gap-1">
+          <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-500 px-3 mb-2">
+            Navigation
+          </p>
+          <ul className="flex flex-col gap-0.5">
             {navItems.map(({ label, to, icon: Icon }) => (
               <li key={to}>
                 <NavLink
@@ -74,15 +84,19 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                   }}
                   className={({ isActive }) =>
                     cn(
-                      'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors',
+                      'flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all duration-200',
                       isActive
-                        ? 'bg-mp-primary/10 text-mp-primary font-semibold'
-                        : 'text-mp-text-secondary hover:bg-mp-background hover:text-mp-text-primary',
+                        ? 'bg-white/10 text-white font-semibold border border-white/15 shadow-[inset_0_1px_0_rgba(255,255,255,0.1)]'
+                        : 'text-gray-400 hover:bg-white/[0.06] hover:text-white',
                     )
                   }
                 >
-                  <Icon size={18} className="shrink-0" />
-                  {label}
+                  {({ isActive }) => (
+                    <>
+                      <Icon size={17} className={cn('shrink-0', isActive ? 'text-white' : 'text-gray-500')} />
+                      {label}
+                    </>
+                  )}
                 </NavLink>
               </li>
             ))}
@@ -90,8 +104,8 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         </nav>
 
         {/* Version */}
-        <div className="px-5 py-4 border-t border-mp-border">
-          <p className="text-xs text-mp-text-muted">v2.0.0</p>
+        <div className="px-5 py-4 border-t border-white/10">
+          <p className="text-xs text-gray-500">v2.0.0 — MP Wealth System</p>
         </div>
       </aside>
     </>

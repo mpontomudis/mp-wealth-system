@@ -57,11 +57,11 @@ export function BrokerCard({ account, selected = false, onClick }: BrokerCardPro
       onClick={onClick}
       onKeyDown={(e) => e.key === 'Enter' && onClick?.()}
       className={[
-        'relative overflow-hidden rounded-xl border-2 bg-white transition-all duration-200',
+        'relative overflow-hidden rounded-2xl border backdrop-blur-xl transition-all duration-300',
         onClick ? 'cursor-pointer' : '',
         selected
-          ? 'border-mp-primary shadow-lg shadow-mp-primary/10'
-          : 'border-mp-border hover:border-mp-primary/40 hover:shadow-md',
+          ? 'border-mp-primary/40 bg-mp-primary/10 shadow-[0_0_30px_rgba(59,130,246,0.2)]'
+          : 'border-white/10 bg-white/5 hover:border-white/20 hover:bg-white/8 hover:scale-[1.01]',
       ].join(' ')}
     >
       {/* Accent bar */}

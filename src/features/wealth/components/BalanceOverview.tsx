@@ -44,19 +44,26 @@ export function BalanceOverview() {
   }, {});
 
   return (
-    <div className="bg-mp-surface rounded-xl shadow-md p-6">
-      <p className="text-sm text-mp-text-secondary">Total Net Worth</p>
-      <div className="mt-1 text-3xl font-bold text-mp-text-primary">{formatIDR(totalIDR)}</div>
-      <div className="mt-0.5 text-sm text-mp-text-muted">≈ {formatUSD(totalUSD)}</div>
-      <div className="mt-4 flex flex-wrap gap-2">
-        {(Object.entries(byType) as [AssetType, number][]).map(([type, total]) => (
-          <span
-            key={type}
-            className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium ${ASSET_TYPE_COLORS[type] ?? 'bg-mp-background text-mp-text-secondary'}`}
-          >
-            {ASSET_TYPE_LABELS[type] ?? type}: {formatIDR(total)}
-          </span>
-        ))}
+    <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl shadow-[0_0_40px_rgba(0,0,0,0.3)] p-6">
+      {/* Glow */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 bg-gradient-to-br from-blue-500/5 via-transparent to-purple-500/5"
+      />
+      <div className="relative">
+        <p className="text-sm text-gray-400">Total Net Worth</p>
+        <div className="mt-1 text-3xl font-bold text-white">{formatIDR(totalIDR)}</div>
+        <div className="mt-0.5 text-sm text-gray-400">≈ {formatUSD(totalUSD)}</div>
+        <div className="mt-4 flex flex-wrap gap-2">
+          {(Object.entries(byType) as [AssetType, number][]).map(([type, total]) => (
+            <span
+              key={type}
+              className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium border border-white/10 ${ASSET_TYPE_COLORS[type] ?? 'bg-white/5 text-gray-400'}`}
+            >
+              {ASSET_TYPE_LABELS[type] ?? type}: {formatIDR(total)}
+            </span>
+          ))}
+        </div>
       </div>
     </div>
   );
