@@ -53,10 +53,9 @@ export default function LoginPage() {
           <img
             src="/logo.png"
             alt="MP Wealth"
-            className="h-16 w-16 object-contain mb-3 drop-shadow-2xl"
+            className="h-24 object-contain drop-shadow-[0_0_30px_rgba(255,215,0,0.25)]"
           />
-          <h1 className="text-xl font-semibold tracking-tight text-white">MP Wealth System</h1>
-          <p className="text-sm text-gray-400 mt-1">Sign in to your account</p>
+          <p className="text-sm text-gray-400 mt-4">Sign in to your account</p>
         </div>
 
         {/* Card */}
