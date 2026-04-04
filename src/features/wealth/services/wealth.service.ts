@@ -34,59 +34,9 @@ function handleResponse<T>(data: T | null, error: unknown): ServiceResponse<T> {
   return { data, error: null };
 }
 
-// ─── Balance sync helper ──────────────────────────────────────
-// multiplier: +1 = apply transaction, -1 = reverse transaction
-
-type TxForBalance = {
-  type: string;
-  amount: number | string;
-  fee?: number | string | null;
-  from_asset_id?: string | null;
-  to_asset_id?: string | null;
-};
-
-async function applyBalanceDeltas(tx: TxForBalance, multiplier: 1 | -1) {
-  const amt = Number(tx.amount);
-  const fee = Number(tx.fee ?? 0);
-
-  const adjustments: { id: string; delta: number }[] = [];
-
-  if (tx.type === 'income' && tx.to_asset_id) {
-    adjustments.push({ id: tx.to_asset_id, delta: amt * multiplier });
-  } else if (tx.type === 'expense' && tx.from_asset_id) {
-    adjustments.push({ id: tx.from_asset_id, delta: -amt * multiplier });
-  } else if (tx.type === 'transfer') {
-    if (tx.from_asset_id) adjustments.push({ id: tx.from_asset_id, delta: -(amt + fee) * multiplier });
-    if (tx.to_asset_id)   adjustments.push({ id: tx.to_asset_id,   delta:  amt            * multiplier });
-  }
-
-  for (const { id, delta } of adjustments) {
-    const { data: asset, error: fetchErr } = await supabase
-      .from('assets')
-      .select('balance')
-      .eq('id', id)
-      .single();
-    if (fetchErr || !asset) {
-      console.error('[applyBalanceDeltas] failed to fetch asset', id, fetchErr);
-      continue;
-    }
-
-    const { error: updateErr } = await supabase
-      .from('assets')
-      .update({
-        balance: Number(asset.balance) + delta,
-        last_updated: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', id);
-
-    if (updateErr) {
-      console.error('[applyBalanceDeltas] failed to update asset', id, delta, updateErr);
-    } else {
-      console.log(`[applyBalanceDeltas] asset ${id} balance ${delta >= 0 ? '+' : ''}${delta}`);
-    }
-  }
-}
+// NOTE: Asset balance is updated server-side by the DB trigger
+// `trg_sync_asset_balance` (see database/runsql.md Section 9).
+// Do NOT add client-side balance update logic here — it will double-count.
 
 // ─── Transaction Fields ───────────────────────────────────────
 
@@ -159,14 +109,7 @@ export async function createTransaction(
     .select(TRANSACTION_FIELDS)
     .single();
 
-  if (error) {
-    console.error('[createTransaction] error:', JSON.stringify(error, null, 2));
-    return handleResponse(data, error);
-  }
-
-  // Update asset balances
-  await applyBalanceDeltas(payload, 1);
-
+  if (error) console.error('[createTransaction] error:', JSON.stringify(error, null, 2));
   return handleResponse(data, error);
 }
 
@@ -176,13 +119,6 @@ export async function updateTransaction(
   id: string,
   payload: TablesUpdate<'transactions'>
 ): Promise<ServiceResponse<Tables<'transactions'>>> {
-  // Fetch old transaction to reverse its balance effect
-  const { data: old } = await supabase
-    .from('transactions')
-    .select('type, amount, fee, from_asset_id, to_asset_id')
-    .eq('id', id)
-    .single();
-
   const { data, error } = await supabase
     .from('transactions')
     .update({ ...payload, updated_at: new Date().toISOString() })
@@ -190,15 +126,7 @@ export async function updateTransaction(
     .select(TRANSACTION_FIELDS)
     .single();
 
-  if (error) {
-    console.error('[updateTransaction] error:', JSON.stringify(error, null, 2));
-    return handleResponse(data, error);
-  }
-
-  // Reverse old balance effects, apply new ones
-  if (old) await applyBalanceDeltas(old, -1);
-  await applyBalanceDeltas(payload, 1);
-
+  if (error) console.error('[updateTransaction] error:', JSON.stringify(error, null, 2));
   return handleResponse(data, error);
 }
 
@@ -207,23 +135,12 @@ export async function updateTransaction(
 export async function deleteTransaction(
   id: string
 ): Promise<ServiceResponse<null>> {
-  // Fetch transaction to reverse its balance effect before soft-deleting
-  const { data: tx } = await supabase
-    .from('transactions')
-    .select('type, amount, fee, from_asset_id, to_asset_id')
-    .eq('id', id)
-    .single();
-
   const { error } = await supabase
     .from('transactions')
     .update({ deleted_at: new Date().toISOString() } as never)
     .eq('id', id);
 
   if (error) return { data: null, error };
-
-  // Reverse balance effects of the deleted transaction
-  if (tx) await applyBalanceDeltas(tx, -1);
-
   return { data: null, error: null };
 }
 
