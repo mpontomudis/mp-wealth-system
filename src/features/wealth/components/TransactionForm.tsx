@@ -107,6 +107,9 @@ export function TransactionForm({ transaction, isOpen, onClose }: TransactionFor
   ];
 
   const onSubmit = (data: FormData) => {
+    // Guard against double-submit
+    if (create.isPending || update.isPending) return;
+
     const payload = {
       ...data,
       amount: Number(data.amount),
