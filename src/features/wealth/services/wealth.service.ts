@@ -284,7 +284,7 @@ export async function deleteAsset(
   return { data: null, error: null };
 }
 
-// ─── 13. getMonthlySummary ────────────────────────────────────
+// ─── 13. getMonthlySummary (client-side — no RPC needed) ──────
 
 export async function getMonthlySummary(
   userId: string,
@@ -292,12 +292,49 @@ export async function getMonthlySummary(
   month?: number
 ): Promise<ServiceResponse<MonthlySummary>> {
   const now = new Date();
+  const y = year ?? now.getFullYear();
+  const m = month ?? now.getMonth() + 1;
 
-  const { data, error } = await supabase.rpc('get_monthly_summary', {
-    p_user_id: userId,
-    p_year: year ?? now.getFullYear(),
-    p_month: month ?? now.getMonth() + 1,
-  });
+  const startDate = `${y}-${String(m).padStart(2, '0')}-01`;
+  const lastDay = new Date(y, m, 0).getDate();
+  const endDate = `${y}-${String(m).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
 
-  return handleResponse(data as MonthlySummary | null, error);
+  const { data, error } = await supabase
+    .from('transactions')
+    .select('type, amount, currency, amount_usd')
+    .eq('user_id', userId)
+    .is('deleted_at' as never, null)
+    .gte('transaction_date', startDate)
+    .lte('transaction_date', endDate);
+
+  if (error) return handleResponse(null, error);
+
+  const USD_RATE = 15750;
+  let total_income_idr = 0, total_expense_idr = 0;
+  let total_income_usd = 0, total_expense_usd = 0;
+
+  for (const tx of data ?? []) {
+    const amt = Number(tx.amount ?? 0);
+    const amtUsd = Number(tx.amount_usd ?? 0) || (tx.currency === 'USD' ? amt : amt / USD_RATE);
+    const amtIdr = tx.currency === 'USD' ? amt * USD_RATE : amt;
+
+    if (tx.type === 'income') {
+      total_income_idr += amtIdr;
+      total_income_usd += amtUsd;
+    } else if (tx.type === 'expense') {
+      total_expense_idr += amtIdr;
+      total_expense_usd += amtUsd;
+    }
+  }
+
+  const summary: MonthlySummary = {
+    total_income_idr,
+    total_expense_idr,
+    total_income_usd,
+    total_expense_usd,
+    net_cashflow_idr: total_income_idr - total_expense_idr,
+    net_cashflow_usd: total_income_usd - total_expense_usd,
+  };
+
+  return handleResponse(summary, null);
 }
