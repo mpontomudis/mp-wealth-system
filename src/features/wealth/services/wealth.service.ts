@@ -46,6 +46,7 @@ const TRANSACTION_FIELDS = `
   amount_usd,
   description,
   notes,
+  fee,
   from_asset_id,
   to_asset_id,
   transaction_date,

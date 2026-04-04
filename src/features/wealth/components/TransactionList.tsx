@@ -186,6 +186,11 @@ export function TransactionList({ limit, showFilters = true }: TransactionListPr
                   >
                     {AMOUNT_PREFIX[tx.type as TransactionType]}
                     {formatIDR(tx.amount)}
+                    {tx.fee && tx.fee > 0 && (
+                      <div className="text-xs text-mp-text-muted font-normal">
+                        fee: {formatIDR(tx.fee)}
+                      </div>
+                    )}
                   </td>
                   <td className="py-3 pr-4">
                     <Badge variant={TYPE_BADGE[tx.type as TransactionType] ?? 'neutral'}>

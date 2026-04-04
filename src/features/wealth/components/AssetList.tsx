@@ -18,6 +18,7 @@ import type { AssetType } from '@/types/supabase';
 const ASSET_TYPE_OPTIONS = [
   { value: 'cash', label: 'Cash' },
   { value: 'bank', label: 'Bank' },
+  { value: 'e_wallet', label: 'E-Wallet (GoPay, OVO, dll)' },
   { value: 'trading', label: 'Trading' },
   { value: 'investment', label: 'Investment' },
   { value: 'crypto', label: 'Crypto' },
@@ -31,6 +32,7 @@ const CURRENCY_OPTIONS = [
 const ASSET_TYPE_BADGE: Record<AssetType, 'success' | 'info' | 'neutral' | 'warning' | 'danger'> = {
   cash: 'success',
   bank: 'info',
+  e_wallet: 'info',
   trading: 'neutral',
   investment: 'warning',
   crypto: 'danger',

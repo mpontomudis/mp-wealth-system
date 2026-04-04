@@ -30,6 +30,7 @@ type FormData = {
   transaction_date: string;
   from_asset_id?: string;
   to_asset_id?: string;
+  fee?: number;
   notes?: string;
 };
 
@@ -85,6 +86,7 @@ export function TransactionForm({ transaction, isOpen, onClose }: TransactionFor
           new Date().toISOString().split('T')[0],
         from_asset_id: transaction.from_asset_id ?? '',
         to_asset_id: transaction.to_asset_id ?? '',
+        fee: transaction.fee ?? undefined,
         notes: transaction.notes ?? '',
       });
     } else {
@@ -108,6 +110,7 @@ export function TransactionForm({ transaction, isOpen, onClose }: TransactionFor
     const payload = {
       ...data,
       amount: Number(data.amount),
+      fee: data.fee ? Number(data.fee) : null,
       from_asset_id: data.from_asset_id || null,
       to_asset_id: data.to_asset_id || null,
     };
@@ -174,6 +177,16 @@ export function TransactionForm({ transaction, isOpen, onClose }: TransactionFor
               {...register('to_asset_id')}
             />
           </div>
+        )}
+        {txType === 'transfer' && (
+          <Input
+            label="Transfer Fee (opsional)"
+            type="number"
+            step="any"
+            min="0"
+            placeholder="mis. 2500"
+            {...register('fee', { valueAsNumber: true })}
+          />
         )}
         {txType === 'expense' && (
           <Select

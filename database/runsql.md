@@ -396,6 +396,21 @@ CREATE UNIQUE INDEX IF NOT EXISTS unique_active_account_per_broker
 
 ---
 
+## SECTION 8 — Add Fee Column & E-Wallet Asset Type
+
+**Masalah:** Tidak ada kolom `fee` untuk mencatat biaya transfer. Tidak ada tipe aset `e_wallet` untuk GoPay/OVO/DANA.
+
+```sql
+-- Tambah kolom fee ke transactions
+ALTER TABLE transactions
+  ADD COLUMN IF NOT EXISTS fee DECIMAL(15, 2) DEFAULT NULL;
+
+-- Tambah nilai e_wallet ke enum asset_type
+ALTER TYPE asset_type ADD VALUE IF NOT EXISTS 'e_wallet';
+```
+
+---
+
 ## SECTION 7 — Add Transfer From/To Account Columns
 
 **Masalah:** Tabel `transactions` tidak memiliki kolom `from_asset_id` dan `to_asset_id` — tidak bisa melacak alur transfer antar rekening.
@@ -419,3 +434,4 @@ ALTER TABLE transactions
 | 2026-04-03 | Section 5 | Fix 409 Conflict saat add trading account — ganti UNIQUE constraint dengan partial index |
 | 2026-04-03 | Section 6 | Fix initial balance $0 — tambah INSERT policy untuk account_metrics_snapshots |
 | 2026-04-04 | Section 7 | Add from_asset_id & to_asset_id ke transactions untuk transfer tracking |
+| 2026-04-04 | Section 8 | Add fee column ke transactions + e_wallet asset type |

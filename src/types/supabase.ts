@@ -13,7 +13,7 @@ export type TradeType          = "BUY" | "SELL";
 export type CategoryType       = "income" | "expense";
 export type TransactionType    = "income" | "expense" | "transfer";
 export type TransactionSource  = "manual" | "whatsapp" | "ai" | "bulk_upload";
-export type AssetType          = "cash" | "bank" | "trading" | "investment" | "crypto";
+export type AssetType          = "cash" | "bank" | "e_wallet" | "trading" | "investment" | "crypto";
 export type BudgetPeriod       = "daily" | "weekly" | "monthly" | "yearly";
 export type MessageType        = "text" | "image" | "audio" | "video" | "document";
 export type ProcessingStatus   = "pending" | "processing" | "completed" | "failed";
@@ -437,6 +437,7 @@ export type Database = {
           amount_usd:          number | null;
           description:         string | null;
           notes:               string | null;
+          fee:                 number | null;
           source:              TransactionSource;
           from_asset_id:       string | null;
           to_asset_id:         string | null;
@@ -458,6 +459,7 @@ export type Database = {
           amount_usd?:          number | null;
           description?:         string | null;
           notes?:               string | null;
+          fee?:                 number | null;
           source?:              TransactionSource;
           from_asset_id?:       string | null;
           to_asset_id?:         string | null;
@@ -479,6 +481,7 @@ export type Database = {
           amount_usd?:          number | null;
           description?:         string | null;
           notes?:               string | null;
+          fee?:                 number | null;
           source?:              TransactionSource;
           from_asset_id?:       string | null;
           to_asset_id?:         string | null;

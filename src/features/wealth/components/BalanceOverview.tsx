@@ -8,6 +8,7 @@ import type { AssetType } from '@/types/supabase';
 const ASSET_TYPE_COLORS: Record<AssetType, string> = {
   cash: 'bg-green-500/10 text-mp-green',
   bank: 'bg-blue-500/10 text-mp-blue',
+  e_wallet: 'bg-sky-500/10 text-sky-400',
   trading: 'bg-purple-500/10 text-purple-400',
   investment: 'bg-yellow-500/10 text-mp-gold',
   crypto: 'bg-orange-500/10 text-orange-400',
@@ -16,6 +17,7 @@ const ASSET_TYPE_COLORS: Record<AssetType, string> = {
 const ASSET_TYPE_LABELS: Record<AssetType, string> = {
   cash: 'Cash',
   bank: 'Bank',
+  e_wallet: 'E-Wallet',
   trading: 'Trading',
   investment: 'Investment',
   crypto: 'Crypto',
