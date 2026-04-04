@@ -140,75 +140,117 @@ export function TransactionList({ limit, showFilters = true }: TransactionListPr
           description="No transactions match the current filters"
         />
       ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-mp-border text-mp-text-secondary text-left">
-                <th className="pb-2 pr-4 font-medium">Date</th>
-                <th className="pb-2 pr-4 font-medium">Description</th>
-                <th className="pb-2 pr-4 font-medium text-right">Amount</th>
-                <th className="pb-2 pr-4 font-medium">Type</th>
-                <th className="pb-2 font-medium">AI</th>
-              </tr>
-            </thead>
-            <tbody>
-              {displayItems.map((tx) => (
-                <tr
-                  key={tx.id}
-                  onClick={() => setEditingTx(tx)}
-                  className="border-b border-mp-border/50 hover:bg-mp-background/50 cursor-pointer transition-colors"
-                >
-                  <td className="py-3 pr-4 text-mp-text-muted whitespace-nowrap">
-                    {formatDate(tx.transaction_date, 'short')}
-                  </td>
-                  <td className="py-3 pr-4 text-mp-text-primary max-w-[200px] truncate">
-                    <div>{tx.description ?? '—'}</div>
+        <>
+          {/* ── Mobile card list (hidden on md+) ───────── */}
+          <div className="flex flex-col gap-2 md:hidden">
+            {displayItems.map((tx) => (
+              <div
+                key={tx.id}
+                onClick={() => setEditingTx(tx)}
+                className="flex items-center gap-3 rounded-xl border border-white/[0.07] bg-white/[0.03] px-3 py-3 cursor-pointer hover:bg-white/[0.06] active:bg-white/[0.08] transition-colors"
+              >
+                {/* Type icon */}
+                <div className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 text-base ${
+                  tx.type === 'income'   ? 'bg-mp-green/15' :
+                  tx.type === 'expense'  ? 'bg-mp-red/15'   : 'bg-mp-blue/15'
+                }`}>
+                  {tx.type === 'income' ? '📥' : tx.type === 'expense' ? '📤' : '🔄'}
+                </div>
+                {/* Description + meta */}
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-mp-text-primary truncate">{tx.description ?? '—'}</p>
+                  <div className="flex items-center gap-1.5 mt-0.5">
+                    <span className="text-xs text-mp-text-muted">{formatDate(tx.transaction_date, 'short')}</span>
                     {tx.type === 'transfer' && (tx.from_asset_id || tx.to_asset_id) && (
-                      <div className="flex items-center gap-1 mt-0.5 text-xs text-mp-text-muted">
-                        <span>{tx.from_asset_id ? assetMap[tx.from_asset_id] ?? '?' : '—'}</span>
-                        <ArrowRight className="w-3 h-3 shrink-0" />
-                        <span>{tx.to_asset_id ? assetMap[tx.to_asset_id] ?? '?' : '—'}</span>
-                      </div>
+                      <>
+                        <span className="text-mp-text-muted">·</span>
+                        <span className="text-xs text-mp-text-muted truncate max-w-[130px]">
+                          {tx.from_asset_id ? assetMap[tx.from_asset_id] ?? '?' : '—'}
+                          {' → '}
+                          {tx.to_asset_id ? assetMap[tx.to_asset_id] ?? '?' : '—'}
+                        </span>
+                      </>
                     )}
-                    {tx.type !== 'transfer' && tx.from_asset_id && (
-                      <div className="text-xs text-mp-text-muted mt-0.5">
-                        from {assetMap[tx.from_asset_id] ?? '?'}
-                      </div>
+                    {tx.type !== 'transfer' && (tx.from_asset_id || tx.to_asset_id) && (
+                      <>
+                        <span className="text-mp-text-muted">·</span>
+                        <span className="text-xs text-mp-text-muted">
+                          {tx.from_asset_id ? assetMap[tx.from_asset_id] : assetMap[tx.to_asset_id ?? ''] ?? ''}
+                        </span>
+                      </>
                     )}
-                    {tx.type !== 'transfer' && tx.to_asset_id && (
-                      <div className="text-xs text-mp-text-muted mt-0.5">
-                        to {assetMap[tx.to_asset_id] ?? '?'}
-                      </div>
-                    )}
-                  </td>
-                  <td
-                    className={`py-3 pr-4 font-medium text-right whitespace-nowrap ${AMOUNT_COLOR[tx.type as TransactionType] ?? ''}`}
-                  >
-                    {AMOUNT_PREFIX[tx.type as TransactionType]}
-                    {formatIDR(tx.amount)}
-                    {tx.fee && tx.fee > 0 && (
-                      <div className="text-xs text-mp-text-muted font-normal">
-                        fee: {formatIDR(tx.fee)}
-                      </div>
-                    )}
-                  </td>
-                  <td className="py-3 pr-4">
-                    <Badge variant={TYPE_BADGE[tx.type as TransactionType] ?? 'neutral'}>
-                      {tx.type}
-                    </Badge>
-                  </td>
-                  <td className="py-3">
-                    {tx.ai_log_id && (
-                      <span aria-label="AI processed">
-                        <Cpu size={14} className="text-mp-blue" />
-                      </span>
-                    )}
-                  </td>
+                  </div>
+                </div>
+                {/* Amount */}
+                <div className="text-right shrink-0">
+                  <p className={`text-sm font-semibold ${AMOUNT_COLOR[tx.type as TransactionType] ?? ''}`}>
+                    {AMOUNT_PREFIX[tx.type as TransactionType]}{formatIDR(tx.amount)}
+                  </p>
+                  {tx.fee && tx.fee > 0 && (
+                    <p className="text-xs text-mp-text-muted">fee: {formatIDR(tx.fee)}</p>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* ── Desktop table (hidden below md) ─────────── */}
+          <div className="hidden md:block overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-mp-border text-mp-text-secondary text-left">
+                  <th className="pb-2 pr-4 font-medium">Date</th>
+                  <th className="pb-2 pr-4 font-medium">Description</th>
+                  <th className="pb-2 pr-4 font-medium text-right">Amount</th>
+                  <th className="pb-2 pr-4 font-medium">Type</th>
+                  <th className="pb-2 font-medium">AI</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {displayItems.map((tx) => (
+                  <tr
+                    key={tx.id}
+                    onClick={() => setEditingTx(tx)}
+                    className="border-b border-mp-border/50 hover:bg-mp-background/50 cursor-pointer transition-colors"
+                  >
+                    <td className="py-3 pr-4 text-mp-text-muted whitespace-nowrap">
+                      {formatDate(tx.transaction_date, 'short')}
+                    </td>
+                    <td className="py-3 pr-4 text-mp-text-primary max-w-[200px] truncate">
+                      <div>{tx.description ?? '—'}</div>
+                      {tx.type === 'transfer' && (tx.from_asset_id || tx.to_asset_id) && (
+                        <div className="flex items-center gap-1 mt-0.5 text-xs text-mp-text-muted">
+                          <span>{tx.from_asset_id ? assetMap[tx.from_asset_id] ?? '?' : '—'}</span>
+                          <ArrowRight className="w-3 h-3 shrink-0" />
+                          <span>{tx.to_asset_id ? assetMap[tx.to_asset_id] ?? '?' : '—'}</span>
+                        </div>
+                      )}
+                      {tx.type !== 'transfer' && tx.from_asset_id && (
+                        <div className="text-xs text-mp-text-muted mt-0.5">from {assetMap[tx.from_asset_id] ?? '?'}</div>
+                      )}
+                      {tx.type !== 'transfer' && tx.to_asset_id && (
+                        <div className="text-xs text-mp-text-muted mt-0.5">to {assetMap[tx.to_asset_id] ?? '?'}</div>
+                      )}
+                    </td>
+                    <td className={`py-3 pr-4 font-medium text-right whitespace-nowrap ${AMOUNT_COLOR[tx.type as TransactionType] ?? ''}`}>
+                      {AMOUNT_PREFIX[tx.type as TransactionType]}
+                      {formatIDR(tx.amount)}
+                      {tx.fee && tx.fee > 0 && (
+                        <div className="text-xs text-mp-text-muted font-normal">fee: {formatIDR(tx.fee)}</div>
+                      )}
+                    </td>
+                    <td className="py-3 pr-4">
+                      <Badge variant={TYPE_BADGE[tx.type as TransactionType] ?? 'neutral'}>{tx.type}</Badge>
+                    </td>
+                    <td className="py-3">
+                      {tx.ai_log_id && <span aria-label="AI processed"><Cpu size={14} className="text-mp-blue" /></span>}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
       )}
 
       {!limit && totalPages > 1 && (

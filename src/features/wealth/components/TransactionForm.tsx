@@ -1,17 +1,13 @@
 // src/features/wealth/components/TransactionForm.tsx
 import { useEffect } from 'react';
-import { useForm, useWatch } from 'react-hook-form';
+import { useForm, useWatch, Controller } from 'react-hook-form';
 import { useAuth } from '@/shared/hooks/useAuth';
 import { useTransactions } from '@/features/wealth/hooks/useTransactions';
 import { useAssets } from '@/features/wealth/hooks/useAssets';
 import { Modal } from '@/shared/components/Modal';
 import { Button } from '@/shared/components/Button';
 import { Input } from '@/shared/components/Input';
-import { Select } from '@/shared/components/Select';
-import {
-  DEFAULT_INCOME_CATEGORIES,
-  DEFAULT_EXPENSE_CATEGORIES,
-} from '@/config/constants';
+import { CustomSelect, type CustomSelectOption } from '@/shared/components/CustomSelect';
 import type { Tables, TransactionType } from '@/types/supabase';
 
 type Transaction = Tables<'transactions'>;
@@ -34,23 +30,16 @@ type FormData = {
   notes?: string;
 };
 
-const TYPE_OPTIONS = [
-  { value: 'income', label: 'Income' },
-  { value: 'expense', label: 'Expense' },
-  { value: 'transfer', label: 'Transfer' },
+const TYPE_OPTIONS: CustomSelectOption[] = [
+  { value: 'expense', label: 'Expense',  prefix: '📤' },
+  { value: 'income',  label: 'Income',   prefix: '📥' },
+  { value: 'transfer',label: 'Transfer', prefix: '🔄' },
 ];
 
-const CURRENCY_OPTIONS = [
-  { value: 'IDR', label: 'IDR' },
-  { value: 'USD', label: 'USD' },
+const CURRENCY_OPTIONS: CustomSelectOption[] = [
+  { value: 'IDR', label: 'IDR — Rupiah',  prefix: '🇮🇩' },
+  { value: 'USD', label: 'USD — Dollar',  prefix: '🇺🇸' },
 ];
-
-// Fallback category labels for display only (category_id FK requires category lookup service)
-const _ALL_CATEGORY_NAMES = [
-  ...DEFAULT_INCOME_CATEGORIES.map((c) => c.name),
-  ...DEFAULT_EXPENSE_CATEGORIES.map((c) => c.name),
-];
-void _ALL_CATEGORY_NAMES; // available for future category-name lookup UI
 
 export function TransactionForm({ transaction, isOpen, onClose }: TransactionFormProps) {
   const { user } = useAuth();
@@ -63,7 +52,7 @@ export function TransactionForm({ transaction, isOpen, onClose }: TransactionFor
     handleSubmit,
     reset,
     control,
-    formState: { errors },
+    formState: { errors, isSubmitting },
   } = useForm<FormData>({
     defaultValues: {
       type: 'expense',
@@ -98,18 +87,17 @@ export function TransactionForm({ transaction, isOpen, onClose }: TransactionFor
     }
   }, [transaction, reset]);
 
-  const assetOptions = [
+  const assetOptions: CustomSelectOption[] = [
     { value: '', label: '— None —' },
     ...(assets ?? []).map((a) => ({
       value: a.id,
-      label: `${a.name}${a.institution ? ` (${a.institution})` : ''}`,
+      label: `${a.name}${a.institution ? ` · ${a.institution}` : ''}`,
+      prefix: '🏦',
     })),
   ];
 
   const onSubmit = (data: FormData) => {
-    // Guard against double-submit
     if (create.isPending || update.isPending) return;
-
     const payload = {
       ...data,
       amount: Number(data.amount),
@@ -117,17 +105,10 @@ export function TransactionForm({ transaction, isOpen, onClose }: TransactionFor
       from_asset_id: data.from_asset_id || null,
       to_asset_id: data.to_asset_id || null,
     };
-
     if (isEdit && transaction) {
-      update.mutate(
-        { id: transaction.id, payload },
-        { onSuccess: onClose },
-      );
+      update.mutate({ id: transaction.id, payload }, { onSuccess: onClose });
     } else {
-      create.mutate(
-        { ...payload, source: 'manual' },
-        { onSuccess: onClose },
-      );
+      create.mutate({ ...payload, source: 'manual' }, { onSuccess: onClose });
     }
   };
 
@@ -140,6 +121,10 @@ export function TransactionForm({ transaction, isOpen, onClose }: TransactionFor
     }
   };
 
+  const inputClass =
+    'w-full bg-white/[0.04] border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-mp-text-muted focus:border-mp-primary focus:outline-none transition-colors';
+  const labelClass = 'block text-xs font-medium text-mp-text-secondary mb-1.5';
+
   return (
     <Modal
       isOpen={isOpen}
@@ -148,36 +133,74 @@ export function TransactionForm({ transaction, isOpen, onClose }: TransactionFor
       size="lg"
     >
       <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
-        <Select
-          label="Type"
-          options={TYPE_OPTIONS}
-          {...register('type', { required: 'Required' })}
-          error={errors.type?.message}
+
+        {/* ── Type ─────────────────────────────────────── */}
+        <Controller
+          name="type"
+          control={control}
+          render={({ field }) => (
+            <CustomSelect
+              label="Type"
+              options={TYPE_OPTIONS}
+              value={field.value}
+              onChange={(v) => field.onChange(v as TransactionType)}
+            />
+          )}
         />
+
+        {/* ── Amount + Currency ────────────────────────── */}
         <div className="grid grid-cols-2 gap-3">
           <Input
             label="Amount"
             type="number"
             step="any"
             min="0"
+            placeholder="0"
             {...register('amount', { required: 'Required', valueAsNumber: true })}
             error={errors.amount?.message}
           />
-          <Select label="Currency" options={CURRENCY_OPTIONS} {...register('currency')} />
+          <Controller
+            name="currency"
+            control={control}
+            render={({ field }) => (
+              <CustomSelect
+                label="Currency"
+                options={CURRENCY_OPTIONS}
+                value={field.value}
+                onChange={field.onChange}
+              />
+            )}
+          />
         </div>
 
-        {/* From / To Account — shown contextually */}
+        {/* ── From / To Account ────────────────────────── */}
         {txType === 'transfer' && (
-          <div className="grid grid-cols-2 gap-3">
-            <Select
-              label="From Account"
-              options={assetOptions}
-              {...register('from_asset_id')}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <Controller
+              name="from_asset_id"
+              control={control}
+              render={({ field }) => (
+                <CustomSelect
+                  label="From Account"
+                  options={assetOptions}
+                  value={field.value ?? ''}
+                  onChange={field.onChange}
+                  placeholder="— Select —"
+                />
+              )}
             />
-            <Select
-              label="To Account"
-              options={assetOptions}
-              {...register('to_asset_id')}
+            <Controller
+              name="to_asset_id"
+              control={control}
+              render={({ field }) => (
+                <CustomSelect
+                  label="To Account"
+                  options={assetOptions}
+                  value={field.value ?? ''}
+                  onChange={field.onChange}
+                  placeholder="— Select —"
+                />
+              )}
             />
           </div>
         )}
@@ -192,73 +215,105 @@ export function TransactionForm({ transaction, isOpen, onClose }: TransactionFor
           />
         )}
         {txType === 'expense' && (
-          <Select
-            label="From Account"
-            options={assetOptions}
-            {...register('from_asset_id')}
+          <Controller
+            name="from_asset_id"
+            control={control}
+            render={({ field }) => (
+              <CustomSelect
+                label="From Account"
+                options={assetOptions}
+                value={field.value ?? ''}
+                onChange={field.onChange}
+                placeholder="— Select account —"
+              />
+            )}
           />
         )}
         {txType === 'income' && (
-          <Select
-            label="To Account"
-            options={assetOptions}
-            {...register('to_asset_id')}
+          <Controller
+            name="to_asset_id"
+            control={control}
+            render={({ field }) => (
+              <CustomSelect
+                label="To Account"
+                options={assetOptions}
+                value={field.value ?? ''}
+                onChange={field.onChange}
+                placeholder="— Select account —"
+              />
+            )}
           />
         )}
 
-        {/* Balance hint — shown when no account selected */}
+        {/* Balance hint */}
         {(txType === 'income' || txType === 'expense') && (
           <p className="text-xs text-yellow-400/80 -mt-1">
-            ⚠️ Pilih{txType === 'income' ? ' To Account' : ' From Account'} agar saldo aset otomatis terupdate.
+            ⚠️ Pilih {txType === 'income' ? 'To Account' : 'From Account'} agar saldo aset otomatis terupdate.
           </p>
         )}
 
+        {/* ── Description ──────────────────────────────── */}
         <Input
           label="Description"
           placeholder="What was this for?"
           {...register('description', { required: 'Description is required' })}
           error={errors.description?.message}
         />
-        <Input
-          label="Date"
-          type="date"
-          {...register('transaction_date', { required: 'Date is required' })}
-          error={errors.transaction_date?.message}
-        />
-        <div className="flex flex-col gap-1">
-          <label className="text-sm font-medium text-mp-text-secondary">Notes (optional)</label>
+
+        {/* ── Date ─────────────────────────────────────── */}
+        <div>
+          <label className={labelClass}>Date</label>
+          <input
+            {...register('transaction_date', { required: 'Date is required' })}
+            type="date"
+            className={inputClass}
+          />
+          {errors.transaction_date && (
+            <p className="mt-1 text-xs text-mp-red">{errors.transaction_date.message}</p>
+          )}
+        </div>
+
+        {/* ── Notes ────────────────────────────────────── */}
+        <div>
+          <label className={labelClass}>Notes (optional)</label>
           <textarea
             {...register('notes')}
-            rows={3}
-            className="w-full rounded-lg border border-mp-border bg-mp-background px-3 py-2 text-sm text-mp-text-primary placeholder:text-mp-text-muted focus:border-mp-primary focus:outline-none focus:ring-1 focus:ring-mp-primary resize-none"
+            rows={2}
+            className={`${inputClass} resize-none`}
             placeholder="Additional notes..."
           />
         </div>
+
         {mutationError && (
-          <p className="text-xs text-red-500">
+          <p className="text-xs text-mp-red">
             {(mutationError as { message?: string })?.message ?? 'Failed to save. Please try again.'}
           </p>
         )}
-        <div className="flex gap-2 justify-end pt-2">
+
+        {/* ── Actions ──────────────────────────────────── */}
+        <div className="flex flex-col-reverse sm:flex-row gap-2 pt-1">
           {isEdit && (
             <Button
               type="button"
               variant="danger"
               onClick={handleDelete}
               loading={remove.isPending}
-              className="mr-auto"
+              className="sm:mr-auto"
             >
               Delete
             </Button>
           )}
-          <Button type="button" variant="secondary" onClick={onClose}>
+          <Button type="button" variant="ghost" onClick={onClose} className="flex-1 sm:flex-none">
             Cancel
           </Button>
-          <Button type="submit" loading={isPending}>
+          <Button type="submit" loading={isSubmitting || isPending} className="flex-1 sm:flex-none">
             {isEdit ? 'Update' : 'Create'}
           </Button>
         </div>
+
       </form>
     </Modal>
   );
 }
+
+
