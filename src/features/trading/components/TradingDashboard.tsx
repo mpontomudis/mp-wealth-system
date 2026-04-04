@@ -9,7 +9,7 @@ import {
   ResponsiveContainer,
   CartesianGrid,
 } from 'recharts';
-import { TrendingUp, TrendingDown, Wifi, WifiOff, AlertCircle, Plus } from 'lucide-react';
+import { TrendingUp, TrendingDown, Wifi, WifiOff, AlertCircle, Plus, Trash2 } from 'lucide-react';
 import { useTradingAccounts } from '../hooks/useTradingAccounts';
 import { usePortfolioTotal } from '../hooks/usePortfolioTotal';
 import { useEquityChart } from '../hooks/useEquityChart';
@@ -17,6 +17,7 @@ import { useTradeHistory } from '../hooks/useTradeHistory';
 import { formatUSD, formatIDR, formatDate, formatPL, formatLots, formatPercentage } from '@/shared/utils/formatters';
 import type { TradingAccountWithLatestMetrics } from '../services/trading.service';
 import { AddTradingAccountModal } from './AddTradingAccountModal';
+import { BrokerDetailModal } from './BrokerDetailModal';
 
 // ─── Shared primitives ────────────────────────────────────────
 
@@ -272,11 +273,12 @@ interface TradingDashboardProps {
 }
 
 export function TradingDashboard({ userId }: TradingDashboardProps) {
-  const { accounts, isLoading: accountsLoading, error: accountsError } = useTradingAccounts(userId);
-  const { portfolio, isLoading: portfolioLoading } = usePortfolioTotal(userId);
+  const { accounts, isLoading: accountsLoading, error: accountsError, remove: removeAccount } = useTradingAccounts(userId);
+  const { portfolio } = usePortfolioTotal(userId);
 
   const [selectedAccountId, setSelectedAccountId] = useState<string>('');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [detailAccount, setDetailAccount] = useState<TradingAccountWithLatestMetrics | null>(null);
 
   // Default to first account once loaded
   React.useEffect(() => {
@@ -285,7 +287,12 @@ export function TradingDashboard({ userId }: TradingDashboardProps) {
     }
   }, [accounts, selectedAccountId]);
 
-  const totalPL = portfolio?.total_profit_usd ?? 0;
+  // Compute portfolio totals from accounts data directly (reliable, no RPC dependency)
+  const exchangeRate = portfolio?.exchange_rate ?? 15750;
+  const totalEquityUSD  = accounts?.reduce((s, a) => s + (a.latest_metrics?.equity          ?? 0), 0) ?? 0;
+  const totalBalanceUSD = accounts?.reduce((s, a) => s + (a.latest_metrics?.balance         ?? 0), 0) ?? 0;
+  const totalPL         = accounts?.reduce((s, a) => s + (a.latest_metrics?.floating_profit ?? 0), 0) ?? 0;
+  const totalEquityIDR  = totalEquityUSD * exchangeRate;
 
   const onlineAccounts = accounts?.filter(isAccountOnline).length ?? 0;
   const activeAccounts = accounts?.filter((a) => a.is_active).length ?? 0;
@@ -295,18 +302,18 @@ export function TradingDashboard({ userId }: TradingDashboardProps) {
 
       {/* ── 1. Portfolio Summary ── */}
       <Card title="Portfolio Overview">
-        {portfolioLoading ? (
+        {accountsLoading ? (
           <LoadingSpinner />
         ) : (
           <div className="grid grid-cols-2 gap-6 sm:grid-cols-4">
             <StatCard
               label="Total Equity"
-              primary={formatUSD(portfolio?.total_equity_usd ?? 0)}
-              secondary={formatIDR(portfolio?.total_equity_idr ?? 0)}
+              primary={formatUSD(totalEquityUSD)}
+              secondary={formatIDR(totalEquityIDR)}
             />
             <StatCard
               label="Total Balance"
-              primary={formatUSD(portfolio?.total_balance_usd ?? 0)}
+              primary={formatUSD(totalBalanceUSD)}
             />
             <StatCard
               label="Floating P/L"
@@ -351,10 +358,13 @@ export function TradingDashboard({ userId }: TradingDashboardProps) {
               const online = isAccountOnline(account);
 
               return (
-                <button
+                <div
                   key={account.id}
-                  onClick={() => setSelectedAccountId(account.id)}
-                  className={`text-left rounded-xl border p-5 backdrop-blur-sm transition-all duration-300 hover:scale-[1.02] ${
+                  onClick={() => {
+                    setSelectedAccountId(account.id);
+                    setDetailAccount(account);
+                  }}
+                  className={`cursor-pointer text-left rounded-xl border p-5 backdrop-blur-sm transition-all duration-300 hover:scale-[1.02] ${
                     isSelected
                       ? 'border-mp-primary/40 bg-mp-primary/10 shadow-[0_0_20px_rgba(59,130,246,0.15)]'
                       : 'border-white/10 bg-white/5 hover:border-white/20 hover:bg-white/10'
@@ -369,7 +379,22 @@ export function TradingDashboard({ userId }: TradingDashboardProps) {
                         #{account.account_number ?? '—'}
                       </p>
                     </div>
-                    <StatusBadge online={online} />
+                    <div className="flex items-center gap-2">
+                      <StatusBadge online={online} />
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (window.confirm(`Delete account #${account.account_number ?? account.id}?`)) {
+                            if (selectedAccountId === account.id) setSelectedAccountId('');
+                            removeAccount.mutate(account.id);
+                          }
+                        }}
+                        className="p-1 rounded text-mp-text-muted hover:text-red-400 hover:bg-white/10 transition-colors"
+                        title="Delete account"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
                   </div>
 
                   <div className="grid grid-cols-2 gap-3 mt-2">
@@ -398,7 +423,7 @@ export function TradingDashboard({ userId }: TradingDashboardProps) {
                       </p>
                     </div>
                   </div>
-                </button>
+                </div>
               );
             })}
           </div>
@@ -434,6 +459,13 @@ export function TradingDashboard({ userId }: TradingDashboardProps) {
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
         userId={userId}
+      />
+
+      {/* ── 6. Broker Detail Modal ── */}
+      <BrokerDetailModal
+        account={detailAccount}
+        isOpen={detailAccount !== null}
+        onClose={() => setDetailAccount(null)}
       />
     </div>
   );

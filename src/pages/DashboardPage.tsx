@@ -11,7 +11,8 @@ import {
 } from 'recharts';
 import { useAuth } from '@/shared/hooks/useAuth';
 import { usePortfolioTotal } from '@/features/trading/hooks/usePortfolioTotal';
-import { useMonthlySummary } from '@/features/wealth/hooks/useMonthlySummary';
+import { useAssets } from '@/features/wealth/hooks/useAssets';
+import { useTransactions } from '@/features/wealth/hooks/useTransactions';
 import { StatCard } from '@/shared/components/StatCard';
 import { Card } from '@/shared/components/Card';
 import { TradingDashboard } from '@/features/trading/components/TradingDashboard';
@@ -36,19 +37,40 @@ const BASE_CHART_MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May'];
 export default function DashboardPage() {
   const { user } = useAuth();
   const { portfolio, isLoading: portfolioLoading } = usePortfolioTotal(user?.id ?? '');
-  const { summary, isLoading: summaryLoading } = useMonthlySummary(user?.id ?? '');
+  const { assets } = useAssets(user?.id ?? '');
+
+  // Fetch only this month's transactions for summary stats
+  const now = new Date();
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
+    .toISOString()
+    .split('T')[0];
+  const { transactions } = useTransactions(user?.id ?? '', { startDate: startOfMonth });
+
+  const exchangeRate = portfolio?.exchange_rate ?? 16000;
+  const totalAssetsIDR =
+    assets?.reduce((sum, a) => {
+      if (a.currency === 'IDR') return sum + (a.balance ?? 0);
+      return sum + (a.balance_usd ?? 0) * exchangeRate;
+    }, 0) ?? 0;
 
   const totalEquityUSD = portfolio?.total_equity_usd ?? 0;
   const floatingPL = portfolio?.total_profit_usd ?? 0;
-  const totalAssetsIDR = portfolio?.total_equity_idr ?? 0;
-  const netCashflow = summary?.net_cashflow_idr ?? 0;
+
+  // Compute monthly summary from transactions (no RPC dependency)
+  const monthlyIncome = (transactions ?? [])
+    .filter((t) => t.type === 'income')
+    .reduce((s, t) => s + (t.currency === 'IDR' ? (t.amount ?? 0) : (t.amount ?? 0) * exchangeRate), 0);
+  const monthlyExpenses = (transactions ?? [])
+    .filter((t) => t.type === 'expense')
+    .reduce((s, t) => s + (t.currency === 'IDR' ? (t.amount ?? 0) : (t.amount ?? 0) * exchangeRate), 0);
+  const netCashflow = monthlyIncome - monthlyExpenses;
 
   const chartData = [
     ...BASE_CHART_MONTHS.map((month) => ({ month, income: 0, expenses: 0 })),
     {
-      month: new Date().toLocaleString('default', { month: 'short' }),
-      income: (summary?.total_income_idr ?? 0) / 1_000_000,
-      expenses: (summary?.total_expense_idr ?? 0) / 1_000_000,
+      month: now.toLocaleString('default', { month: 'short' }),
+      income:   monthlyIncome   / 1_000_000,
+      expenses: monthlyExpenses / 1_000_000,
     },
   ];
 
@@ -105,11 +127,7 @@ export default function DashboardPage() {
           title="Monthly Net"
           value={`${netCashflow >= 0 ? '+' : ''}${formatIDR(netCashflow)}`}
           subtitle="Net cashflow this month"
-          trend={
-            (summary?.total_income_idr ?? 0) > 0
-              ? (netCashflow / (summary?.total_income_idr ?? 1)) * 100
-              : 0
-          }
+          trend={monthlyIncome > 0 ? (netCashflow / monthlyIncome) * 100 : 0}
         />
       </div>
 
@@ -120,7 +138,7 @@ export default function DashboardPage() {
         </div>
 
         <Card title="Wealth — Income vs Expenses">
-          {summaryLoading ? (
+          {portfolioLoading ? (
             <div className="h-[300px] flex items-center justify-center text-gray-400 text-sm">
               <div className="flex items-center gap-2">
                 <div className="h-4 w-4 rounded-full border-2 border-white/10 border-t-blue-500 animate-spin" />

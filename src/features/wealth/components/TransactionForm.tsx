@@ -50,7 +50,7 @@ void _ALL_CATEGORY_NAMES; // available for future category-name lookup UI
 
 export function TransactionForm({ transaction, isOpen, onClose }: TransactionFormProps) {
   const { user } = useAuth();
-  const { create, update } = useTransactions(user?.id ?? '');
+  const { create, update, remove } = useTransactions(user?.id ?? '');
   const isEdit = Boolean(transaction);
 
   const {
@@ -108,7 +108,14 @@ export function TransactionForm({ transaction, isOpen, onClose }: TransactionFor
     }
   };
 
-  const isPending = create.isPending || update.isPending;
+  const isPending = create.isPending || update.isPending || remove.isPending;
+  const mutationError = create.error || update.error || remove.error;
+
+  const handleDelete = () => {
+    if (transaction && window.confirm('Delete this transaction?')) {
+      remove.mutate(transaction.id, { onSuccess: onClose });
+    }
+  };
 
   return (
     <Modal
@@ -156,7 +163,23 @@ export function TransactionForm({ transaction, isOpen, onClose }: TransactionFor
             placeholder="Additional notes..."
           />
         </div>
+        {mutationError && (
+          <p className="text-xs text-red-500">
+            {(mutationError as { message?: string })?.message ?? 'Failed to save. Please try again.'}
+          </p>
+        )}
         <div className="flex gap-2 justify-end pt-2">
+          {isEdit && (
+            <Button
+              type="button"
+              variant="danger"
+              onClick={handleDelete}
+              loading={remove.isPending}
+              className="mr-auto"
+            >
+              Delete
+            </Button>
+          )}
           <Button type="button" variant="secondary" onClick={onClose}>
             Cancel
           </Button>

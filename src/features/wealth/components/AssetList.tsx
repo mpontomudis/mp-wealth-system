@@ -1,6 +1,6 @@
 // src/features/wealth/components/AssetList.tsx
 import { useState } from 'react';
-import { PlusCircle } from 'lucide-react';
+import { PlusCircle, Trash2, Pencil } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { useAuth } from '@/shared/hooks/useAuth';
 import { useAssets } from '@/features/wealth/hooks/useAssets';
@@ -13,7 +13,7 @@ import { Badge } from '@/shared/components/Badge';
 import { PageLoader } from '@/shared/components/LoadingSpinner';
 import { EmptyState } from '@/shared/components/EmptyState';
 import { formatIDR, formatUSD } from '@/shared/utils/formatters';
-import type { AssetType, TablesUpdate } from '@/types/supabase';
+import type { AssetType } from '@/types/supabase';
 
 const ASSET_TYPE_OPTIONS = [
   { value: 'cash', label: 'Cash' },
@@ -45,7 +45,7 @@ type AssetFormData = {
 
 export function AssetList() {
   const { user } = useAuth();
-  const { assets, isLoading, update } = useAssets(user?.id ?? '');
+  const { assets, isLoading, create, update, remove } = useAssets(user?.id ?? '');
   const [showModal, setShowModal] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
 
@@ -53,19 +53,21 @@ export function AssetList() {
     register,
     handleSubmit,
     reset,
+    setValue,
     formState: { errors },
   } = useForm<AssetFormData>({
     defaultValues: { currency: 'IDR', type: 'cash' },
   });
 
   const onSubmit = (data: AssetFormData) => {
+    const payload = {
+      name: data.name,
+      type: data.type,
+      balance: Number(data.balance),
+      currency: data.currency,
+    };
+
     if (editingId) {
-      const payload: TablesUpdate<'assets'> = {
-        name: data.name,
-        type: data.type,
-        balance: Number(data.balance),
-        currency: data.currency,
-      };
       update.mutate(
         { id: editingId, payload },
         {
@@ -76,8 +78,14 @@ export function AssetList() {
           },
         },
       );
+    } else {
+      create.mutate(payload, {
+        onSuccess: () => {
+          reset();
+          setShowModal(false);
+        },
+      });
     }
-    // TODO: useCreateAsset for new assets
   };
 
   const openAdd = () => {
@@ -113,7 +121,33 @@ export function AssetList() {
                     {asset.type}
                   </Badge>
                 </div>
-                {/* TODO: delete */}
+                <div className="flex items-center gap-2">
+                  <button
+                    className="p-1 rounded hover:bg-mp-bg-secondary text-mp-text-muted hover:text-blue-400 transition-colors"
+                    title="Edit"
+                    onClick={() => {
+                      setValue('name', asset.name ?? '');
+                      setValue('type', asset.type as AssetType);
+                      setValue('balance', asset.balance ?? 0);
+                      setValue('currency', asset.currency ?? 'IDR');
+                      setEditingId(asset.id);
+                      setShowModal(true);
+                    }}
+                  >
+                    <Pencil size={15} />
+                  </button>
+                  <button
+                    className="p-1 rounded hover:bg-mp-bg-secondary text-mp-text-muted hover:text-red-400 transition-colors"
+                    title="Delete"
+                    onClick={() => {
+                      if (window.confirm(`Delete "${asset.name}"?`)) {
+                        remove.mutate(asset.id);
+                      }
+                    }}
+                  >
+                    <Trash2 size={15} />
+                  </button>
+                </div>
               </div>
               <div className="mt-3">
                 <div className="text-xl font-bold text-mp-text-primary">
@@ -124,7 +158,9 @@ export function AssetList() {
                 {asset.balance_usd != null && (
                   <div className="text-sm text-mp-text-muted">≈ {formatUSD(asset.balance_usd)}</div>
                 )}
-                <div className="text-xs text-mp-text-muted mt-1">{asset.currency}</div>
+                {asset.currency === 'USD' && (
+                  <div className="text-xs text-mp-text-muted mt-1">USD</div>
+                )}
               </div>
             </Card>
           ))}
@@ -160,6 +196,16 @@ export function AssetList() {
             error={errors.balance?.message}
           />
           <Select label="Currency" options={CURRENCY_OPTIONS} {...register('currency')} />
+          {(create.error || update.error) && (
+            <p className="text-xs text-red-400 bg-red-900/20 rounded p-2 break-all">
+              {(() => {
+                const err = (create.error || update.error) as unknown as Record<string, unknown>;
+                return err?.message
+                  ? `Error: ${String(err.message)}${err.details ? ` — ${String(err.details)}` : ''}${err.hint ? ` (Hint: ${String(err.hint)})` : ''}`
+                  : 'Save failed. Check browser console for details.';
+              })()}
+            </p>
+          )}
           <div className="flex gap-2 justify-end pt-2">
             <Button
               type="button"
@@ -171,7 +217,7 @@ export function AssetList() {
             >
               Cancel
             </Button>
-            <Button type="submit" loading={update.isPending}>
+            <Button type="submit" loading={create.isPending || update.isPending}>
               Save
             </Button>
           </div>

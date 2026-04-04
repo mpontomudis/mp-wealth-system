@@ -11,7 +11,7 @@ import {
 } from 'recharts';
 import { useAuth } from '@/shared/hooks/useAuth';
 import { useAssets } from '@/features/wealth/hooks/useAssets';
-import { useMonthlySummary } from '@/features/wealth/hooks/useMonthlySummary';
+import { useTransactions } from '@/features/wealth/hooks/useTransactions';
 import { StatCard } from '@/shared/components/StatCard';
 import { Card } from '@/shared/components/Card';
 import { TransactionList } from './TransactionList';
@@ -23,7 +23,13 @@ const CHART_MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
 export function WealthDashboard() {
   const { user } = useAuth();
   const { assets, isLoading: assetsLoading } = useAssets(user?.id ?? '');
-  const { summary, isLoading: summaryLoading } = useMonthlySummary(user?.id ?? '');
+
+  // Fetch only this month's transactions for summary stats
+  const now = new Date();
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
+    .toISOString()
+    .split('T')[0];
+  const { transactions, isLoading: txLoading } = useTransactions(user?.id ?? '', { startDate: startOfMonth });
 
   const totalAssets =
     assets?.reduce((sum, a) => {
@@ -31,14 +37,22 @@ export function WealthDashboard() {
       return sum + (a.balance_usd ?? 0) * 16000;
     }, 0) ?? 0;
 
-  const monthlyIncome = summary?.total_income_idr ?? 0;
-  const monthlyExpenses = summary?.total_expense_idr ?? 0;
-  const netCashflow = summary?.net_cashflow_idr ?? 0;
+  const EXCHANGE_RATE = 16000;
+  const monthlyIncome = (transactions ?? [])
+    .filter((t) => t.type === 'income')
+    .reduce((s, t) => s + (t.currency === 'IDR' ? (t.amount ?? 0) : (t.amount ?? 0) * EXCHANGE_RATE), 0);
+
+  const monthlyExpenses = (transactions ?? [])
+    .filter((t) => t.type === 'expense')
+    .reduce((s, t) => s + (t.currency === 'IDR' ? (t.amount ?? 0) : (t.amount ?? 0) * EXCHANGE_RATE), 0);
+
+  const netCashflow = monthlyIncome - monthlyExpenses;
+  const isLoading = assetsLoading || txLoading;
 
   // Chart: populate current month only; expand with historical data when multi-month hook is available
   const chartData = CHART_MONTHS.map((month, i) => ({
     month,
-    income: i === CHART_MONTHS.length - 1 ? monthlyIncome / 1_000_000 : 0,
+    income:   i === CHART_MONTHS.length - 1 ? monthlyIncome   / 1_000_000 : 0,
     expenses: i === CHART_MONTHS.length - 1 ? monthlyExpenses / 1_000_000 : 0,
   }));
 
@@ -75,7 +89,7 @@ export function WealthDashboard() {
 
       {/* Row 2: Line chart */}
       <Card title="Income vs Expenses — Last 6 Months">
-        {summaryLoading || assetsLoading ? (
+        {isLoading ? (
           <div className="h-[300px] flex items-center justify-center text-mp-text-muted text-sm">
             Loading chart…
           </div>

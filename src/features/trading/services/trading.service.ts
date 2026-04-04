@@ -328,10 +328,47 @@ export async function createTradingAccount(
     .select()
     .single();
 
-  return handleResponse(data as Tables<'trading_accounts'> | null, error);
+  if (error || !data) return handleResponse(data as Tables<'trading_accounts'> | null, error);
+
+  // Insert initial metrics snapshot so balance/equity show immediately
+  const initialBalance = payload.initial_deposit ?? 0;
+  if (initialBalance > 0) {
+    const { error: snapError } = await supabase.from('account_metrics_snapshots').insert({
+      account_id:      data.id,
+      balance:         initialBalance,
+      equity:          initialBalance,
+      floating_profit: 0,
+      margin:          0,
+      free_margin:     initialBalance,
+      margin_level:    0,
+      open_positions:  0,
+      total_lots:      0,
+      data_source:     'Manual',
+      is_valid:        true,
+    });
+    if (snapError) {
+      console.error('[createTradingAccount] snapshot insert failed:', snapError);
+    }
+  }
+
+  return handleResponse(data as Tables<'trading_accounts'> | null, null);
 }
 
-// ─── 8. getPortfolioTotal ─────────────────────────────────────
+// ─── 8. deleteTradingAccount (soft) ──────────────────────────
+
+export async function deleteTradingAccount(
+  id: string
+): Promise<ServiceResponse<null>> {
+  const { error } = await supabase
+    .from('trading_accounts')
+    .update({ deleted_at: new Date().toISOString(), is_active: false })
+    .eq('id', id);
+
+  if (error) return { data: null, error };
+  return { data: null, error: null };
+}
+
+// ─── 9. getPortfolioTotal ─────────────────────────────────────
 
 export async function getPortfolioTotal(
   userId: string

@@ -102,6 +102,7 @@ export async function createTransaction(
     .select(TRANSACTION_FIELDS)
     .single();
 
+  if (error) console.error('[createTransaction] error:', JSON.stringify(error, null, 2));
   return handleResponse(data, error);
 }
 
@@ -118,6 +119,7 @@ export async function updateTransaction(
     .select(TRANSACTION_FIELDS)
     .single();
 
+  if (error) console.error('[updateTransaction] error:', JSON.stringify(error, null, 2));
   return handleResponse(data, error);
 }
 
@@ -136,7 +138,6 @@ export async function deleteTransaction(
 }
 
 // ─── Category Fields ─────────────────────────────────────────
-
 const CATEGORY_FIELDS = `
   id,
   user_id,
@@ -181,6 +182,20 @@ export async function createCategory(
   return handleResponse(data, error);
 }
 
+// ─── 7. deleteCategory (soft) ────────────────────────────────
+
+export async function deleteCategory(
+  id: string
+): Promise<ServiceResponse<null>> {
+  const { error } = await supabase
+    .from('categories')
+    .update({ deleted_at: new Date().toISOString() } as never)
+    .eq('id', id);
+
+  if (error) return { data: null, error };
+  return { data: null, error: null };
+}
+
 // ─── Asset Fields ─────────────────────────────────────────────
 
 const ASSET_FIELDS = `
@@ -216,7 +231,23 @@ export async function getAssets(
   return handleResponse(data, error);
 }
 
-// ─── 8. updateAsset ──────────────────────────────────────────
+// ─── 8. createAsset ──────────────────────────────────────────
+
+export async function createAsset(
+  payload: Omit<TablesInsert<'assets'>, 'user_id'>
+): Promise<ServiceResponse<Tables<'assets'>>> {
+  const user = await getCurrentUser();
+  const { data, error } = await supabase
+    .from('assets')
+    .insert({ ...payload, user_id: user.id })
+    .select(ASSET_FIELDS)
+    .single();
+
+  if (error) console.error('[createAsset] error:', JSON.stringify(error, null, 2));
+  return handleResponse(data, error);
+}
+
+// ─── 10. updateAsset ─────────────────────────────────────────
 
 export async function updateAsset(
   id: string,
@@ -232,7 +263,21 @@ export async function updateAsset(
   return handleResponse(data, error);
 }
 
-// ─── 9. getMonthlySummary ─────────────────────────────────────
+// ─── 12. deleteAsset (soft) ──────────────────────────────────
+
+export async function deleteAsset(
+  id: string
+): Promise<ServiceResponse<null>> {
+  const { error } = await supabase
+    .from('assets')
+    .update({ deleted_at: new Date().toISOString() } as never)
+    .eq('id', id);
+
+  if (error) return { data: null, error };
+  return { data: null, error: null };
+}
+
+// ─── 13. getMonthlySummary ────────────────────────────────────
 
 export async function getMonthlySummary(
   userId: string,

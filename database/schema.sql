@@ -60,10 +60,13 @@ CREATE TABLE trading_accounts (
     last_sync_at TIMESTAMPTZ,
     deleted_at TIMESTAMPTZ,
     created_at TIMESTAMPTZ DEFAULT NOW(),
-    updated_at TIMESTAMPTZ DEFAULT NOW(),
-
-    CONSTRAINT unique_account_per_broker UNIQUE(broker_id, account_number, user_id)
+    updated_at TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- Partial unique index: allow re-adding same account number after soft-delete
+CREATE UNIQUE INDEX unique_active_account_per_broker
+  ON trading_accounts(broker_id, account_number, user_id)
+  WHERE deleted_at IS NULL;
 
 CREATE TABLE account_metrics_snapshots (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
