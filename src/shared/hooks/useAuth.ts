@@ -20,7 +20,19 @@ export function useAuth(): {
       setIsLoading(false);
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      // During TOKEN_REFRESHED the session is briefly null before the new
+      // token arrives. Ignore transient null during refresh to avoid
+      // redirecting the user to /login unexpectedly.
+      if (event === 'TOKEN_REFRESHED' || event === 'INITIAL_SESSION') {
+        if (session) {
+          setSession(session);
+          setUser(session.user);
+        }
+        setIsLoading(false);
+        return;
+      }
+
       setSession(session);
       setUser(session?.user ?? null);
       setIsLoading(false);

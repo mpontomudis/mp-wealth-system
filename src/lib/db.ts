@@ -21,11 +21,12 @@ export class AuthRequiredError extends Error {
  * rather than accepting it as a parameter from callers.
  */
 export async function getCurrentUser(): Promise<User> {
-  const {
-    data: { user },
-    error,
-  } = await supabase.auth.getUser();
+  // Try local session first (no network needed) — avoids failures during token refresh
+  const { data: { session } } = await supabase.auth.getSession();
+  if (session?.user) return session.user;
 
+  // Fall back to server-verified user if no local session
+  const { data: { user }, error } = await supabase.auth.getUser();
   if (error || !user) throw new AuthRequiredError();
   return user;
 }
