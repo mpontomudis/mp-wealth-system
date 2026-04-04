@@ -123,15 +123,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     const body = req.body as FonntePayload;
-    console.log('📱 Incoming WA webhook:', JSON.stringify(body, null, 2));
+    // Log FULL raw body — critical for debugging unknown Fonnte payload formats
+    console.log('📱 RAW Fonnte payload:', JSON.stringify(body, null, 2));
+    console.log('📋 All keys:', Object.keys(body ?? {}));
 
-    // Normalise fields across Fonnte versions
-    const sender      = (body?.sender    ?? body?.from      ?? '').trim();
-    const message     = (body?.message   ?? body?.text      ?? '').trim();
-    const whatsappId  = (body?.id        ?? body?.messageId ?? '').trim();
-    const messageType = (body?.type                         ?? 'text').trim();
-    const mediaUrl    = body?.url   ?? null;
-    const mediaType   = body?.mimeType ?? body?.mimetype ?? null;
+    // Fonnte v1/v2 field normalisation — check all known variants
+    const sender      = (body?.sender ?? body?.from ?? body?.phone ?? body?.number ?? '').toString().trim();
+    const message     = (body?.message ?? body?.text ?? body?.body ?? body?.content ?? '').toString().trim();
+    const whatsappId  = (body?.id ?? body?.messageId ?? body?.message_id ?? '').toString().trim();
+    const messageType = (body?.type ?? body?.message_type ?? 'text').toString().trim();
+    const mediaUrl    = (body?.url ?? body?.media_url ?? null) as string | null;
+    const mediaType   = (body?.mimeType ?? body?.mimetype ?? body?.media_type ?? null) as string | null;
 
     // Parse timestamp → ISO string; fall back to now()
     const rawTs      = body?.timestamp ?? body?.date;
@@ -141,26 +143,25 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     console.log('📝 Parsed:', { sender, message, whatsappId, messageType });
 
-    if (!sender || !message) {
-      console.warn('WA webhook: empty sender or message — ignored');
-      return res.status(400).json({ success: false, error: 'Missing sender or message' });
-    }
+    // If fields empty, store raw body as text_content for debugging
+    const effectiveSender  = sender  || 'unknown';
+    const effectiveMessage = message || JSON.stringify(body);
 
     // Lookup user_id by phone number
-    const userId = await findUserByPhone(sender);
+    const userId = await findUserByPhone(effectiveSender);
     if (!userId) {
-      console.warn(`⚠️  No user found for phone: ${sender} — message stored without user`);
+      console.warn(`⚠️  No user found for phone: ${effectiveSender}`);
     } else {
-      console.log(`✅ Matched user_id: ${userId} for phone: ${sender}`);
+      console.log(`✅ Matched user_id: ${userId}`);
     }
 
     // Insert into whatsapp_messages
     const { data: inserted, error } = await getSupabase()
       .from('whatsapp_messages')
       .insert({
-        user_id:           userId,          // null if phone not registered
-        from_number:       sender,
-        text_content:      message,
+        user_id:           userId,
+        from_number:       effectiveSender,
+        text_content:      effectiveMessage,
         whatsapp_id:       whatsappId || null,
         message_type:      messageType,
         media_url:         mediaUrl,
