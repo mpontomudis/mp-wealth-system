@@ -12,8 +12,8 @@ import { formatIDR } from '@/shared/utils/formatters';
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 const USD_RATE = 15750;
-const DAYS_ID = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
-const MONTHS_ID = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+const DAYS_EN = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const MONTHS_EN = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
 function toIdr(amount: number, currency: string) {
   return currency === 'USD' ? amount * USD_RATE : amount;
@@ -51,7 +51,7 @@ function getRangeDates(period: Period, anchor: string): { startDate: string; end
   const s = `${y}-${String(m).padStart(2,'0')}-01`;
   const lastDay = new Date(y, m, 0).getDate();
   const e = `${y}-${String(m).padStart(2,'0')}-${String(lastDay).padStart(2,'0')}`;
-  return { startDate: s, endDate: e, label: `${MONTHS_ID[m-1]} ${y}` };
+  return { startDate: s, endDate: e, label: `${MONTHS_EN[m-1]} ${y}` };
 }
 
 function buildChartData(
@@ -76,7 +76,7 @@ function buildChartData(
     const mon = new Date(startDate + 'T00:00:00');
     const days = Array.from({ length: 7 }, (_, i) => {
       const d = new Date(mon); d.setDate(mon.getDate() + i);
-      return { label: DAYS_ID[d.getDay()], date: d.toISOString().split('T')[0], income: 0, expenses: 0 };
+      return { label: DAYS_EN[d.getDay()], date: d.toISOString().split('T')[0], income: 0, expenses: 0 };
     });
     for (const tx of transactions) {
       const d = days.find(d => d.date === tx.transaction_date);
@@ -90,7 +90,7 @@ function buildChartData(
 
   // month → per week
   const weeks = Array.from({ length: 5 }, (_, i) => ({
-    label: `Mgg ${i+1}`, income: 0, expenses: 0,
+    label: `Wk ${i+1}`, income: 0, expenses: 0,
   }));
   for (const tx of transactions) {
     const day = new Date(tx.transaction_date + 'T00:00:00').getDate();
@@ -145,9 +145,9 @@ export default function ReportsPage() {
   };
 
   const PERIOD_TABS: { key: Period; label: string }[] = [
-    { key: 'day', label: 'Hari' },
-    { key: 'week', label: 'Minggu' },
-    { key: 'month', label: 'Bulan' },
+    { key: 'day', label: 'Daily' },
+    { key: 'week', label: 'Weekly' },
+    { key: 'month', label: 'Monthly' },
   ];
 
   const xKey = period === 'day' ? 'label' : period === 'week' ? 'label' : 'label';
@@ -205,7 +205,7 @@ export default function ReportsPage() {
           onClick={() => setAnchor(today)}
           className="ml-1 px-3 py-1.5 rounded-lg border border-white/10 bg-white/[0.04] hover:bg-white/[0.08] text-xs text-mp-text-muted hover:text-white transition-colors"
         >
-          Hari ini
+          Today
         </button>
       </div>
 
@@ -233,7 +233,7 @@ export default function ReportsPage() {
           <div className="h-[260px] flex items-center justify-center text-mp-text-muted text-sm">Loading…</div>
         ) : chartData.length === 0 ? (
           <div className="h-[260px] flex items-center justify-center text-mp-text-muted text-sm">
-            Tidak ada transaksi pada periode ini
+            No transactions for this period
           </div>
         ) : (
           <ResponsiveContainer width="100%" height={260}>
@@ -258,21 +258,21 @@ export default function ReportsPage() {
 
       {/* Transaction detail table */}
       {(transactions ?? []).length > 0 && (
-        <Card title="Detail Transaksi">
+        <Card title="Transaction Details">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-mp-border text-mp-text-secondary text-left">
-                  <th className="pb-2 pr-3 font-medium">Tanggal</th>
-                  <th className="pb-2 pr-3 font-medium">Keterangan</th>
-                  <th className="pb-2 font-medium text-right">Jumlah</th>
+                  <th className="pb-2 pr-3 font-medium">Date</th>
+                  <th className="pb-2 pr-3 font-medium">Description</th>
+                  <th className="pb-2 font-medium text-right">Amount</th>
                 </tr>
               </thead>
               <tbody>
                 {(transactions ?? []).map(tx => (
                   <tr key={tx.id} className="border-b border-mp-border/40 last:border-0">
                     <td className="py-2 pr-3 text-mp-text-muted whitespace-nowrap text-xs">
-                      {tx.transaction_date ? new Date(tx.transaction_date+'T00:00:00').toLocaleDateString('id-ID',{day:'2-digit',month:'short'}) : '—'}
+                      {tx.transaction_date ? new Date(tx.transaction_date+'T00:00:00').toLocaleDateString('en-US',{day:'2-digit',month:'short'}) : '—'}
                     </td>
                     <td className="py-2 pr-3 text-mp-text-primary max-w-[180px] truncate">{tx.description ?? '—'}</td>
                     <td className={`py-2 text-right font-medium whitespace-nowrap ${tx.type==='income'?'text-mp-green':tx.type==='expense'?'text-mp-red':'text-mp-blue'}`}>
