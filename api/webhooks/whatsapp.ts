@@ -2,20 +2,24 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
 
 // ---------------------------------------------------------------------------
-// Env helper — fails fast at cold-start, never mid-request
-// Use SUPABASE_SERVICE_ROLE_KEY so inserts bypass Row Level Security
+// Env helper — returns undefined (not throws) so health check still works
 // ---------------------------------------------------------------------------
 function env(key: string): string {
-  const value = process.env[key];
-  if (!value) throw new Error(`Missing environment variable: ${key}`);
-  return value;
+  return process.env[key] ?? '';
 }
 
-const supabase = createClient(
-  env('SUPABASE_URL'),
-  env('SUPABASE_SERVICE_ROLE_KEY'),
-  { auth: { persistSession: false } }
-);
+// Lazy supabase client — created on first DB call, not at module load
+// This prevents FUNCTION_INVOCATION_FAILED when env vars aren't set yet
+let _supabase: ReturnType<typeof createClient> | null = null;
+function getSupabase() {
+  if (!_supabase) {
+    const url = env('SUPABASE_URL');
+    const key = env('SUPABASE_SERVICE_ROLE_KEY');
+    if (!url || !key) throw new Error('Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY');
+    _supabase = createClient(url, key, { auth: { persistSession: false } });
+  }
+  return _supabase;
+}
 
 // ---------------------------------------------------------------------------
 // Fonnte payload — supports v1 and v2 field names
@@ -56,7 +60,7 @@ async function findUserByPhone(senderRaw: string): Promise<string | null> {
   const sender = normalisePhone(senderRaw);
 
   // Step 1: check user_preferences table
-  const { data, error } = await supabase
+  const { data, error } = await getSupabase()
     .from('user_preferences')
     .select('user_id, whatsapp_number')
     .not('whatsapp_number', 'is', null);
@@ -77,7 +81,7 @@ async function findUserByPhone(senderRaw: string): Promise<string | null> {
   const ownerPhone = process.env['OWNER_PHONE_NUMBER'];
   if (ownerPhone && normalisePhone(ownerPhone) === sender) {
     // Fetch the first (and likely only) user in the system
-    const { data: users } = await supabase
+    const { data: users } = await getSupabase()
       .from('user_preferences')
       .select('user_id')
       .limit(1)
@@ -143,7 +147,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     // Insert into whatsapp_messages
-    const { data: inserted, error } = await supabase
+    const { data: inserted, error } = await getSupabase()
       .from('whatsapp_messages')
       .insert({
         user_id:           userId,          // null if phone not registered
