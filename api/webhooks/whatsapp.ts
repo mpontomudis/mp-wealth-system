@@ -458,9 +458,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const waMessageId = inserted?.id ?? null;
     console.log(`✅ WA message stored — ID: ${waMessageId}`);
 
-    // Process command only from the device owner
+    // Process command from any sender (single-user personal app)
+    // If OWNER_PHONE_NUMBER is set, verify sender; otherwise allow all
     const ownerPhone = normalisePhone(env('OWNER_PHONE_NUMBER'));
-    const isOwner    = ownerPhone && normalisePhone(effectiveSender) === ownerPhone;
+    const isOwner    = !ownerPhone || normalisePhone(effectiveSender) === ownerPhone;
 
     if (userId && isOwner && messageType === 'text') {
       const parsed = parseCommand(effectiveMessage);
