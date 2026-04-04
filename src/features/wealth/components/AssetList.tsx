@@ -110,7 +110,49 @@ export function AssetList() {
       {!assets || assets.length === 0 ? (
         <EmptyState title="No assets yet" description="Add your first asset to get started" />
       ) : (
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <>
+          {/* ─── Total Summary ─── */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-4">
+            {(() => {
+              const IDR_RATE = 15750;
+              const totalIdr = assets.reduce((sum, a) => {
+                const bal = Number(a.balance ?? 0);
+                return sum + (a.currency === 'USD' ? bal * IDR_RATE : bal);
+              }, 0);
+              const totalUsd = totalIdr / IDR_RATE;
+              const byType = assets.reduce<Record<string, number>>((acc, a) => {
+                const bal = Number(a.balance ?? 0);
+                const idr = a.currency === 'USD' ? bal * IDR_RATE : bal;
+                acc[a.type] = (acc[a.type] ?? 0) + idr;
+                return acc;
+              }, {});
+              const topType = Object.entries(byType).sort((a, b) => b[1] - a[1])[0];
+              return (
+                <>
+                  <div className="rounded-xl bg-mp-primary/10 border border-mp-primary/20 px-4 py-3 flex sm:flex-col items-center sm:text-center justify-between sm:justify-center gap-2 sm:gap-0">
+                    <p className="text-xs text-mp-text-muted">Total Balance</p>
+                    <div className="text-right sm:text-center">
+                      <p className="text-sm font-bold text-mp-primary">{formatIDR(totalIdr)}</p>
+                      <p className="text-xs text-mp-text-muted">≈ {formatUSD(totalUsd)}</p>
+                    </div>
+                  </div>
+                  <div className="rounded-xl bg-white/[0.04] border border-white/10 px-4 py-3 flex sm:flex-col items-center sm:text-center justify-between sm:justify-center gap-2 sm:gap-0">
+                    <p className="text-xs text-mp-text-muted">Total Assets</p>
+                    <p className="text-sm font-bold text-white">{assets.length} akun</p>
+                  </div>
+                  <div className="rounded-xl bg-white/[0.04] border border-white/10 px-4 py-3 flex sm:flex-col items-center sm:text-center justify-between sm:justify-center gap-2 sm:gap-0">
+                    <p className="text-xs text-mp-text-muted">Terbesar</p>
+                    <div className="text-right sm:text-center">
+                      <p className="text-xs text-white font-semibold capitalize">{topType?.[0] ?? '—'}</p>
+                      <p className="text-xs text-mp-text-muted">{topType ? formatIDR(topType[1]) : '—'}</p>
+                    </div>
+                  </div>
+                </>
+              );
+            })()}
+          </div>
+
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
           {assets.map((asset) => (
             <Card key={asset.id} className="cursor-pointer hover:shadow-lg transition-shadow">
               <div className="flex items-start justify-between">
@@ -167,6 +209,7 @@ export function AssetList() {
             </Card>
           ))}
         </div>
+        </>
       )}
 
       <Modal
