@@ -13,7 +13,8 @@ function env(key: string): string {
 let _supabase: ReturnType<typeof createClient> | null = null;
 function getSupabase() {
   if (!_supabase) {
-    const url = env('SUPABASE_URL');
+    // Support both bare names (server) and VITE_ prefixed names (shared)
+    const url = env('SUPABASE_URL') || env('VITE_SUPABASE_URL');
     const key = env('SUPABASE_SERVICE_ROLE_KEY');
     if (!url || !key) throw new Error('Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY');
     _supabase = createClient(url, key, { auth: { persistSession: false } });
@@ -108,7 +109,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         message: 'WhatsApp webhook is live. Send POST to receive messages.',
         timestamp: new Date().toISOString(),
         env_check: {
-          SUPABASE_URL:              !!process.env['SUPABASE_URL'],
+          SUPABASE_URL:              !!(process.env['SUPABASE_URL'] || process.env['VITE_SUPABASE_URL']),
           SUPABASE_SERVICE_ROLE_KEY: !!process.env['SUPABASE_SERVICE_ROLE_KEY'],
           OWNER_PHONE_NUMBER:        !!process.env['OWNER_PHONE_NUMBER'],
         },
