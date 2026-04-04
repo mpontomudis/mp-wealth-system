@@ -17,6 +17,7 @@ import {
   ChevronRight,
   Lightbulb,
   HelpCircle,
+  MessageSquare,
 } from 'lucide-react';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -105,6 +106,15 @@ function Badge({ color, children }: { color: string; children: React.ReactNode }
     <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold ${color}`}>
       {children}
     </span>
+  );
+}
+
+function WACmd({ cmd, desc }: { cmd: string; desc: string }) {
+  return (
+    <div className="flex gap-3 items-start text-sm">
+      <code className="bg-white/[0.06] border border-white/10 rounded-md px-2 py-0.5 text-green-300 font-mono text-xs whitespace-nowrap shrink-0">{cmd}</code>
+      <span className="text-mp-text-secondary">{desc}</span>
+    </div>
   );
 }
 
@@ -459,9 +469,76 @@ const sections: Section[] = [
     ),
   },
   {
+    id: 'whatsapp',
+    icon: MessageSquare,
+    title: '10. WhatsApp Chatbot — Catat via WA',
+    color: 'bg-green-500/20 text-green-400',
+    content: (
+      <div className="space-y-5 pt-2">
+        <p>Catat transaksi langsung dari WhatsApp tanpa buka aplikasi. Kirim pesan ke <span className="font-mono text-green-400 text-xs bg-green-500/10 px-1.5 py-0.5 rounded">6282227653512</span> dengan format berikut:</p>
+
+        <Warning>
+          <strong>Penting:</strong> Tulis nama aset dengan kata kunci <code className="bg-black/20 px-1 rounded">dari</code> / <code className="bg-black/20 px-1 rounded">pakai</code> (expense) atau <code className="bg-black/20 px-1 rounded">ke</code> (income) agar saldo aset otomatis terupdate. Nama aset harus sesuai yang ada di menu <strong>Assets</strong>.
+        </Warning>
+
+        {/* Expense */}
+        <div className="rounded-xl border border-red-500/20 bg-red-500/[0.04] p-4 space-y-2.5">
+          <div className="flex items-center gap-2 mb-1">
+            <Badge color="bg-red-500/20 text-red-400">EXPENSE</Badge>
+            <span className="text-sm text-mp-text-secondary">Format: [deskripsi] [nominal] dari [aset]</span>
+          </div>
+          <WACmd cmd="beli kopi 15rb dari gopay"     desc="Expense Rp 15.000, dari aset GoPay" />
+          <WACmd cmd="makan siang 35rb dari bri"     desc="Expense Rp 35.000, dari aset BRI" />
+          <WACmd cmd="bayar listrik 500rb pakai bca" desc="Expense Rp 500.000, dari aset BCA" />
+          <WACmd cmd="jajan snack 20rb"              desc="Expense Rp 20.000 (tanpa update saldo)" />
+        </div>
+
+        {/* Income */}
+        <div className="rounded-xl border border-green-500/20 bg-green-500/[0.04] p-4 space-y-2.5">
+          <div className="flex items-center gap-2 mb-1">
+            <Badge color="bg-green-500/20 text-green-400">INCOME</Badge>
+            <span className="text-sm text-mp-text-secondary">Format: [deskripsi] [nominal] ke [aset]</span>
+          </div>
+          <WACmd cmd="gaji masuk 5jt ke bri"   desc="Income Rp 5.000.000, masuk ke aset BRI" />
+          <WACmd cmd="dapat 1jt ke gopay"       desc="Income Rp 1.000.000, masuk ke GoPay" />
+          <WACmd cmd="bonus 500rb ke cash"      desc="Income Rp 500.000, masuk ke Cash" />
+        </div>
+
+        {/* Transfer */}
+        <div className="rounded-xl border border-blue-500/20 bg-blue-500/[0.04] p-4 space-y-2.5">
+          <div className="flex items-center gap-2 mb-1">
+            <Badge color="bg-blue-500/20 text-blue-400">TRANSFER</Badge>
+            <span className="text-sm text-mp-text-secondary">Format: transfer [nominal] dari [aset] ke [aset]</span>
+          </div>
+          <WACmd cmd="transfer 1jt dari bri ke bca"    desc="Transfer Rp 1.000.000 dari BRI ke BCA" />
+          <WACmd cmd="kirim 200rb dari bri ke gopay"   desc="Transfer Rp 200.000 dari BRI ke GoPay" />
+        </div>
+
+        {/* Info commands */}
+        <div className="rounded-xl border border-white/10 bg-white/[0.02] p-4 space-y-2.5">
+          <p className="text-sm font-semibold text-mp-text-primary mb-1">📊 Perintah Info:</p>
+          <WACmd cmd="saldo"   desc="Tampilkan saldo semua aset" />
+          <WACmd cmd="laporan" desc="Rekap transaksi hari ini (income, expense, net)" />
+          <WACmd cmd="bantu"   desc="Tampilkan panduan lengkap perintah WA" />
+        </div>
+
+        <div className="space-y-1.5">
+          <p className="text-sm font-semibold text-mp-text-primary">Format nominal yang didukung:</p>
+          <div className="flex flex-wrap gap-1.5">
+            {['15000', '15rb', '15k', '15ribu', '1.5jt', '15jt', '15juta', '15.000'].map(f => (
+              <code key={f} className="bg-white/[0.06] border border-white/10 rounded px-2 py-0.5 text-xs text-green-300 font-mono">{f}</code>
+            ))}
+          </div>
+        </div>
+
+        <Tip>Jika nama aset tidak ditemukan, bot akan menampilkan daftar aset yang tersedia. Pastikan nama aset di command cocok dengan yang didaftarkan di menu Assets.</Tip>
+      </div>
+    ),
+  },
+  {
     id: 'faq',
     icon: HelpCircle,
-    title: '10. FAQ & Troubleshooting',
+    title: '11. FAQ & Troubleshooting',
     color: 'bg-red-500/20 text-red-400',
     content: (
       <div className="space-y-3 pt-2">
@@ -557,7 +634,7 @@ export default function GuidePage() {
 
       {/* Footer */}
       <div className="text-center py-4 text-xs text-mp-text-muted">
-        MP Wealth System — Panduan v1.0 · Diperbarui April 2026
+        MP Wealth System — Panduan v2.0 · Diperbarui April 2026
       </div>
     </div>
   );

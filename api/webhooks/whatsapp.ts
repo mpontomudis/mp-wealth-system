@@ -50,6 +50,8 @@ interface ParsedCommand {
   amount?: number;
   description?: string;
   categoryHint?: string;
+  fromAssetHint?: string;  // "dari gopay" / "pakai bri"
+  toAssetHint?: string;    // "ke bri" / "ke tabungan"
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -84,6 +86,34 @@ function formatRupiah(amount: number): string {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// ASSET LOOKUP  — match user's typed asset name against DB records
+// ─────────────────────────────────────────────────────────────────────────────
+async function findAssetId(userId: string, hint: string): Promise<string | null> {
+  if (!hint?.trim()) return null;
+  const { data } = await getSupabase()
+    .from('assets')
+    .select('id, name')
+    .eq('user_id', userId)
+    .is('deleted_at', null);
+
+  const lower = hint.toLowerCase().trim();
+  const match = (data ?? []).find(a => {
+    const name = (a.name ?? '').toLowerCase();
+    return name.includes(lower) || lower.includes(name);
+  });
+  return match?.id ?? null;
+}
+
+async function getAssetNames(userId: string): Promise<string[]> {
+  const { data } = await getSupabase()
+    .from('assets')
+    .select('name')
+    .eq('user_id', userId)
+    .is('deleted_at', null);
+  return (data ?? []).map(a => a.name as string);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // COMMAND PARSER  (Indonesian natural language → intent)
 // ─────────────────────────────────────────────────────────────────────────────
 function parseCommand(text: string): ParsedCommand {
@@ -94,20 +124,28 @@ function parseCommand(text: string): ParsedCommand {
   if (/^(laporan|report|rekap\w*|summary|ringkasan)/.test(t))  return { intent: 'report' };
   if (/^(help|bantuan|bantu|panduan|cara|perintah|menu)$/.test(t)) return { intent: 'help' };
 
+  // Extract asset hints from prepositions BEFORE stripping amount
+  // "dari [X]" or "pakai [X]" or "via [X]" → fromAssetHint
+  const fromAssetHint = t.match(/\b(?:dari|pakai|pake|via|lewat)\s+([\w\s]+?)(?:\s+ke\s|\s+untuk\s|\s*$)/i)?.[1]?.trim();
+  // "ke [X]" at or near end → toAssetHint
+  const toAssetHint = t.match(/\bke\s+([\w]+(?:\s[\w]+)?)\s*$/i)?.[1]?.trim();
+
   // Find amount anywhere in the text
   const amtMatch = t.match(/(\d[\d.,]*\s*(?:rb|ribu|k|jt|juta|m(?:iliar)?|b(?:iliar)?)?)/);
   const amount = amtMatch ? parseAmount(amtMatch[1]) : null;
   if (!amount) return { intent: 'unknown' };
 
-  // Strip amount from text to isolate description
-  const withoutAmt = t.replace(amtMatch![0], '').replace(/\s+/g, ' ').trim();
+  // Strip amount + asset prepositions to isolate description
+  let withoutAmt = t.replace(amtMatch![0], '').replace(/\s+/g, ' ').trim();
+  if (fromAssetHint) withoutAmt = withoutAmt.replace(new RegExp(`(?:dari|pakai|pake|via|lewat)\\s+${fromAssetHint}`, 'i'), '').trim();
+  if (toAssetHint)   withoutAmt = withoutAmt.replace(new RegExp(`ke\\s+${toAssetHint}\\s*$`, 'i'), '').trim();
 
   // Income
   const incomeKw = ['gaji', 'terima', 'dapat', 'pemasukan', 'masuk', 'diterima', 'bonus', 'thr', 'profit', 'dividen', 'income'];
   for (const kw of incomeKw) {
     if (t.includes(kw)) {
       const desc = withoutAmt.replace(new RegExp(kw, 'g'), '').replace(/\s+/g, ' ').trim();
-      return { intent: 'income', amount, description: desc || kw, categoryHint: kw };
+      return { intent: 'income', amount, description: desc || kw, categoryHint: kw, fromAssetHint, toAssetHint };
     }
   }
 
@@ -116,7 +154,8 @@ function parseCommand(text: string): ParsedCommand {
   for (const kw of transferKw) {
     if (t.includes(kw)) {
       const dest = withoutAmt.replace(new RegExp(kw, 'g'), '').replace(/^ke\s+/, '').trim();
-      return { intent: 'transfer', amount, description: dest ? `Transfer ke ${dest}` : 'Transfer', categoryHint: dest };
+      const desc = dest ? `Transfer${fromAssetHint ? ` dari ${fromAssetHint}` : ''}${toAssetHint ? ` ke ${toAssetHint}` : ''}` : 'Transfer';
+      return { intent: 'transfer', amount, description: desc, categoryHint: dest, fromAssetHint, toAssetHint };
     }
   }
 
@@ -124,7 +163,7 @@ function parseCommand(text: string): ParsedCommand {
   const removeWords = /\b(beli|bayar|bayarin|makan|minum|jajan|keluar|habis|spend|untuk|buat|di|ke)\b/g;
   const categoryHint = withoutAmt;
   const description  = withoutAmt.replace(removeWords, '').replace(/\s+/g, ' ').trim() || withoutAmt;
-  return { intent: 'expense', amount, description: description || 'Pengeluaran', categoryHint };
+  return { intent: 'expense', amount, description: description || 'Pengeluaran', categoryHint, fromAssetHint, toAssetHint };
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -259,24 +298,28 @@ async function getDailyReport(userId: string): Promise<string> {
 const HELP_MSG = `📱 *Panduan Perintah WA:*
 
 💸 *Pengeluaran:*
-• beli kopi 15rb
-• makan siang 35000
-• bayar listrik 500rb
+• beli kopi 15rb dari gopay
+• makan siang 35rb dari bri
+• bayar listrik 500rb pakai bca
 • jajan snack 20rb
 
 💰 *Pemasukan:*
-• gaji masuk 5jt
-• dapat 1jt dari client
-• bonus 500rb
+• gaji masuk 5jt ke bri
+• dapat 1jt ke gopay
+• bonus 500rb ke cash
 
 🔄 *Transfer:*
-• transfer 1jt ke BCA
-• kirim 500rb ke tabungan
+• transfer 1jt dari bri ke bca
+• kirim 200rb dari bri ke gopay
 
 📊 *Info:*
 • saldo → cek semua aset
 • laporan → rekap hari ini
-• bantu → panduan ini`;
+• bantu → panduan ini
+
+💡 *Tips:*
+Tulis "dari/pakai" + nama aset untuk update saldo otomatis.
+Nama aset sesuai yang didaftarkan di menu Assets.`;
 
 // ---------------------------------------------------------------------------
 // Normalise phone numbers for comparison
@@ -327,11 +370,17 @@ async function processCommand(
   if (parsed.intent === 'help')    return HELP_MSG;
   if (parsed.intent === 'unknown') return `❓ Perintah tidak dikenali.\n\nKetik *bantu* untuk melihat daftar perintah.`;
 
-  if (!parsed.amount) return `⚠️ Nominal tidak ditemukan. Coba: "beli kopi 15rb"`;
+  if (!parsed.amount) return `⚠️ Nominal tidak ditemukan. Coba: "beli kopi 15rb dari gopay"`;
 
   const type = parsed.intent === 'transfer' ? 'transfer'
              : parsed.intent === 'income'   ? 'income'
              : 'expense';
+
+  // Resolve asset IDs from hints
+  const [fromAssetId, toAssetId] = await Promise.all([
+    parsed.fromAssetHint ? findAssetId(userId, parsed.fromAssetHint) : Promise.resolve(null),
+    parsed.toAssetHint   ? findAssetId(userId, parsed.toAssetHint)   : Promise.resolve(null),
+  ]);
 
   const categoryId = type !== 'transfer'
     ? await findCategoryId(userId, type as 'income' | 'expense', parsed.categoryHint ?? parsed.description ?? '')
@@ -348,6 +397,8 @@ async function processCommand(
       currency:             'IDR',
       description:          parsed.description ?? (type === 'income' ? 'Pemasukan' : type === 'transfer' ? 'Transfer' : 'Pengeluaran'),
       category_id:          categoryId,
+      from_asset_id:        fromAssetId,
+      to_asset_id:          toAssetId,
       source:               'whatsapp',
       whatsapp_message_id:  waMessageId,
       transaction_date:     today,
@@ -363,11 +414,31 @@ async function processCommand(
   const typeEmoji = type === 'income' ? '🟢' : type === 'expense' ? '🔴' : '🔵';
   const typeLabel = type === 'income' ? 'Pemasukan' : type === 'expense' ? 'Pengeluaran' : 'Transfer';
 
+  // Show which asset was used (or warning if missing)
+  const assetLines: string[] = [];
+  if (type === 'expense' || type === 'transfer') {
+    if (fromAssetId) assetLines.push(`💳 Dari: ${parsed.fromAssetHint}`);
+    else {
+      const names = await getAssetNames(userId);
+      const hint = names.length ? `\nAset tersedia: ${names.join(', ')}` : '';
+      assetLines.push(`⚠️ Aset tidak ditemukan — saldo tidak berubah.${hint}`);
+    }
+  }
+  if (type === 'income' || type === 'transfer') {
+    if (toAssetId) assetLines.push(`🏦 Ke: ${parsed.toAssetHint}`);
+    else if (type === 'income') {
+      const names = await getAssetNames(userId);
+      const hint = names.length ? `\nAset tersedia: ${names.join(', ')}` : '';
+      assetLines.push(`⚠️ Aset tujuan tidak ditemukan — saldo tidak berubah.${hint}`);
+    }
+  }
+
   return [
     `${typeEmoji} *${typeLabel} Tersimpan!*`,
     ``,
     `📝 ${tx?.description}`,
     `💰 ${formatRupiah(parsed.amount)}`,
+    ...assetLines,
     `📅 ${today}`,
     ``,
     `Ketik *laporan* untuk melihat ringkasan hari ini.`,
