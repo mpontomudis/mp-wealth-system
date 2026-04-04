@@ -298,7 +298,7 @@ export function TradingDashboard({ userId }: TradingDashboardProps) {
   const activeAccounts = accounts?.filter((a) => a.is_active).length ?? 0;
 
   return (
-    <div className="flex flex-col gap-6 p-4">
+    <div className="flex flex-col gap-5">
 
       {/* ── 1. Portfolio Summary ── */}
       <Card title="Portfolio Overview">

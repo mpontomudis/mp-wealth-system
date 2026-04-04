@@ -81,7 +81,7 @@ export default function DashboardPage() {
   ];
 
   return (
-    <div className="p-6 flex flex-col gap-6">
+    <div className="p-5 flex flex-col gap-5">
       {/* Header */}
       <div className="flex items-start justify-between">
         <div>
@@ -153,8 +153,8 @@ export default function DashboardPage() {
         <div className="flex-1 h-px bg-white/[0.06]" />
       </div>
 
-      {/* Stat cards */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      {/* Stat cards — items-stretch so all rows are same height */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 items-stretch">
         <StatCard
           title="Portfolio Value"
           value={formatUSD(totalEquityUSD)}
@@ -183,8 +183,8 @@ export default function DashboardPage() {
         />
       </div>
 
-      {/* Charts row */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+      {/* Charts row — items-start so columns align at top, not stretched */}
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-2 items-start">
         <div className={portfolioLoading ? 'opacity-50 pointer-events-none' : ''}>
           <TradingDashboard userId={user?.id ?? ''} />
         </div>
