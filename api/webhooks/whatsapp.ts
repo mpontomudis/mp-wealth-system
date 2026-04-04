@@ -46,12 +46,13 @@ interface FonntePayload {
 // Parsed command from WhatsApp message
 // ---------------------------------------------------------------------------
 interface ParsedCommand {
-  intent: 'expense' | 'income' | 'transfer' | 'balance' | 'report' | 'help' | 'unknown';
+  intent: 'expense' | 'income' | 'transfer' | 'balance' | 'report' | 'trading' | 'help' | 'unknown';
   amount?: number;
   description?: string;
   categoryHint?: string;
   fromAssetHint?: string;  // "dari gopay" / "pakai bri"
   toAssetHint?: string;    // "ke bri" / "ke tabungan"
+  brokerHint?: string;     // "trading exness" / "cek exness"
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -137,6 +138,11 @@ function parseCommand(text: string): ParsedCommand {
   if (/^(saldo|cek\s*saldo|balance|cek\s*balance)$/.test(t)) return { intent: 'balance' };
   if (/^(laporan|report|rekap\w*|summary|ringkasan)/.test(t))  return { intent: 'report' };
   if (/^(help|bantuan|bantu|panduan|cara|perintah|menu)$/.test(t)) return { intent: 'help' };
+
+  // Trading intents — "trading", "cek trading", "posisi", "trading exness", etc.
+  if (/^(trading|cek\s*trading|posisi\s*trading|akun\s*trading)$/.test(t)) return { intent: 'trading' };
+  const tradingWithBroker = t.match(/^(?:trading|cek\s*trading|posisi)\s+([\w]+(?:\s[\w]+)?)$/);
+  if (tradingWithBroker) return { intent: 'trading', brokerHint: tradingWithBroker[1].trim() };
 
   // Extract asset hints from prepositions BEFORE stripping amount
   // "dari [X]" or "pakai [X]" or "via [X]" → fromAssetHint
@@ -318,6 +324,111 @@ async function getDailyReport(userId: string): Promise<string> {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// TRADING SUMMARY
+// ─────────────────────────────────────────────────────────────────────────────
+async function getTradingSummary(userId: string, brokerHint?: string): Promise<string> {
+  const { data: accounts, error } = await getSupabase()
+    .from('trading_accounts')
+    .select(`
+      id, account_name, account_number, base_currency, leverage, initial_deposit,
+      broker_profiles ( broker_name, broker_code )
+    `)
+    .eq('user_id', userId)
+    .eq('is_active', true)
+    .is('deleted_at', null);
+
+  if (error) {
+    console.error('❌ Trading accounts error:', error.message);
+    return '❌ Gagal mengambil data trading.';
+  }
+  if (!accounts?.length) return '📈 Belum ada akun trading yang terdaftar.\n\nTambahkan akun trading di app MP Wealth System.';
+
+  // Filter by broker hint if provided
+  const filtered = brokerHint
+    ? accounts.filter(a => {
+        const bp = a.broker_profiles as { broker_name: string; broker_code: string } | null;
+        const name = (bp?.broker_name ?? '').toLowerCase();
+        const code = (bp?.broker_code ?? '').toLowerCase();
+        const hint = brokerHint.toLowerCase();
+        return name.includes(hint) || code.includes(hint);
+      })
+    : accounts;
+
+  if (!filtered.length) {
+    const brokerList = [...new Set(accounts.map(a => {
+      const bp = a.broker_profiles as { broker_name: string } | null;
+      return bp?.broker_name ?? 'Unknown';
+    }))].join(', ');
+    return `❓ Broker "${brokerHint}" tidak ditemukan.\n\nBroker tersedia: ${brokerList}`;
+  }
+
+  // Get latest snapshot for each account
+  const accountIds = filtered.map(a => a.id);
+  const { data: snapshots } = await getSupabase()
+    .from('account_metrics_snapshots')
+    .select('account_id, balance, equity, floating_profit, open_positions, snapshot_time')
+    .in('account_id', accountIds)
+    .eq('is_valid', true)
+    .order('snapshot_time', { ascending: false });
+
+  // Keep only the latest snapshot per account_id
+  const latestSnap: Record<string, typeof snapshots extends (infer T)[] | null ? T : never> = {};
+  for (const snap of snapshots ?? []) {
+    if (!latestSnap[snap.account_id]) latestSnap[snap.account_id] = snap;
+  }
+
+  let totalEquityUSD = 0;
+  let totalFloating  = 0;
+  const lines: string[] = [];
+
+  for (const acc of filtered) {
+    const bp   = acc.broker_profiles as { broker_name: string; broker_code: string } | null;
+    const snap = latestSnap[acc.id];
+    const cur  = acc.base_currency ?? 'USD';
+    const fmt  = (n: number) => cur === 'USD'
+      ? `$${n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+      : formatRupiah(n);
+
+    lines.push(`🏦 *${bp?.broker_name ?? 'Unknown'} (${bp?.broker_code ?? '-'})*`);
+    lines.push(`   Akun : ${acc.account_number}${acc.account_name ? ` — ${acc.account_name}` : ''}`);
+    lines.push(`   Mode : ${cur} | Leverage 1:${acc.leverage}`);
+
+    if (snap) {
+      const pnlSign  = snap.floating_profit >= 0 ? '+' : '';
+      const pnlEmoji = snap.floating_profit >= 0 ? '🟢' : '🔴';
+      lines.push(`   Balance  : ${fmt(snap.balance)}`);
+      lines.push(`   Equity   : ${fmt(snap.equity)}`);
+      lines.push(`   Floating : ${pnlEmoji} ${pnlSign}${fmt(snap.floating_profit)}`);
+      lines.push(`   Posisi   : ${snap.open_positions} open`);
+      const snapDate = new Date(snap.snapshot_time).toLocaleString('id-ID', { timeZone: 'Asia/Jayapura', dateStyle: 'short', timeStyle: 'short' });
+      lines.push(`   _(Update: ${snapDate})_`);
+      if (cur === 'USD') {
+        totalEquityUSD += snap.equity;
+        totalFloating  += snap.floating_profit;
+      }
+    } else {
+      lines.push(`   Balance  : ${fmt(acc.initial_deposit)} _(belum ada snapshot)_`);
+      if (cur === 'USD') totalEquityUSD += acc.initial_deposit;
+    }
+    lines.push('');
+  }
+
+  const title = brokerHint
+    ? `📈 *Trading — ${brokerHint.toUpperCase()}:*\n`
+    : `📈 *Ringkasan Trading:*\n`;
+
+  const totals = filtered.length > 1
+    ? [
+        `━━━━━━━━━━━━`,
+        `💼 Total Equity : $${totalEquityUSD.toLocaleString('en-US', { minimumFractionDigits: 2 })}`,
+        `📊 Total Floating: ${totalFloating >= 0 ? '+' : ''}$${totalFloating.toLocaleString('en-US', { minimumFractionDigits: 2 })}`,
+      ]
+    : [];
+
+  return [title, ...lines, ...totals].join('\n').trim();
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // HELP MESSAGE
 // ─────────────────────────────────────────────────────────────────────────────
 const HELP_MSG = `📱 *Panduan Perintah WA:*
@@ -336,6 +447,11 @@ const HELP_MSG = `📱 *Panduan Perintah WA:*
 🔄 *Transfer:*
 • transfer 1jt dari bri ke bca
 • kirim 200rb dari bri ke gopay
+
+📈 *Trading:*
+• trading → semua akun trading
+• trading exness → khusus EXNESS
+• trading tickmill → khusus TICKMILL
 
 📊 *Info:*
 • saldo → cek semua aset
@@ -407,6 +523,7 @@ async function processCommand(
 ): Promise<string> {
   if (parsed.intent === 'balance') return getBalanceSummary(userId);
   if (parsed.intent === 'report')  return getDailyReport(userId);
+  if (parsed.intent === 'trading') return getTradingSummary(userId, parsed.brokerHint);
   if (parsed.intent === 'help')    return HELP_MSG;
   if (parsed.intent === 'unknown') return `❓ Perintah tidak dikenali.\n\nKetik *bantu* untuk melihat daftar perintah.`;
 

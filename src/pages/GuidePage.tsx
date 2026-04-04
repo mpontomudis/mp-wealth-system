@@ -522,6 +522,22 @@ const sections: Section[] = [
           <WACmd cmd="bantu"   desc="Tampilkan panduan lengkap perintah WA" />
         </div>
 
+        {/* Trading */}
+        <div className="rounded-xl border border-purple-500/20 bg-purple-500/[0.04] p-4 space-y-2.5">
+          <div className="flex items-center gap-2 mb-1">
+            <Badge color="bg-purple-500/20 text-purple-400">TRADING</Badge>
+            <span className="text-sm text-mp-text-secondary">Cek akun broker & posisi trading</span>
+          </div>
+          <WACmd cmd="trading"           desc="Ringkasan semua akun trading (equity, floating P&L)" />
+          <WACmd cmd="trading exness"    desc="Detail akun EXNESS saja" />
+          <WACmd cmd="trading tickmill"  desc="Detail akun TICKMILL saja" />
+          <WACmd cmd="trading icm"       desc="Detail akun ICM saja" />
+        </div>
+
+        <Warning>
+          <strong>Note:</strong> Data trading diambil dari snapshot MT5 terakhir. Jika MT5 EA belum aktif, akan tampil initial deposit saja. Snapshot realtime tersedia setelah EA di-deploy ke broker.
+        </Warning>
+
         <div className="space-y-1.5">
           <p className="text-sm font-semibold text-mp-text-primary">Format nominal yang didukung:</p>
           <div className="overflow-x-auto rounded-xl border border-white/10 my-1">

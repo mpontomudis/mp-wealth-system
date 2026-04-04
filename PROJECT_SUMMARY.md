@@ -1,6 +1,6 @@
-# MP Wealth System v2.0.0
+# MP Wealth System v3.0.0
 
-> **Personal Financial Command Center** — Multi-broker trading tracker, wealth manager, and AI-ready dashboard.
+> **Personal Financial Command Center** — Multi-broker trading tracker, wealth manager, and WhatsApp chatbot for hands-free transaction recording.
 >
 > Owner: **Marlon Pontomudis** | Timezone: **WIT (Asia/Jayapura, GMT+9)**
 
@@ -13,13 +13,14 @@
 3. [Project Structure](#project-structure)
 4. [Database Summary](#database-summary)
 5. [Current Features](#current-features)
-6. [Shared UI Components](#shared-ui-components)
-7. [Environment Variables](#environment-variables)
-8. [Development Setup](#development-setup)
-9. [Deployment](#deployment)
-10. [Known Issues](#known-issues)
-11. [Roadmap](#roadmap)
-12. [Development Status](#development-status)
+6. [WhatsApp Chatbot](#whatsapp-chatbot)
+7. [Shared UI Components](#shared-ui-components)
+8. [Environment Variables](#environment-variables)
+9. [Development Setup](#development-setup)
+10. [Deployment](#deployment)
+11. [Known Issues](#known-issues)
+12. [Roadmap](#roadmap)
+13. [Development Status](#development-status)
 
 ---
 
@@ -31,14 +32,13 @@ MP Wealth System is a fullstack personal finance and trading dashboard built for
 |--------|-------------|
 | **Trading Monitor** | Track multiple broker accounts, view equity/balance/P&L, manage trading accounts manually |
 | **Wealth Tracker** | Record income, expenses, and transfers; manage assets in IDR & USD |
-| **AI-Ready Architecture** | Database and service layer prepared for WhatsApp + OCR parsing (implementation pending) |
+| **WhatsApp Chatbot** | Send natural language commands via WhatsApp to record transactions, check balances, and get daily reports — no app required |
 
 ### Key Goals
 
 - Multi-broker trading tracking (EXNESS, TICKMILL, ICM, XM, MIFX)
 - Wealth management with dual-currency support (IDR / USD)
-- Manual-first data entry before MT5 automation is activated
-- AI parsing of WhatsApp messages for automated transaction creation (future)
+- WhatsApp-first data entry: record transactions by sending a message
 - Single-user, production-grade system hosted on Vercel + Supabase
 
 ---
@@ -56,7 +56,9 @@ MP Wealth System is a fullstack personal finance and trading dashboard built for
 | Styling | Tailwind CSS | v3 |
 | Charts | Recharts | v2 |
 | Icons | Lucide React | 0.303 |
-| Backend / Database | Supabase (PostgreSQL, Auth, Edge Functions) | latest |
+| Backend / Database | Supabase (PostgreSQL, Auth) | latest |
+| Serverless Functions | Vercel (`api/` directory) | — |
+| WhatsApp Gateway | Fonnte API | — |
 | Deployment | Vercel | — |
 
 ---
@@ -65,8 +67,13 @@ MP Wealth System is a fullstack personal finance and trading dashboard built for
 
 ```
 mp-wealth-system/
-├── vercel.json                   # SPA routing config (filesystem + fallback)
+├── vercel.json                   # SPA routing config + function maxDuration
 ├── vite.config.ts                # Vite config (base: '/', outDir: dist/)
+│
+├── api/                          # Vercel Serverless Functions
+│   └── webhooks/
+│       └── whatsapp.ts           # WhatsApp webhook (Fonnte → parse → DB → reply)
+│
 ├── database/
 │   └── schema.sql                # Full PostgreSQL schema (15 tables)
 │
@@ -76,8 +83,8 @@ mp-wealth-system/
 │
 ├── supabase/
 │   ├── config.toml
-│   └── functions/                # Deno edge functions
-│       ├── _shared/              # cors, supabase-client, ai-parser utilities
+│   └── functions/                # Deno edge functions (legacy/future)
+│       ├── _shared/
 │       ├── whatsapp-webhook/
 │       ├── ingest-metrics/
 │       ├── process-ai-message/
@@ -133,13 +140,14 @@ mp-wealth-system/
     │
     └── pages/
         ├── LoginPage.tsx
-        ├── DashboardPage.tsx
+        ├── DashboardPage.tsx     # Total Net Worth banner + layout
         ├── TradingPage.tsx
         ├── WealthPage.tsx
         ├── TransactionsPage.tsx
         ├── AssetsPage.tsx
-        ├── ReportsPage.tsx
-        └── SettingsPage.tsx
+        ├── ReportsPage.tsx       # English UI (Daily/Weekly/Monthly)
+        ├── SettingsPage.tsx
+        └── GuidePage.tsx         # v2.0 — includes WhatsApp chatbot guide
 ```
 
 ---
@@ -165,16 +173,16 @@ mp-wealth-system/
 | Table | Purpose |
 |-------|---------|
 | `categories` | Income/expense categories with parent hierarchy |
-| `transactions` | All financial transactions (IDR/USD, manual + AI-sourced) |
-| `assets` | Tracked assets by type (cash, bank, trading, investment, crypto) |
+| `transactions` | All financial transactions (IDR/USD, source: manual/whatsapp/ai) |
+| `assets` | Tracked assets by type (cash, bank, e_wallet, trading, investment, crypto) |
 | `budgets` | Monthly budget targets per category |
 
 #### AI / Integration
 
 | Table | Purpose |
 |-------|---------|
-| `whatsapp_messages` | Incoming WhatsApp messages from Fonnte |
-| `ai_logs` | Claude AI parsing results (confidence score, parsed JSONB) |
+| `whatsapp_messages` | Incoming WhatsApp messages from Fonnte (processing_status: pending/processed/failed) |
+| `ai_logs` | AI parsing results |
 | `ocr_results` | Receipt/image OCR extraction results |
 
 #### Shared
@@ -183,14 +191,15 @@ mp-wealth-system/
 |-------|---------|
 | `exchange_rates` | Daily USD/IDR rates |
 | `system_logs` | App-wide error and info logs |
-| `user_preferences` | Per-user settings (currency, theme) |
+| `user_preferences` | Per-user settings (currency, theme, whatsapp_number) |
 
 ### Key Relationships
 
 - `trading_accounts.broker_id` → `broker_profiles.id`
 - `account_metrics_snapshots.account_id` → `trading_accounts.id`
 - `transactions.category_id` → `categories.id`
-- `transactions.ai_log_id` → `ai_logs.id`
+- `transactions.from_asset_id` / `to_asset_id` → `assets.id`
+- `transactions.whatsapp_message_id` → `whatsapp_messages.id`
 - `ai_logs.whatsapp_message_id` → `whatsapp_messages.id`
 
 ### PostgreSQL RPC Functions
@@ -207,41 +216,94 @@ mp-wealth-system/
 ### Auth
 
 - Email + password login via Supabase Auth
-- Magic link (OTP email) support
 - Session persistence with auto token refresh
 - Protected routes via `RequireAuth` guard
-- Redirect if already authenticated via `RedirectIfAuth`
+
+### Dashboard
+
+- **Total Net Worth banner** — `totalAssetsIDR + tradingEquityIDR` with visual split bar (Wealth % vs Trading %)
+- Portfolio overview cards (equity, balance, P&L, monthly net)
+- Recharts charts for trading and wealth overview
 
 ### Trading
 
-- Broker profiles available (EXNESS, TICKMILL, ICM, XM, MIFX)
-- Trading accounts table ready — add/view accounts
-- Add Trading Account modal with form validation
+- Broker profiles (EXNESS, TICKMILL, ICM, XM, MIFX)
+- Add/view trading accounts
 - Portfolio total overview (equity, balance, P&L)
-- Equity history chart (Recharts line chart)
-- Broker card per account with metrics display
+- Equity history chart
 
 ### Wealth
 
 - Transactions: create, list, filter by type/date/category
-- Assets: view and add assets by type (cash, bank, trading, investment, crypto)
+- Assets: view and add assets (cash, bank, e_wallet, trading, investment, crypto)
+- `from_asset_id` / `to_asset_id` on transactions → auto-update asset balances via DB trigger
 - Dual-currency support (IDR primary, USD secondary)
-- Balance overview with net worth breakdown
 - Monthly income/expense summary
 
-### Dashboard
+### Reports
 
-- Portfolio overview cards (equity, balance, P&L)
-- Equity / balance / floating profit stat cards
-- Recharts charts for trading and wealth overview
+- Monthly income vs expense bar chart
+- Daily/Weekly/Monthly breakdown (English UI)
+- Totals in IDR & USD
 
-### Utilities
+### Guide
 
-- `formatIDR()` — Indonesian Rupiah with `Rp` prefix
-- `formatUSD()` — US Dollar with `$` prefix
-- `formatDate()` — localized date formatting
-- `formatPercent()` — percentage with sign
-- `cn()` — conditional class name merging
+- Full in-app user guide (v2.0, accordion layout)
+- Section 10: WhatsApp Chatbot documentation with command reference, amount formats, asset matching table
+
+---
+
+## WhatsApp Chatbot
+
+### Architecture
+
+```
+WhatsApp (Marlon) → Fonnte → POST /api/webhooks/whatsapp (Vercel) → Supabase → Fonnte reply
+```
+
+### File: `api/webhooks/whatsapp.ts`
+
+Vercel Serverless Function (TypeScript). Key functions:
+
+| Function | Description |
+|----------|-------------|
+| `parseAmount(raw)` | Parse Indonesian amounts: `15rb`, `5jt`, `10.518.612`, `10518612` |
+| `parseCommand(text)` | NLP parser → intent + amount + description + fromAssetHint + toAssetHint |
+| `findAssetId(userId, hint)` | Fuzzy partial match on asset names |
+| `findCategoryId(userId, type, hint)` | Keyword → category name → DB lookup |
+| `processCommand(parsed, userId, waId)` | Route intent to transaction insert / balance / report |
+| `getBalanceSummary(userId)` | List all assets + total IDR |
+| `getDailyReport(userId)` | Today's transactions + income/expense/net summary |
+| `sendWAReply(to, message)` | Send reply via Fonnte API |
+| `getDeviceOwnerUserId()` | Lookup user_id from user_preferences (single-user fallback) |
+
+### Supported Commands
+
+| Send this | Result |
+|-----------|--------|
+| `beli kopi 15rb dari gopay` | Expense Rp 15.000, from_asset = GoPay |
+| `makan siang 35rb dari bri` | Expense Rp 35.000, from_asset = BRI |
+| `gaji masuk 5jt ke bri` | Income Rp 5.000.000, to_asset = BRI |
+| `transfer 1jt dari bri ke bca` | Transfer Rp 1.000.000, from=BRI to=BCA |
+| `saldo` | List all assets + Total IDR |
+| `laporan` | Today's transaction summary |
+| `bantu` | Full command guide |
+
+### Amount Formats
+
+`15000` · `15rb` · `15k` · `15ribu` · `5jt` · `5juta` · `1.5jt` · `10.518.612` · `10,518,612`
+
+### Asset Matching
+
+Partial case-insensitive match: `blubca` → "Bank BluBCA", `bri` → "BRI Utama".
+If two assets share a keyword (e.g. "Bank BCA" and "Bank BluBCA"), use a unique substring: `blu` for BluBCA.
+
+### Fonnte Setup
+
+- Device: `6282227653512` (Fonnte WhatsApp number)
+- Sender (owner): `6281356834753` (Marlon's personal number)
+- Webhook URL: `https://mp-wealth-system.vercel.app/api/webhooks/whatsapp`
+- **autoread must be ON** in Fonnte device settings
 
 ---
 
@@ -259,7 +321,7 @@ mp-wealth-system/
 | `Card` | Surface card with optional title and action slot |
 | `Tabs` | Controlled/uncontrolled tab navigation |
 | `Badge` | 5-variant status pill (success/danger/warning/info/neutral) |
-| `StatCard` | KPI card with trend indicator |
+| `StatCard` | KPI card with trend indicator, consistent height via invisible spacer |
 | `CurrencyDisplay` | Dual IDR/USD display component |
 | `LoadingSpinner` | Inline spinner + full-page loader |
 | `EmptyState` | Icon + message + optional action button |
@@ -269,23 +331,25 @@ mp-wealth-system/
 
 ## Environment Variables
 
-### Frontend (`.env`)
+### Frontend (`.env` / Vercel)
 
 ```env
-VITE_SUPABASE_URL=https://your-project.supabase.co
-VITE_SUPABASE_ANON_KEY=your-anon-key
+VITE_SUPABASE_URL=https://wizjektyboozhfxwwlnl.supabase.co
+VITE_SUPABASE_ANON_KEY=eyJ...
+VITE_SUPABASE_ROLE_KEY=eyJ...          # service_role key (used by webhook fallback)
+VITE_WHATSAPP_VERIFY_TOKEN=iRipAg5...  # Fonnte device token (also used for sending)
+VITE_WHATSAPP_PHONE_NUMBER_ID=6282227653512
 ```
 
-> All environment variables use `import.meta.env` — no `process.env` anywhere in the codebase.
-
-### Edge Function Secrets (`supabase secrets set`)
+### Webhook-specific (Vercel Production)
 
 ```env
-ANTHROPIC_API_KEY=sk-ant-...
-INGEST_API_KEY=your-random-secret
-WHATSAPP_VERIFY_TOKEN=your-token
-OWNER_PHONE_NUMBER=628xxxxxxxx
+SUPABASE_SERVICE_ROLE_KEY=eyJ...       # Primary service role key for webhook
+OWNER_PHONE_NUMBER=6281356834753       # Marlon's personal WA number (command sender)
+FONNTE_TOKEN=iRipAg5...                # Fonnte device token for sending replies
 ```
+
+> Webhook reads: `SUPABASE_SERVICE_ROLE_KEY` → `VITE_SUPABASE_SERVICE_ROLE_KEY` → `VITE_SUPABASE_ROLE_KEY` (fallback chain)
 
 ---
 
@@ -316,12 +380,16 @@ npm run build
 ### Platform: Vercel
 
 - Vite builds to `dist/`
-- Set `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` in Vercel environment variables
+- `api/` directory → Vercel Serverless Functions (TypeScript)
+- Set env vars in Vercel Dashboard → Settings → Environment Variables
 
-### `vercel.json` (SPA Routing Fix)
+### `vercel.json`
 
 ```json
 {
+  "functions": {
+    "api/**/*.ts": { "maxDuration": 10 }
+  },
   "routes": [
     { "handle": "filesystem" },
     { "src": "/(.*)", "dest": "/" }
@@ -329,51 +397,39 @@ npm run build
 }
 ```
 
-- `handle: filesystem` — serves real static files (JS/CSS/images) first
-- `src: /(.*)` → `dest: /` — fallback to `index.html` for all client-side routes
-- This fixes the `"Expected a JavaScript module but got text/html"` error that occurs when JS assets are incorrectly intercepted by the SPA fallback
-
-### Vite Config
-
-```ts
-base: '/'         // correct asset paths
-outDir: 'dist'    // Vercel expects dist/
-sourcemap: false  // production build
-```
-
 ---
 
 ## Known Issues
 
-- No real trading data yet — dashboard shows zeros until manual entries are added
-- MT5 EA integration not yet active — `ingest-metrics` edge function is built but EA is not deployed
-- AI assistant (WhatsApp parsing) is built but not yet configured with Fonnte webhook
-- Exchange rates require manual trigger or pg_cron scheduler setup
-- No bulk import for historical transactions yet
+- MT5 EA integration not yet active — `ingest-metrics` edge function built but EA not deployed to brokers
+- Exchange rates require manual trigger or pg_cron setup
+- No bulk import for historical transactions
+- WhatsApp chatbot processes text messages only (images/audio stored but not parsed)
 
 ---
 
 ## Roadmap
 
-### Phase 1 — Now (Manual Input)
+### Phase 1 — Complete ✅
 
 - Manual trading account entry and P&L tracking
-- Wealth transactions and assets population
-- Dashboard population with real data
-- Reports page with monthly breakdown
+- Wealth transactions and assets with auto balance sync
+- Dashboard with Total Net Worth banner
+- Reports page with monthly breakdown (English UI)
+- WhatsApp chatbot via Fonnte (live, end-to-end)
 
 ### Phase 2 — Next
 
 - Advanced reports and analytics
 - Export to CSV / PDF
-- UX improvements and mobile responsiveness
 - Budget vs actuals tracking
+- UX improvements and mobile responsiveness
 
 ### Phase 3 — Future Automation
 
 - MT5 EA deployment to live brokers
 - Auto-sync of trading metrics via `ingest-metrics`
-- WhatsApp + AI parsing via Fonnte + Claude
+- AI (Claude) parsing for smarter WhatsApp commands
 - OCR receipt scanning for expense entry
 
 ---
@@ -387,11 +443,21 @@ sourcemap: false  // production build
 | Supabase Config | ✅ Complete | Client, constants, broker catalog |
 | Service Layer | ✅ Complete | Trading, wealth, AI, currency services |
 | TanStack Query Hooks | ✅ Complete | All features covered |
-| Shared UI Components | ✅ Complete | 15 components |
-| Feature Components | ✅ Complete | Trading, Wealth, AI panels |
-| Pages & Routing | ✅ Complete | 8 pages + auth guards |
-| Edge Functions | ✅ Complete | 4 Deno functions built |
-| Frontend Deployment | ✅ Live on Vercel | vercel.json SPA routing fixed |
+| Shared UI Components | ✅ Complete | 15 components, consistent heights |
+| Feature Components | ✅ Complete | Trading, Wealth panels |
+| Pages & Routing | ✅ Complete | 9 pages + auth guards |
+| Dashboard | ✅ Complete | Total Net Worth banner, layout consistency |
+| Reports Page | ✅ Complete | English UI, Daily/Weekly/Monthly |
+| Guide Page | ✅ Complete | v2.0, incl. WhatsApp chatbot section |
+| WhatsApp Webhook | ✅ Live | Fonnte → Vercel → Supabase → Fonnte reply |
+| WhatsApp Chatbot | ✅ Live | NLP parser, asset lookup, balance, report |
+| Frontend Deployment | ✅ Live | https://mp-wealth-system.vercel.app |
 | MT5 EA Integration | ⏳ Pending | EA built, not yet deployed to brokers |
-| WhatsApp / AI Parsing | ⏳ Pending | Architecture ready, webhook not configured |
-| Real Data Population | ⏳ Pending | Manual entry in progress |
+| AI (Claude) Parsing | ⏳ Future | Architecture ready |
+| Real Trading Data | ⏳ Pending | Manual entry in progress |
+
+> **Personal Financial Command Center** — Multi-broker trading tracker, wealth manager, and AI-ready dashboard.
+>
+> Owner: **Marlon Pontomudis** | Timezone: **WIT (Asia/Jayapura, GMT+9)**
+
+---
