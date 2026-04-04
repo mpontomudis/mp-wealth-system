@@ -100,13 +100,18 @@ async function findUserByPhone(senderRaw: string): Promise<string | null> {
 // ---------------------------------------------------------------------------
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
-    // GET — health check / browser test
+    // GET — health check + env var diagnostics
     if (req.method === 'GET') {
       return res.status(200).json({
         status: 'ok',
         endpoint: '/api/webhooks/whatsapp',
         message: 'WhatsApp webhook is live. Send POST to receive messages.',
         timestamp: new Date().toISOString(),
+        env_check: {
+          SUPABASE_URL:              !!process.env['SUPABASE_URL'],
+          SUPABASE_SERVICE_ROLE_KEY: !!process.env['SUPABASE_SERVICE_ROLE_KEY'],
+          OWNER_PHONE_NUMBER:        !!process.env['OWNER_PHONE_NUMBER'],
+        },
       });
     }
 
