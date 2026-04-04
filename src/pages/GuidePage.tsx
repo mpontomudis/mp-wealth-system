@@ -524,11 +524,64 @@ const sections: Section[] = [
 
         <div className="space-y-1.5">
           <p className="text-sm font-semibold text-mp-text-primary">Format nominal yang didukung:</p>
-          <div className="flex flex-wrap gap-1.5">
-            {['15000', '15rb', '15k', '15ribu', '1.5jt', '15jt', '15juta', '15.000'].map(f => (
-              <code key={f} className="bg-white/[0.06] border border-white/10 rounded px-2 py-0.5 text-xs text-green-300 font-mono">{f}</code>
-            ))}
+          <div className="overflow-x-auto rounded-xl border border-white/10 my-1">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-white/10 bg-white/[0.03]">
+                  <th className="px-4 py-2 text-left text-xs font-semibold text-mp-text-muted uppercase">Yang kamu ketik</th>
+                  <th className="px-4 py-2 text-left text-xs font-semibold text-mp-text-muted uppercase">Dibaca sebagai</th>
+                </tr>
+              </thead>
+              <tbody>
+                {([
+                  ['10518612',     'Rp 10.518.612 ✅'],
+                  ['10.518.612',   'Rp 10.518.612 ✅'],
+                  ['10,518,612',   'Rp 10.518.612 ✅'],
+                  ['15000',        'Rp 15.000 ✅'],
+                  ['15rb / 15k',   'Rp 15.000 ✅'],
+                  ['15ribu',       'Rp 15.000 ✅'],
+                  ['5jt / 5juta',  'Rp 5.000.000 ✅'],
+                  ['1.5jt',        'Rp 1.500.000 ✅'],
+                  ['500rb',        'Rp 500.000 ✅'],
+                ] as [string,string][]).map(([k,v],i) => (
+                  <tr key={i} className="border-b border-white/[0.05] last:border-0">
+                    <td className="px-4 py-2 font-mono text-xs text-green-300">{k}</td>
+                    <td className="px-4 py-2 text-xs text-mp-text-secondary">{v}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
+        </div>
+
+        <div className="space-y-1.5">
+          <p className="text-sm font-semibold text-mp-text-primary">Cara penulisan nama aset:</p>
+          <p className="text-sm text-mp-text-secondary">Cukup ketik <strong>sebagian nama aset</strong> — sistem akan otomatis mencocokkan. Tidak perlu nama lengkap dan tidak case-sensitive.</p>
+          <div className="overflow-x-auto rounded-xl border border-white/10 my-1">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-white/10 bg-white/[0.03]">
+                  <th className="px-4 py-2 text-left text-xs font-semibold text-mp-text-muted uppercase">Nama aset di sistem</th>
+                  <th className="px-4 py-2 text-left text-xs font-semibold text-mp-text-muted uppercase">Yang bisa kamu ketik</th>
+                </tr>
+              </thead>
+              <tbody>
+                {([
+                  ['Bank BluBCA',   'blubca, blu, bca, bluebca'],
+                  ['BRI Utama',     'bri, utama, bri utama'],
+                  ['GoPay',        'gopay, go'],
+                  ['Cash Dompet',  'cash, dompet'],
+                  ['OVO',          'ovo'],
+                ] as [string,string][]).map(([k,v],i) => (
+                  <tr key={i} className="border-b border-white/[0.05] last:border-0">
+                    <td className="px-4 py-2 font-mono text-xs text-mp-primary">{k}</td>
+                    <td className="px-4 py-2 text-xs text-green-300">{v}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <Warning>Jika nama aset tidak cocok, bot akan tampilkan daftar aset yang tersedia. Saldo <strong>tidak akan berubah</strong> sampai aset berhasil dicocokkan.</Warning>
         </div>
 
         <Tip>Jika nama aset tidak ditemukan, bot akan menampilkan daftar aset yang tersedia. Pastikan nama aset di command cocok dengan yang didaftarkan di menu Assets.</Tip>

@@ -60,22 +60,36 @@ interface ParsedCommand {
 // ─────────────────────────────────────────────────────────────────────────────
 function parseAmount(raw: string): number | null {
   const s = raw.toLowerCase().replace(/rp\.?\s*/g, '').trim();
-  const m = s.match(/(\d+(?:[.,]\d+)?)\s*(rb|ribu|k|jt|juta|m(?:iliar)?|b(?:iliar)?)?/);
+  // Match digits (with separators) + optional unit
+  const m = s.match(/(\d[\d.,]*)\s*(rb|ribu|k|jt|juta|m(?:iliar)?|b(?:iliar)?)?/);
   if (!m) return null;
 
-  let num: number;
-  const digits = m[1].replace(',', '.');
+  let digits = m[1];
+  const dotCount   = (digits.match(/\./g) ?? []).length;
+  const commaCount = (digits.match(/,/g)  ?? []).length;
 
-  // "15.000" with 3 decimal digits → thousands separator in Indonesian
-  if (digits.includes('.') && digits.split('.')[1]?.length === 3) {
-    num = parseInt(digits.replace('.', ''));
-  } else {
-    num = parseFloat(digits);
+  if (dotCount > 1) {
+    // "10.518.612" — multiple dots are thousands separators → strip all
+    digits = digits.replace(/\./g, '');
+  } else if (dotCount === 1) {
+    const afterDot = digits.split('.')[1] ?? '';
+    // "15.000" (3 digits after dot) = thousands sep; "1.5" = decimal → keep
+    if (afterDot.length === 3) digits = digits.replace('.', '');
   }
 
+  if (commaCount > 1) {
+    digits = digits.replace(/,/g, '');
+  } else if (commaCount === 1) {
+    const afterComma = digits.split(',')[1] ?? '';
+    digits = afterComma.length === 3
+      ? digits.replace(',', '')       // "10,518,612" = thousands
+      : digits.replace(',', '.');     // "15,5" = decimal
+  }
+
+  let num = parseFloat(digits);
   const unit = m[2] ?? '';
-  if (['rb', 'ribu', 'k'].includes(unit))   num *= 1_000;
-  else if (['jt', 'juta'].includes(unit))   num *= 1_000_000;
+  if (['rb', 'ribu', 'k'].includes(unit))      num *= 1_000;
+  else if (['jt', 'juta'].includes(unit))      num *= 1_000_000;
   else if (/^m/.test(unit) || /^b/.test(unit)) num *= 1_000_000_000;
 
   return num > 0 ? num : null;
