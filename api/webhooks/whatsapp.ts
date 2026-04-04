@@ -235,12 +235,14 @@ async function sendWAReply(to: string, message: string): Promise<void> {
 // BALANCE SUMMARY
 // ─────────────────────────────────────────────────────────────────────────────
 async function getBalanceSummary(userId: string): Promise<string> {
-  const { data: assets } = await getSupabase()
+  console.log(`📊 getBalanceSummary for userId: ${userId}`);
+  const { data: assets, error } = await getSupabase()
     .from('assets')
     .select('name, current_value, currency')
     .eq('user_id', userId)
     .is('deleted_at', null);
 
+  console.log(`📊 assets found: ${assets?.length ?? 0}`, error?.message ?? '');
   if (!assets?.length) return '📊 Belum ada aset yang terdaftar.\n\nTambahkan aset di app MP Wealth System.';
 
   const lines = assets.map(a => {
@@ -331,7 +333,7 @@ function normalisePhone(phone: string): string {
 
 // ---------------------------------------------------------------------------
 // Get device owner's user_id.
-// All messages received by the Fonnte device belong to the device owner.
+// For single-user app: try phone match first, fall back to first user.
 // ---------------------------------------------------------------------------
 async function getDeviceOwnerUserId(): Promise<string | null> {
   const ownerPhone = normalisePhone(process.env['OWNER_PHONE_NUMBER'] ?? '');
@@ -343,16 +345,31 @@ async function getDeviceOwnerUserId(): Promise<string | null> {
   if (error) { console.error('user_preferences lookup error:', error.message); return null; }
 
   const rows = data ?? [];
+  console.log(`🔍 user_preferences rows: ${rows.length}`, rows.map(r => ({ uid: r.user_id?.slice(0,8), wa: r.whatsapp_number })));
 
-  if (ownerPhone) {
+  // Try to match by phone (any stored number vs owner phone)
+  if (ownerPhone && rows.length > 0) {
     const match = rows.find(row => {
       const stored = normalisePhone(row.whatsapp_number ?? '');
-      return stored === ownerPhone || stored === `62${ownerPhone.replace(/^0/, '')}`;
+      // Match in both directions (stored contains owner or owner contains stored)
+      return stored === ownerPhone
+          || stored === `62${ownerPhone.replace(/^0/, '')}`
+          || ownerPhone === `62${stored.replace(/^0/, '')}`;
     });
-    if (match?.user_id) { console.log(`✅ Device owner matched → ${match.user_id}`); return match.user_id; }
+    if (match?.user_id) { console.log(`✅ Device owner matched by phone → ${match.user_id}`); return match.user_id; }
   }
 
-  if (rows.length > 0) { console.log(`📌 Fallback to first user → ${rows[0].user_id}`); return rows[0].user_id; }
+  // Single-user app fallback: always use first user
+  if (rows.length > 0) {
+    console.log(`📌 Single-user fallback → ${rows[0].user_id}`);
+    return rows[0].user_id;
+  }
+
+  // Last resort: query auth.users via service role
+  const { data: anyUser } = await getSupabase().auth.admin.listUsers();
+  const firstUser = anyUser?.users?.[0];
+  if (firstUser) { console.log(`📌 auth fallback → ${firstUser.id}`); return firstUser.id; }
+
   return null;
 }
 
