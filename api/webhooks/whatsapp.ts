@@ -54,45 +54,42 @@ function normalisePhone(phone: string): string {
 }
 
 // ---------------------------------------------------------------------------
-// Lookup user_id by phone number.
+// Get device owner's user_id.
+// All messages received by the Fonnte device belong to the device owner.
 // Strategy:
-//   1. Query user_preferences.whatsapp_number (normalised match)
-//   2. Fallback: if OWNER_PHONE_NUMBER env matches sender → fetch first user
+//   1. Match OWNER_PHONE_NUMBER env → lookup user_preferences.whatsapp_number
+//   2. Fallback: first row in user_preferences (single-user app)
 // ---------------------------------------------------------------------------
-async function findUserByPhone(senderRaw: string): Promise<string | null> {
-  const sender = normalisePhone(senderRaw);
+async function getDeviceOwnerUserId(): Promise<string | null> {
+  const ownerPhone = normalisePhone(process.env['OWNER_PHONE_NUMBER'] ?? '');
 
-  // Step 1: check user_preferences table
   const { data, error } = await getSupabase()
     .from('user_preferences')
-    .select('user_id, whatsapp_number')
-    .not('whatsapp_number', 'is', null);
+    .select('user_id, whatsapp_number');
 
   if (error) {
     console.error('user_preferences lookup error:', error.message);
+    return null;
   }
 
-  const match = (data ?? []).find((row) => {
-    const stored = normalisePhone(row.whatsapp_number ?? '');
-    // Match exact, or handle 0xxx → 62xxx conversion
-    return stored === sender || stored === `62${sender.replace(/^0/, '')}`;
-  });
+  const rows = data ?? [];
 
-  if (match?.user_id) return match.user_id;
-
-  // Step 2: fallback via OWNER_PHONE_NUMBER env var
-  const ownerPhone = process.env['OWNER_PHONE_NUMBER'];
-  if (ownerPhone && normalisePhone(ownerPhone) === sender) {
-    // Fetch the first (and likely only) user in the system
-    const { data: users } = await getSupabase()
-      .from('user_preferences')
-      .select('user_id')
-      .limit(1)
-      .single();
-    if (users?.user_id) {
-      console.log(`📌 Matched via OWNER_PHONE_NUMBER env fallback → ${users.user_id}`);
-      return users.user_id;
+  // Try to match by owner phone number
+  if (ownerPhone) {
+    const match = rows.find((row) => {
+      const stored = normalisePhone(row.whatsapp_number ?? '');
+      return stored === ownerPhone || stored === `62${ownerPhone.replace(/^0/, '')}`;
+    });
+    if (match?.user_id) {
+      console.log(`✅ Device owner matched by phone → ${match.user_id}`);
+      return match.user_id;
     }
+  }
+
+  // Fallback: single-user app — use the only user
+  if (rows.length > 0) {
+    console.log(`📌 Fallback to first user → ${rows[0].user_id}`);
+    return rows[0].user_id;
   }
 
   return null;
@@ -158,8 +155,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const effectiveSender  = sender  || 'unknown';
     const effectiveMessage = message || JSON.stringify(body);
 
-    // Lookup user_id by phone number
-    const userId = await findUserByPhone(effectiveSender);
+    // user_id = device owner (Marlon), not the sender
+    // All messages to this Fonnte device belong to the device owner
+    const userId = await getDeviceOwnerUserId();
     if (!userId) {
       console.warn(`⚠️  No user found for phone: ${effectiveSender}`);
     } else {
