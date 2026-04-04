@@ -9,6 +9,7 @@ import {
   BarChart3,
   Settings,
   BookOpen,
+  Target,
 } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 import { cn } from '@/shared/utils/cn';
@@ -25,8 +26,9 @@ const navItems: NavItem[] = [
   { label: 'Wealth', to: '/wealth', icon: Wallet },
   { label: 'Transactions', to: '/transactions', icon: Receipt },
   { label: 'Assets', to: '/assets', icon: PieChart },
-  { label: 'Reports', to: '/reports', icon: BarChart3 },
-  { label: 'Settings', to: '/settings', icon: Settings },
+  { label: 'Reports',      to: '/reports',      icon: BarChart3      },
+  { label: 'Budget',       to: '/budget',       icon: Target         },
+  { label: 'Settings',     to: '/settings',     icon: Settings       },
   { label: 'Panduan', to: '/guide', icon: BookOpen },
 ];
 

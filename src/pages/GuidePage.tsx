@@ -18,6 +18,8 @@ import {
   Lightbulb,
   HelpCircle,
   MessageSquare,
+  Target,
+  Download,
 } from 'lucide-react';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -70,15 +72,15 @@ function FieldTable({ rows }: { rows: [string, string][] }) {
       <table className="w-full text-sm">
         <thead>
           <tr className="border-b border-white/10 bg-white/[0.03]">
-            <th className="px-4 py-2 text-left text-xs font-semibold text-mp-text-muted uppercase tracking-wide">Field</th>
-            <th className="px-4 py-2 text-left text-xs font-semibold text-mp-text-muted uppercase tracking-wide">Keterangan</th>
+            <th className="px-3 py-2 text-left text-xs font-semibold text-mp-text-muted uppercase tracking-wide">Field</th>
+            <th className="px-3 py-2 text-left text-xs font-semibold text-mp-text-muted uppercase tracking-wide">Keterangan</th>
           </tr>
         </thead>
         <tbody>
           {rows.map(([field, desc], i) => (
             <tr key={i} className="border-b border-white/[0.05] last:border-0">
-              <td className="px-4 py-2.5 font-mono text-xs text-mp-primary whitespace-nowrap">{field}</td>
-              <td className="px-4 py-2.5 text-mp-text-secondary">{desc}</td>
+              <td className="px-3 py-2.5 font-mono text-xs text-mp-primary whitespace-nowrap align-top">{field}</td>
+              <td className="px-3 py-2.5 text-xs text-mp-text-secondary break-words">{desc}</td>
             </tr>
           ))}
         </tbody>
@@ -111,9 +113,9 @@ function Badge({ color, children }: { color: string; children: React.ReactNode }
 
 function WACmd({ cmd, desc }: { cmd: string; desc: string }) {
   return (
-    <div className="flex gap-3 items-start text-sm">
-      <code className="bg-white/[0.06] border border-white/10 rounded-md px-2 py-0.5 text-green-300 font-mono text-xs whitespace-nowrap shrink-0">{cmd}</code>
-      <span className="text-mp-text-secondary">{desc}</span>
+    <div className="flex flex-col sm:flex-row sm:items-start gap-1 sm:gap-3 text-sm">
+      <code className="self-start bg-white/[0.06] border border-white/10 rounded-md px-2 py-1 text-green-300 font-mono text-xs sm:whitespace-nowrap sm:shrink-0">{cmd}</code>
+      <span className="text-mp-text-secondary text-xs sm:text-sm leading-relaxed">{desc}</span>
     </div>
   );
 }
@@ -405,29 +407,105 @@ const sections: Section[] = [
   {
     id: 'reports',
     icon: BarChart3,
-    title: '7. Reports — Laporan Bulanan',
+    title: '7. Reports — Laporan & Analitik',
     color: 'bg-amber-500/20 text-amber-400',
     content: (
-      <div className="space-y-3 pt-2">
-        <p>Lihat laporan income vs expenses per bulan dalam bentuk grafik batang dan tabel.</p>
+      <div className="space-y-4 pt-2">
+        <p>Laporan keuangan lengkap dengan 3 tab analitik dan fitur export data.</p>
+
+        {/* Tabs overview */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+          {[
+            ['📊 Overview', 'KPI cards (income, expense, savings rate) + bar chart bulanan + tabel transaksi'],
+            ['🍩 Categories', 'Donut chart pengeluaran per kategori + breakdown tabel'],
+            ['📈 6-Mo Trends', 'Grafik tren 6 bulan terakhir: income, expense, dan savings'],
+          ].map(([tab, desc]) => (
+            <div key={tab} className="rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2.5">
+              <p className="text-xs font-semibold text-mp-text-primary">{tab}</p>
+              <p className="text-xs text-mp-text-muted mt-1">{desc}</p>
+            </div>
+          ))}
+        </div>
+
+        {/* Export */}
+        <div className="rounded-xl border border-amber-500/20 bg-amber-500/[0.04] p-4 space-y-2">
+          <div className="flex items-center gap-2 mb-1">
+            <Download size={14} className="text-amber-400 shrink-0" />
+            <span className="text-sm font-semibold text-mp-text-primary">Export Data</span>
+          </div>
+          <FieldTable rows={[
+            ['CSV', 'Download semua transaksi bulan aktif sebagai file .csv (bisa dibuka di Excel)'],
+            ['PDF', 'Download laporan ringkasan + tabel transaksi sebagai file .pdf'],
+          ]} />
+        </div>
+
         <div className="flex flex-col gap-2">
           <Step num={1} title='Klik menu "Reports"' />
           <Step num={2} title="Pilih Bulan dan Tahun di kanan atas" />
-          <Step num={3} title="Grafik dan tabel ringkasan tampil otomatis" />
+          <Step num={3} title="Pilih tab: Overview / Categories / 6-Mo Trends" />
+          <Step num={4} title='Klik tombol "Export ▼" → pilih CSV atau PDF'>Tombol ada di kanan atas halaman</Step>
         </div>
+        <Tip>Savings Rate di tab Overview dihitung otomatis: (Income − Expenses) / Income × 100%</Tip>
+      </div>
+    ),
+  },
+  {
+    id: 'budget',
+    icon: Target,
+    title: '8. Budget — Anggaran vs Aktual',
+    color: 'bg-orange-500/20 text-orange-400',
+    content: (
+      <div className="space-y-4 pt-2">
+        <p>Set anggaran bulanan per kategori dan pantau realisasi pengeluaran secara visual.</p>
+
+        {/* How it works */}
+        <div className="flex flex-col gap-2">
+          <Step num={1} title='Klik menu "Budget" di sidebar' />
+          <Step num={2} title='Klik "+ New Budget"'>Modal form terbuka</Step>
+          <Step num={3} title="Pilih kategori, set nominal, pilih periode">Periode: Daily / Weekly / Monthly / Yearly</Step>
+          <Step num={4} title="Klik Create Budget">Budget langsung tampil sebagai kartu progress bar</Step>
+        </div>
+
+        {/* Budget vs Actuals cards */}
+        <div className="rounded-xl border border-orange-500/20 bg-orange-500/[0.04] p-4 space-y-2">
+          <p className="text-sm font-semibold text-mp-text-primary mb-1">📊 Kartu Budget vs Aktual</p>
+          <p className="text-sm text-mp-text-secondary">Setiap kartu menampilkan:</p>
+          <ul className="text-sm text-mp-text-secondary space-y-1 pl-3">
+            <li>• Progress bar berwarna (hijau → kuning → merah sesuai penggunaan)</li>
+            <li>• Nominal terpakai vs total budget (IDR)</li>
+            <li>• Persentase pemakaian</li>
+            <li>• Sisa anggaran</li>
+          </ul>
+        </div>
+
+        {/* Inline create category */}
+        <div className="rounded-xl border border-white/10 bg-white/[0.02] p-4 space-y-2">
+          <p className="text-sm font-semibold text-mp-text-primary mb-1">➕ Buat Kategori Baru (Inline)</p>
+          <p className="text-sm text-mp-text-secondary">Tidak perlu keluar dari form — kamu bisa buat kategori baru langsung di dalam modal budget:</p>
+          <div className="flex flex-col gap-1.5 mt-2">
+            <Step num={1} title='Di dropdown "Category", klik "➕ Create new category"' />
+            <Step num={2} title="Ketik nama kategori (contoh: Food, Netflix, Petrol)" />
+            <Step num={3} title="Pilih emoji dan warna" />
+            <Step num={4} title='Klik "Create"'>Kategori baru langsung terpilih di form</Step>
+          </div>
+        </div>
+
         <FieldTable rows={[
-          ['Income vs Expenses', 'Grafik batang dalam juta rupiah'],
-          ['Total Income', 'Dalam IDR & USD'],
-          ['Total Expenses', 'Dalam IDR & USD'],
-          ['Net Cashflow', 'Selisih income dan expense'],
+          ['Category', 'Kategori expense yang dibudget (opsional — bisa "All Expenses")'],
+          ['Amount (IDR)', 'Batas anggaran, contoh: 2.000.000'],
+          ['Period', 'Daily / Weekly / Monthly / Yearly'],
+          ['Start Date', 'Tanggal berlaku budget'],
         ]} />
+
+        <Tip>Budget dengan kategori "All Expenses" akan menghitung semua pengeluaran tanpa filter kategori.</Tip>
+        <Warning>Budget aktif hanya menghitung transaksi bertipe <strong>Expense</strong> di periode yang sesuai. Transfer tidak dihitung.</Warning>
       </div>
     ),
   },
   {
     id: 'settings',
     icon: Settings,
-    title: '8. Settings — Pengaturan',
+    title: '9. Settings — Pengaturan',
     color: 'bg-gray-500/20 text-gray-400',
     content: (
       <div className="space-y-3 pt-2">
@@ -443,7 +521,7 @@ const sections: Section[] = [
   {
     id: 'setup',
     icon: CheckCircle2,
-    title: '9. Urutan Setup yang Benar',
+    title: '10. Urutan Setup yang Benar',
     color: 'bg-green-500/20 text-green-400',
     content: (
       <div className="space-y-3 pt-2">
@@ -454,7 +532,8 @@ const sections: Section[] = [
             ['Tambah Assets', 'Daftarkan semua rekening bank, e-wallet, dan cash yang kamu punya'],
             ['Tambah Akun Trading', 'Jika punya akun broker — tambahkan di menu Trading'],
             ['Catat Transaksi', 'Mulai catat Income, Expense, dan Transfer harian'],
-            ['Cek Dashboard', 'Lihat ringkasan otomatis di Dashboard & Wealth'],
+            ['Set Budget', 'Buat anggaran bulanan per kategori di menu Budget (opsional)'],
+            ['Cek Dashboard & Reports', 'Lihat ringkasan otomatis di Dashboard, Wealth, dan Reports'],
           ].map(([title, desc], i) => (
             <div key={i} className="flex gap-3 items-start">
               <div className="w-6 h-6 rounded-full bg-green-500/20 border border-green-500/40 flex items-center justify-center text-xs font-bold text-green-400 shrink-0">{i + 1}</div>
@@ -471,7 +550,7 @@ const sections: Section[] = [
   {
     id: 'whatsapp',
     icon: MessageSquare,
-    title: '10. WhatsApp Chatbot — Catat via WA',
+    title: '11. WhatsApp Chatbot — Catat via WA',
     color: 'bg-green-500/20 text-green-400',
     content: (
       <div className="space-y-5 pt-2">
@@ -483,9 +562,9 @@ const sections: Section[] = [
 
         {/* Expense */}
         <div className="rounded-xl border border-red-500/20 bg-red-500/[0.04] p-4 space-y-2.5">
-          <div className="flex items-center gap-2 mb-1">
+          <div className="flex flex-wrap items-center gap-2 mb-1">
             <Badge color="bg-red-500/20 text-red-400">EXPENSE</Badge>
-            <span className="text-sm text-mp-text-secondary">Format: [deskripsi] [nominal] dari [aset]</span>
+            <span className="text-xs text-mp-text-secondary">Format: [deskripsi] [nominal] dari [aset]</span>
           </div>
           <WACmd cmd="beli kopi 15rb dari gopay"     desc="Expense Rp 15.000, dari aset GoPay" />
           <WACmd cmd="makan siang 35rb dari bri"     desc="Expense Rp 35.000, dari aset BRI" />
@@ -495,9 +574,9 @@ const sections: Section[] = [
 
         {/* Income */}
         <div className="rounded-xl border border-green-500/20 bg-green-500/[0.04] p-4 space-y-2.5">
-          <div className="flex items-center gap-2 mb-1">
+          <div className="flex flex-wrap items-center gap-2 mb-1">
             <Badge color="bg-green-500/20 text-green-400">INCOME</Badge>
-            <span className="text-sm text-mp-text-secondary">Format: [deskripsi] [nominal] ke [aset]</span>
+            <span className="text-xs text-mp-text-secondary">Format: [deskripsi] [nominal] ke [aset]</span>
           </div>
           <WACmd cmd="gaji masuk 5jt ke bri"   desc="Income Rp 5.000.000, masuk ke aset BRI" />
           <WACmd cmd="dapat 1jt ke gopay"       desc="Income Rp 1.000.000, masuk ke GoPay" />
@@ -506,9 +585,9 @@ const sections: Section[] = [
 
         {/* Transfer */}
         <div className="rounded-xl border border-blue-500/20 bg-blue-500/[0.04] p-4 space-y-2.5">
-          <div className="flex items-center gap-2 mb-1">
+          <div className="flex flex-wrap items-center gap-2 mb-1">
             <Badge color="bg-blue-500/20 text-blue-400">TRANSFER</Badge>
-            <span className="text-sm text-mp-text-secondary">Format: transfer [nominal] dari [aset] ke [aset]</span>
+            <span className="text-xs text-mp-text-secondary">Format: transfer [nominal] dari [aset] ke [aset]</span>
           </div>
           <WACmd cmd="transfer 1jt dari bri ke bca"    desc="Transfer Rp 1.000.000 dari BRI ke BCA" />
           <WACmd cmd="kirim 200rb dari bri ke gopay"   desc="Transfer Rp 200.000 dari BRI ke GoPay" />
@@ -524,9 +603,9 @@ const sections: Section[] = [
 
         {/* Trading */}
         <div className="rounded-xl border border-purple-500/20 bg-purple-500/[0.04] p-4 space-y-2.5">
-          <div className="flex items-center gap-2 mb-1">
+          <div className="flex flex-wrap items-center gap-2 mb-1">
             <Badge color="bg-purple-500/20 text-purple-400">TRADING</Badge>
-            <span className="text-sm text-mp-text-secondary">Cek akun broker & posisi trading</span>
+            <span className="text-xs text-mp-text-secondary">Cek akun broker & posisi trading</span>
           </div>
           <WACmd cmd="trading"           desc="Ringkasan semua akun trading (equity, floating P&L)" />
           <WACmd cmd="trading exness"    desc="Detail akun EXNESS saja" />
@@ -544,8 +623,8 @@ const sections: Section[] = [
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-white/10 bg-white/[0.03]">
-                  <th className="px-4 py-2 text-left text-xs font-semibold text-mp-text-muted uppercase">Yang kamu ketik</th>
-                  <th className="px-4 py-2 text-left text-xs font-semibold text-mp-text-muted uppercase">Dibaca sebagai</th>
+                  <th className="px-3 py-2 text-left text-xs font-semibold text-mp-text-muted uppercase">Yang kamu ketik</th>
+                  <th className="px-3 py-2 text-left text-xs font-semibold text-mp-text-muted uppercase">Dibaca sebagai</th>
                 </tr>
               </thead>
               <tbody>
@@ -561,8 +640,8 @@ const sections: Section[] = [
                   ['500rb',        'Rp 500.000 ✅'],
                 ] as [string,string][]).map(([k,v],i) => (
                   <tr key={i} className="border-b border-white/[0.05] last:border-0">
-                    <td className="px-4 py-2 font-mono text-xs text-green-300">{k}</td>
-                    <td className="px-4 py-2 text-xs text-mp-text-secondary">{v}</td>
+                    <td className="px-3 py-2 font-mono text-xs text-green-300 whitespace-nowrap">{k}</td>
+                    <td className="px-3 py-2 text-xs text-mp-text-secondary">{v}</td>
                   </tr>
                 ))}
               </tbody>
@@ -577,22 +656,26 @@ const sections: Section[] = [
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-white/10 bg-white/[0.03]">
-                  <th className="px-4 py-2 text-left text-xs font-semibold text-mp-text-muted uppercase">Nama aset di sistem</th>
-                  <th className="px-4 py-2 text-left text-xs font-semibold text-mp-text-muted uppercase">Yang bisa kamu ketik</th>
+                  <th className="px-3 py-2 text-left text-xs font-semibold text-mp-text-muted uppercase">Nama aset</th>
+                  <th className="px-3 py-2 text-left text-xs font-semibold text-mp-text-muted uppercase">Ketik</th>
                 </tr>
               </thead>
               <tbody>
                 {([
-                  ['Bank BluBCA',   'blu, blubca, bluebca (jangan hanya "bca" jika ada Bank BCA juga)'],
-                  ['Bank BCA',      'bca (spesifik jika tidak ada aset lain dengan "bca")'],
-                  ['BRI Utama',     'bri, utama, bri utama'],
+                  ['Bank BluBCA',  'blu, blubca\n(jangan "bca" jika ada Bank BCA)'],
+                  ['Bank BCA',     'bca'],
+                  ['BRI Utama',    'bri, utama'],
                   ['GoPay',        'gopay, go'],
                   ['Cash Dompet',  'cash, dompet'],
                   ['OVO',          'ovo'],
                 ] as [string,string][]).map(([k,v],i) => (
                   <tr key={i} className="border-b border-white/[0.05] last:border-0">
-                    <td className="px-4 py-2 font-mono text-xs text-mp-primary">{k}</td>
-                    <td className="px-4 py-2 text-xs text-green-300">{v}</td>
+                    <td className="px-3 py-2 font-mono text-xs text-mp-primary whitespace-nowrap align-top">{k}</td>
+                    <td className="px-3 py-2 text-xs text-green-300 break-words">
+                      {v.split('\n').map((line, j) => (
+                        <span key={j} className={j > 0 ? 'block text-mp-text-muted mt-0.5' : ''}>{line}</span>
+                      ))}
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -609,11 +692,23 @@ const sections: Section[] = [
   {
     id: 'faq',
     icon: HelpCircle,
-    title: '11. FAQ & Troubleshooting',
+    title: '12. FAQ & Troubleshooting',
     color: 'bg-red-500/20 text-red-400',
     content: (
       <div className="space-y-3 pt-2">
         {[
+          {
+            q: 'Budget tidak menampilkan data aktual?',
+            a: 'Pastikan ada transaksi bertipe Expense di periode aktif budget. Budget menghitung pengeluaran berdasarkan periode yang berlaku. Cek apakah kategori budget cocok dengan kategori transaksi.',
+          },
+          {
+            q: 'Export CSV/PDF tidak berfungsi?',
+            a: 'Pastikan ada transaksi di bulan yang dipilih. Untuk CSV: jika karakter rusak di Excel, buka via Data → From Text/CSV dengan encoding UTF-8 BOM. PDF di-load pertama kali memerlukan koneksi stabil.',
+          },
+          {
+            q: 'Pie chart tab Categories semua tampil "Other"?',
+            a: 'Kategori akan tampil begitu transaksi memiliki kategori yang dipilih saat pencatatan. Pastikan kamu memilih Category di form transaksi Expense.',
+          },
           {
             q: 'From Account / To Account kosong?',
             a: 'Kamu belum menambahkan aset. Buka menu Assets terlebih dahulu dan tambahkan rekening/dompet kamu.',
@@ -705,7 +800,7 @@ export default function GuidePage() {
 
       {/* Footer */}
       <div className="text-center py-4 text-xs text-mp-text-muted">
-        MP Wealth System — Panduan v2.0 · Diperbarui April 2026
+        MP Wealth System — Panduan v3.0 · Diperbarui April 2026
       </div>
     </div>
   );

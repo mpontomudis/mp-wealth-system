@@ -102,7 +102,7 @@ mp-wealth-system/
     │   └── supabase.ts           # Generated DB types (Tables<T>, enums, RPC)
     │
     ├── shared/
-    │   ├── components/           # 15 reusable UI components (see below)
+    │   ├── components/           # 18 reusable UI components (see below)
     │   ├── hooks/
     │   │   ├── useAuth.ts        # Supabase session + onAuthStateChange
     │   │   ├── useExchangeRate.ts
@@ -112,7 +112,8 @@ mp-wealth-system/
     │   │   └── currency.service.ts
     │   └── utils/
     │       ├── cn.ts             # Class name merger (clsx)
-    │       └── formatters.ts     # formatIDR, formatUSD, formatDate, formatPercent
+    │       ├── formatters.ts     # formatIDR, formatUSD, formatDate, formatPercent
+    │       └── exportUtils.ts    # exportTransactionsCSV(), exportTransactionsPDF()
     │
     ├── features/
     │   ├── trading/
@@ -126,11 +127,13 @@ mp-wealth-system/
     │   │
     │   ├── wealth/
     │   │   ├── components/       # WealthDashboard, BalanceOverview,
-    │   │   │                     # TransactionList, TransactionForm, AssetList
+    │   │   │                     # TransactionList, TransactionForm, AssetList,
+    │   │   │                     # BudgetForm, BudgetVsActuals
     │   │   ├── hooks/            # useTransactions, useAssets,
-    │   │   │                     # useCategories, useMonthlySummary
+    │   │   │                     # useCategories, useMonthlySummary, useBudgets
     │   │   └── services/
-    │   │       └── wealth.service.ts
+    │   │       ├── wealth.service.ts
+    │   │       └── budget.service.ts
     │   │
     │   └── ai-assistant/
     │       ├── components/       # AIAssistantPanel, WhatsAppFeed
@@ -145,9 +148,10 @@ mp-wealth-system/
         ├── WealthPage.tsx
         ├── TransactionsPage.tsx
         ├── AssetsPage.tsx
-        ├── ReportsPage.tsx       # English UI (Daily/Weekly/Monthly)
+        ├── ReportsPage.tsx       # 3-tab analytics: Overview / Categories / 6-Mo Trends + Export
+        ├── BudgetPage.tsx        # Budget vs Actuals page at /budget
         ├── SettingsPage.tsx
-        └── GuidePage.tsx         # v2.0 — includes WhatsApp chatbot guide
+        └── GuidePage.tsx         # v3.0 — Phase 2 features + WhatsApp chatbot guide
 ```
 
 ---
@@ -242,14 +246,31 @@ mp-wealth-system/
 
 ### Reports
 
-- Monthly income vs expense bar chart
-- Daily/Weekly/Monthly breakdown (English UI)
-- Totals in IDR & USD
+- 3-tab analytics page: **Overview**, **Categories**, **6-Mo Trends**
+- Overview: KPI cards (income, expense, savings rate, net cashflow) + monthly bar chart + transaction table
+- Categories: donut chart of expense breakdown per category + ranked table
+- 6-Mo Trends: multi-line area chart of income, expense, and savings over last 6 months
+- **Export to CSV** — pure-JS blob download with UTF-8 BOM (Excel-compatible)
+- **Export to PDF** — jsPDF + autoTable: summary header + full transaction table + page footers
+
+### Budget vs Actuals
+
+- Create monthly/weekly/yearly budgets per expense category
+- Budget vs Actuals progress bar cards: color-coded (green → yellow → red as usage increases)
+- Inline category creation — create new expense categories directly from the budget form (emoji picker + color picker, no page navigation required)
+- Custom dark-themed dropdowns (`CustomSelect`) replacing native `<select>` for full dark-mode compatibility
+- Budget CRUD: create, edit, delete (soft-delete via `deleted_at`)
+
+### Mobile UX
+
+- **BottomNav** — fixed bottom navigation bar on mobile (`lg:hidden`): Dashboard, Transactions, Reports, Budget, Assets
+- Layout padding adjusted (`pb-20 lg:pb-0`) to prevent content hidden behind BottomNav
 
 ### Guide
 
-- Full in-app user guide (v2.0, accordion layout)
-- Section 10: WhatsApp Chatbot documentation with command reference, amount formats, asset matching table
+- Full in-app user guide (v3.0, accordion layout)
+- 12 sections — updated for Phase 2: Reports tabs, Budget, Export, inline category creation
+- Section 12: FAQ with Phase 2 troubleshooting entries
 
 ---
 
@@ -311,12 +332,15 @@ If two assets share a keyword (e.g. "Bank BCA" and "Bank BluBCA"), use a unique 
 
 | Component | Description |
 |-----------|-------------|
-| `Layout` | Sidebar + Navbar + Outlet shell |
+| `Layout` | Sidebar + Navbar + BottomNav (mobile) + Outlet shell |
 | `Sidebar` | Navigation links with active state (NavLink) |
 | `Navbar` | Page title (from route) + sign out button |
+| `BottomNav` | Mobile-only fixed bottom nav — 5 routes (Dashboard, Transactions, Reports, Budget, Assets) |
 | `Button` | 4 variants (primary, secondary, danger, ghost) × 3 sizes + loading state |
 | `Input` | Labeled input with error message and icon slot |
 | `Select` | Labeled select with options array and error |
+| `CustomSelect` | Fully custom dark-themed dropdown — replaces native `<select>`; supports `onAddNew` callback |
+| `ExportMenu` | Dropdown button for CSV / PDF export (used in ReportsPage) |
 | `Modal` | Portal modal with Escape key + 4 sizes (sm/md/lg/xl) |
 | `Card` | Surface card with optional title and action slot |
 | `Tabs` | Controlled/uncontrolled tab navigation |
@@ -405,6 +429,7 @@ npm run build
 - Exchange rates require manual trigger or pg_cron setup
 - No bulk import for historical transactions
 - WhatsApp chatbot processes text messages only (images/audio stored but not parsed)
+- Category pie chart in Reports shows "Other" when transactions have no category assigned — select a category when recording expenses to populate the chart
 
 ---
 
@@ -418,12 +443,14 @@ npm run build
 - Reports page with monthly breakdown (English UI)
 - WhatsApp chatbot via Fonnte (live, end-to-end)
 
-### Phase 2 — Next
+### Phase 2 — Complete ✅
 
-- Advanced reports and analytics
-- Export to CSV / PDF
-- Budget vs actuals tracking
-- UX improvements and mobile responsiveness
+- Advanced reports: 3-tab analytics (Overview, Categories, 6-Mo Trends)
+- Export to CSV and PDF (jsPDF + autoTable)
+- Budget vs Actuals: per-category budget targets with progress bar visualization
+- Inline category creation from BudgetForm (emoji picker + color picker)
+- Custom dark-themed `CustomSelect` dropdown — replaces native `<select>` system-wide
+- Mobile UX: fixed BottomNav for 5-route navigation on small screens
 
 ### Phase 3 — Future Automation
 
@@ -441,14 +468,16 @@ npm run build
 | Database Schema | ✅ Complete | 15 tables, RLS, triggers, RPC functions |
 | TypeScript Types | ✅ Complete | All tables, enums, RPC types generated |
 | Supabase Config | ✅ Complete | Client, constants, broker catalog |
-| Service Layer | ✅ Complete | Trading, wealth, AI, currency services |
-| TanStack Query Hooks | ✅ Complete | All features covered |
-| Shared UI Components | ✅ Complete | 15 components, consistent heights |
-| Feature Components | ✅ Complete | Trading, Wealth panels |
-| Pages & Routing | ✅ Complete | 9 pages + auth guards |
+| Service Layer | ✅ Complete | Trading, wealth, budget, AI, currency services |
+| TanStack Query Hooks | ✅ Complete | All features covered incl. useBudgets |
+| Shared UI Components | ✅ Complete | 18 components — CustomSelect, ExportMenu, BottomNav added |
+| Feature Components | ✅ Complete | Trading, Wealth, Budget panels |
+| Pages & Routing | ✅ Complete | 10 pages + auth guards (added BudgetPage) |
 | Dashboard | ✅ Complete | Total Net Worth banner, layout consistency |
-| Reports Page | ✅ Complete | English UI, Daily/Weekly/Monthly |
-| Guide Page | ✅ Complete | v2.0, incl. WhatsApp chatbot section |
+| Reports Page | ✅ Complete | 3 tabs (Overview/Categories/6-Mo Trends) + CSV/PDF export |
+| Budget Page | ✅ Complete | Budget vs Actuals + inline category creation + CustomSelect |
+| Guide Page | ✅ Complete | v3.0 — Phase 2 sections, 12 accordion sections |
+| Mobile UX | ✅ Complete | BottomNav (5 routes), responsive layout padding |
 | WhatsApp Webhook | ✅ Live | Fonnte → Vercel → Supabase → Fonnte reply |
 | WhatsApp Chatbot | ✅ Live | NLP parser, asset lookup, balance, report |
 | Frontend Deployment | ✅ Live | https://mp-wealth-system.vercel.app |

@@ -307,7 +307,7 @@ export async function getMonthlySummary(
     .gte('transaction_date', startDate)
     .lte('transaction_date', endDate);
 
-  if (error) return handleResponse(null, error);
+  if (error) return handleResponse(null as unknown as MonthlySummary, error);
 
   const USD_RATE = 15750;
   let total_income_idr = 0, total_expense_idr = 0;
@@ -337,4 +337,43 @@ export async function getMonthlySummary(
   };
 
   return handleResponse(summary, null);
+}
+
+// ─── TransactionWithCategory ──────────────────────────────────
+
+export type TransactionWithCategory = {
+  id: string;
+  type: string;
+  amount: number;
+  currency: string | null;
+  description: string | null;
+  notes: string | null;
+  transaction_date: string | null;
+  category_id: string | null;
+  categories: { id: string; name: string; icon: string | null; color: string | null; type: string } | null;
+};
+
+// ─── 14. getTransactionsWithCategory ─────────────────────────
+
+export async function getTransactionsWithCategory(
+  userId: string,
+  filters?: TransactionFilters
+): Promise<ServiceResponse<TransactionWithCategory[]>> {
+  let query = supabase
+    .from('transactions')
+    .select(`
+      id, type, amount, currency, description, notes,
+      transaction_date, category_id,
+      categories ( id, name, icon, color, type )
+    `)
+    .eq('user_id', userId)
+    .is('deleted_at' as never, null)
+    .order('transaction_date', { ascending: false });
+
+  if (filters?.startDate) query = query.gte('transaction_date', filters.startDate);
+  if (filters?.endDate) query = query.lte('transaction_date', filters.endDate);
+  if (filters?.type) query = query.eq('type', filters.type);
+
+  const { data, error } = await query;
+  return handleResponse(data as TransactionWithCategory[] | null, error);
 }
