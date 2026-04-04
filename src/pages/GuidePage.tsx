@@ -567,7 +567,8 @@ const sections: Section[] = [
               </thead>
               <tbody>
                 {([
-                  ['Bank BluBCA',   'blubca, blu, bca, bluebca'],
+                  ['Bank BluBCA',   'blu, blubca, bluebca (jangan hanya "bca" jika ada Bank BCA juga)'],
+                  ['Bank BCA',      'bca (spesifik jika tidak ada aset lain dengan "bca")'],
                   ['BRI Utama',     'bri, utama, bri utama'],
                   ['GoPay',        'gopay, go'],
                   ['Cash Dompet',  'cash, dompet'],
@@ -582,6 +583,7 @@ const sections: Section[] = [
             </table>
           </div>
           <Warning>Jika nama aset tidak cocok, bot akan tampilkan daftar aset yang tersedia. Saldo <strong>tidak akan berubah</strong> sampai aset berhasil dicocokkan.</Warning>
+          <Tip>Jika punya dua aset dengan nama mirip (misal "Bank BCA" dan "Bank BluBCA"), pastikan ketik kata yang <strong>unik</strong> — misal <code className="bg-black/20 px-1 rounded text-xs">blu</code> untuk BluBCA agar tidak tertukar.</Tip>
         </div>
 
         <Tip>Jika nama aset tidak ditemukan, bot akan menampilkan daftar aset yang tersedia. Pastikan nama aset di command cocok dengan yang didaftarkan di menu Assets.</Tip>
