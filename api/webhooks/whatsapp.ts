@@ -40,19 +40,22 @@ interface FonntePayload {
 
 // ---------------------------------------------------------------------------
 // Normalise phone numbers for comparison
-// Strips +, spaces, dashes. e.g. "+62 812-3456-7890" → "628123456789"
+// Strips +, spaces, dashes. e.g. "+62 822-2765-3512" → "6282227653512"
 // ---------------------------------------------------------------------------
 function normalisePhone(phone: string): string {
   return phone.replace(/[\s\-+]/g, '');
 }
 
 // ---------------------------------------------------------------------------
-// Lookup user_id from user_preferences.whatsapp_number
-// Tries both normalised form and with/without leading +
+// Lookup user_id by phone number.
+// Strategy:
+//   1. Query user_preferences.whatsapp_number (normalised match)
+//   2. Fallback: if OWNER_PHONE_NUMBER env matches sender → fetch first user
 // ---------------------------------------------------------------------------
 async function findUserByPhone(senderRaw: string): Promise<string | null> {
   const sender = normalisePhone(senderRaw);
 
+  // Step 1: check user_preferences table
   const { data, error } = await supabase
     .from('user_preferences')
     .select('user_id, whatsapp_number')
@@ -60,15 +63,32 @@ async function findUserByPhone(senderRaw: string): Promise<string | null> {
 
   if (error) {
     console.error('user_preferences lookup error:', error.message);
-    return null;
   }
 
   const match = (data ?? []).find((row) => {
     const stored = normalisePhone(row.whatsapp_number ?? '');
+    // Match exact, or handle 0xxx → 62xxx conversion
     return stored === sender || stored === `62${sender.replace(/^0/, '')}`;
   });
 
-  return match?.user_id ?? null;
+  if (match?.user_id) return match.user_id;
+
+  // Step 2: fallback via OWNER_PHONE_NUMBER env var
+  const ownerPhone = process.env['OWNER_PHONE_NUMBER'];
+  if (ownerPhone && normalisePhone(ownerPhone) === sender) {
+    // Fetch the first (and likely only) user in the system
+    const { data: users } = await supabase
+      .from('user_preferences')
+      .select('user_id')
+      .limit(1)
+      .single();
+    if (users?.user_id) {
+      console.log(`📌 Matched via OWNER_PHONE_NUMBER env fallback → ${users.user_id}`);
+      return users.user_id;
+    }
+  }
+
+  return null;
 }
 
 // ---------------------------------------------------------------------------
