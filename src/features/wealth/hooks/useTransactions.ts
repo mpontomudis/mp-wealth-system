@@ -33,6 +33,7 @@ export function useTransactions(userId: string, filters?: TransactionFilters) {
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['transactions', userId] });
       void queryClient.invalidateQueries({ queryKey: ['monthly-summary', userId] });
+      void queryClient.invalidateQueries({ queryKey: ['assets', userId] });
     },
   });
 
@@ -51,6 +52,7 @@ export function useTransactions(userId: string, filters?: TransactionFilters) {
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['transactions', userId] });
       void queryClient.invalidateQueries({ queryKey: ['monthly-summary', userId] });
+      void queryClient.invalidateQueries({ queryKey: ['assets', userId] });
     },
   });
 
@@ -62,6 +64,7 @@ export function useTransactions(userId: string, filters?: TransactionFilters) {
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['transactions', userId] });
       void queryClient.invalidateQueries({ queryKey: ['monthly-summary', userId] });
+      void queryClient.invalidateQueries({ queryKey: ['assets', userId] });
     },
   });
 
