@@ -122,16 +122,27 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(405).json({ success: false, error: 'Method not allowed' });
     }
 
-    const body = req.body as FonntePayload;
-    // Log FULL raw body — critical for debugging unknown Fonnte payload formats
-    console.log('📱 RAW Fonnte payload:', JSON.stringify(body, null, 2));
-    console.log('📋 All keys:', Object.keys(body ?? {}));
+    // Log headers so we can see Content-Type Fonnte uses
+    console.log('📨 Headers:', JSON.stringify(req.headers, null, 2));
 
-    // Fonnte v1/v2 field normalisation — check all known variants
-    const sender      = (body?.sender ?? body?.from ?? body?.phone ?? body?.number ?? '').toString().trim();
-    const message     = (body?.message ?? body?.text ?? body?.body ?? body?.content ?? '').toString().trim();
-    const whatsappId  = (body?.id ?? body?.messageId ?? body?.message_id ?? '').toString().trim();
-    const messageType = (body?.type ?? body?.message_type ?? 'text').toString().trim();
+    // Fonnte sometimes sends application/x-www-form-urlencoded, not JSON
+    // Vercel parses both, but we normalise here just in case
+    let rawBody: Record<string, unknown> = {};
+    if (typeof req.body === 'string') {
+      try { rawBody = JSON.parse(req.body); } catch { rawBody = {}; }
+    } else if (req.body && typeof req.body === 'object') {
+      rawBody = req.body as Record<string, unknown>;
+    }
+
+    const body = rawBody as FonntePayload;
+    console.log('📱 RAW Fonnte payload:', JSON.stringify(body, null, 2));
+    console.log('📋 Keys received:', Object.keys(body));
+
+    // Fonnte field normalisation — all known field name variants
+    const sender      = String(body?.sender ?? body?.from ?? body?.phone ?? body?.number ?? body?.device ?? '').trim();
+    const message     = String(body?.message ?? body?.text ?? body?.body ?? body?.content ?? '').trim();
+    const whatsappId  = String(body?.id ?? body?.messageId ?? body?.message_id ?? '').trim();
+    const messageType = String(body?.type ?? body?.message_type ?? 'text').trim();
     const mediaUrl    = (body?.url ?? body?.media_url ?? null) as string | null;
     const mediaType   = (body?.mimeType ?? body?.mimetype ?? body?.media_type ?? null) as string | null;
 
@@ -173,8 +184,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       .single();
 
     if (error) {
+      // Log error but still return 200 so Fonnte doesn't disable the webhook
       console.error('❌ Supabase insert error:', error);
-      return res.status(500).json({ success: false, error: error.message });
+      return res.status(200).json({ success: false, stored: false, error: error.message });
     }
 
     console.log(`✅ WA message stored — ID: ${inserted?.id} | from: ${sender}`);
