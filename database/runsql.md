@@ -425,6 +425,107 @@ ALTER TABLE transactions
 
 ---
 
+## SECTION 9 — Auto-Sync Asset Balance via DB Trigger
+
+**Masalah:** Saldo aset tidak otomatis berubah saat transaksi dibuat/diedit/dihapus karena logika update dilakukan di sisi klien (rentan cache, error, dll).
+
+**Fix:** Buat trigger PostgreSQL yang otomatis mengupdate balance di tabel `assets` setiap ada INSERT atau UPDATE di `transactions`.
+
+> ⚠️ **Penting:** Setelah menjalankan section ini, saldo akan diupdate dari **DB server-side**. Tidak ada perubahan kode yang diperlukan.
+> Jika section ini sudah dijalankan, **jangan jalankan dua kali** — bisa double-count.
+
+```sql
+-- ─── Buat fungsi trigger ───────────────────────────────────────────────────
+CREATE OR REPLACE FUNCTION sync_asset_balance_on_transaction()
+RETURNS TRIGGER AS $$
+DECLARE
+  v_apply_old BOOLEAN := FALSE;
+  v_apply_new BOOLEAN := FALSE;
+BEGIN
+  IF TG_OP = 'INSERT' THEN
+    IF NEW.deleted_at IS NULL THEN
+      v_apply_new := TRUE;
+    END IF;
+  ELSIF TG_OP = 'UPDATE' THEN
+    IF OLD.deleted_at IS NULL THEN
+      v_apply_old := TRUE;  -- reverse old effects
+    END IF;
+    IF NEW.deleted_at IS NULL THEN
+      v_apply_new := TRUE;  -- apply new effects
+    END IF;
+  END IF;
+
+  -- REVERSE old transaction
+  IF v_apply_old THEN
+    IF OLD.type = 'income' AND OLD.to_asset_id IS NOT NULL THEN
+      UPDATE assets SET balance = balance - OLD.amount,
+        last_updated = NOW(), updated_at = NOW()
+      WHERE id = OLD.to_asset_id;
+    ELSIF OLD.type = 'expense' AND OLD.from_asset_id IS NOT NULL THEN
+      UPDATE assets SET balance = balance + OLD.amount,
+        last_updated = NOW(), updated_at = NOW()
+      WHERE id = OLD.from_asset_id;
+    ELSIF OLD.type = 'transfer' THEN
+      IF OLD.from_asset_id IS NOT NULL THEN
+        UPDATE assets SET balance = balance + (OLD.amount + COALESCE(OLD.fee, 0)),
+          last_updated = NOW(), updated_at = NOW()
+        WHERE id = OLD.from_asset_id;
+      END IF;
+      IF OLD.to_asset_id IS NOT NULL THEN
+        UPDATE assets SET balance = balance - OLD.amount,
+          last_updated = NOW(), updated_at = NOW()
+        WHERE id = OLD.to_asset_id;
+      END IF;
+    END IF;
+  END IF;
+
+  -- APPLY new transaction
+  IF v_apply_new THEN
+    IF NEW.type = 'income' AND NEW.to_asset_id IS NOT NULL THEN
+      UPDATE assets SET balance = balance + NEW.amount,
+        last_updated = NOW(), updated_at = NOW()
+      WHERE id = NEW.to_asset_id;
+    ELSIF NEW.type = 'expense' AND NEW.from_asset_id IS NOT NULL THEN
+      UPDATE assets SET balance = balance - NEW.amount,
+        last_updated = NOW(), updated_at = NOW()
+      WHERE id = NEW.from_asset_id;
+    ELSIF NEW.type = 'transfer' THEN
+      IF NEW.from_asset_id IS NOT NULL THEN
+        UPDATE assets SET balance = balance - (NEW.amount + COALESCE(NEW.fee, 0)),
+          last_updated = NOW(), updated_at = NOW()
+        WHERE id = NEW.from_asset_id;
+      END IF;
+      IF NEW.to_asset_id IS NOT NULL THEN
+        UPDATE assets SET balance = balance + NEW.amount,
+          last_updated = NOW(), updated_at = NOW()
+        WHERE id = NEW.to_asset_id;
+      END IF;
+    END IF;
+  END IF;
+
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- ─── Pasang trigger ────────────────────────────────────────────────────────
+DROP TRIGGER IF EXISTS trg_sync_asset_balance ON transactions;
+
+CREATE TRIGGER trg_sync_asset_balance
+AFTER INSERT OR UPDATE ON transactions
+FOR EACH ROW
+EXECUTE FUNCTION sync_asset_balance_on_transaction();
+```
+
+### Verifikasi
+
+```sql
+-- Pastikan trigger terpasang
+SELECT tgname, tgenabled FROM pg_trigger
+WHERE tgname = 'trg_sync_asset_balance';
+```
+
+---
+
 ## Riwayat Update
 
 | Tanggal | Section | Keterangan |

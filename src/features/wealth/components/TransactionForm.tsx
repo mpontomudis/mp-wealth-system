@@ -203,6 +203,13 @@ export function TransactionForm({ transaction, isOpen, onClose }: TransactionFor
           />
         )}
 
+        {/* Balance hint — shown when no account selected */}
+        {(txType === 'income' || txType === 'expense') && (
+          <p className="text-xs text-yellow-400/80 -mt-1">
+            ⚠️ Pilih{txType === 'income' ? ' To Account' : ' From Account'} agar saldo aset otomatis terupdate.
+          </p>
+        )}
+
         <Input
           label="Description"
           placeholder="What was this for?"

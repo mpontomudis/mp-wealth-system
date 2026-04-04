@@ -61,14 +61,17 @@ async function applyBalanceDeltas(tx: TxForBalance, multiplier: 1 | -1) {
   }
 
   for (const { id, delta } of adjustments) {
-    const { data: asset } = await supabase
+    const { data: asset, error: fetchErr } = await supabase
       .from('assets')
       .select('balance')
       .eq('id', id)
       .single();
-    if (!asset) continue;
+    if (fetchErr || !asset) {
+      console.error('[applyBalanceDeltas] failed to fetch asset', id, fetchErr);
+      continue;
+    }
 
-    await supabase
+    const { error: updateErr } = await supabase
       .from('assets')
       .update({
         balance: Number(asset.balance) + delta,
@@ -76,6 +79,12 @@ async function applyBalanceDeltas(tx: TxForBalance, multiplier: 1 | -1) {
         updated_at: new Date().toISOString(),
       })
       .eq('id', id);
+
+    if (updateErr) {
+      console.error('[applyBalanceDeltas] failed to update asset', id, delta, updateErr);
+    } else {
+      console.log(`[applyBalanceDeltas] asset ${id} balance ${delta >= 0 ? '+' : ''}${delta}`);
+    }
   }
 }
 
