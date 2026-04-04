@@ -157,14 +157,14 @@ export function TransactionList({ limit, showFilters = true }: TransactionListPr
                   {tx.type === 'income' ? '📥' : tx.type === 'expense' ? '📤' : '🔄'}
                 </div>
                 {/* Description + meta */}
-                <div className="flex-1 min-w-0">
+                <div className="flex-1 min-w-0 overflow-hidden">
                   <p className="text-sm font-medium text-mp-text-primary truncate">{tx.description ?? '—'}</p>
-                  <div className="flex items-center gap-1.5 mt-0.5">
-                    <span className="text-xs text-mp-text-muted">{formatDate(tx.transaction_date, 'short')}</span>
+                  <div className="flex items-center gap-1 mt-0.5 min-w-0 overflow-hidden">
+                    <span className="text-xs text-mp-text-muted whitespace-nowrap shrink-0">{formatDate(tx.transaction_date, 'short')}</span>
                     {tx.type === 'transfer' && (tx.from_asset_id || tx.to_asset_id) && (
                       <>
-                        <span className="text-mp-text-muted">·</span>
-                        <span className="text-xs text-mp-text-muted truncate max-w-[130px]">
+                        <span className="text-mp-text-muted shrink-0">·</span>
+                        <span className="text-xs text-mp-text-muted truncate min-w-0">
                           {tx.from_asset_id ? assetMap[tx.from_asset_id] ?? '?' : '—'}
                           {' → '}
                           {tx.to_asset_id ? assetMap[tx.to_asset_id] ?? '?' : '—'}
@@ -173,8 +173,8 @@ export function TransactionList({ limit, showFilters = true }: TransactionListPr
                     )}
                     {tx.type !== 'transfer' && (tx.from_asset_id || tx.to_asset_id) && (
                       <>
-                        <span className="text-mp-text-muted">·</span>
-                        <span className="text-xs text-mp-text-muted">
+                        <span className="text-mp-text-muted shrink-0">·</span>
+                        <span className="text-xs text-mp-text-muted truncate min-w-0">
                           {tx.from_asset_id ? assetMap[tx.from_asset_id] : assetMap[tx.to_asset_id ?? ''] ?? ''}
                         </span>
                       </>
@@ -182,12 +182,12 @@ export function TransactionList({ limit, showFilters = true }: TransactionListPr
                   </div>
                 </div>
                 {/* Amount */}
-                <div className="text-right shrink-0">
-                  <p className={`text-sm font-semibold ${AMOUNT_COLOR[tx.type as TransactionType] ?? ''}`}>
+                <div className="text-right shrink-0 pl-2">
+                  <p className={`text-xs font-semibold whitespace-nowrap ${AMOUNT_COLOR[tx.type as TransactionType] ?? ''}`}>
                     {AMOUNT_PREFIX[tx.type as TransactionType]}{formatIDR(tx.amount)}
                   </p>
                   {tx.fee && tx.fee > 0 && (
-                    <p className="text-xs text-mp-text-muted">fee: {formatIDR(tx.fee)}</p>
+                    <p className="text-xs text-mp-text-muted whitespace-nowrap">fee: {formatIDR(tx.fee)}</p>
                   )}
                 </div>
               </div>
