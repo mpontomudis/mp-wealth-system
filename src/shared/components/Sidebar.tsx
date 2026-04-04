@@ -8,6 +8,7 @@ import {
   PieChart,
   BarChart3,
   Settings,
+  BookOpen,
 } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 import { cn } from '@/shared/utils/cn';
@@ -26,6 +27,7 @@ const navItems: NavItem[] = [
   { label: 'Assets', to: '/assets', icon: PieChart },
   { label: 'Reports', to: '/reports', icon: BarChart3 },
   { label: 'Settings', to: '/settings', icon: Settings },
+  { label: 'Panduan', to: '/guide', icon: BookOpen },
 ];
 
 interface SidebarProps {

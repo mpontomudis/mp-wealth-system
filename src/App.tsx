@@ -13,6 +13,7 @@ const TransactionsPage = lazy(() => import('@/pages/TransactionsPage'));
 const AssetsPage       = lazy(() => import('@/pages/AssetsPage'));
 const ReportsPage      = lazy(() => import('@/pages/ReportsPage'));
 const SettingsPage     = lazy(() => import('@/pages/SettingsPage'));
+const GuidePage        = lazy(() => import('@/pages/GuidePage'));
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
   const { user, isLoading } = useAuth();
@@ -49,6 +50,7 @@ export default function App() {
             <Route path="assets"       element={<AssetsPage />} />
             <Route path="reports"      element={<ReportsPage />} />
             <Route path="settings"     element={<SettingsPage />} />
+            <Route path="guide"        element={<GuidePage />} />
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
