@@ -56,6 +56,12 @@ export default function DashboardPage() {
   const totalEquityUSD = portfolio?.total_equity_usd ?? 0;
   const floatingPL = portfolio?.total_profit_usd ?? 0;
 
+  // Total Net Worth = Wealth Assets + Trading Equity (all in IDR)
+  const tradingEquityIDR = totalEquityUSD * exchangeRate;
+  const totalNetWorth = totalAssetsIDR + tradingEquityIDR;
+  const wealthPct = totalNetWorth > 0 ? (totalAssetsIDR / totalNetWorth) * 100 : 100;
+  const tradingPct = totalNetWorth > 0 ? (tradingEquityIDR / totalNetWorth) * 100 : 0;
+
   // Compute monthly summary from transactions (no RPC dependency)
   const monthlyIncome = (transactions ?? [])
     .filter((t) => t.type === 'income')
@@ -90,6 +96,52 @@ export default function DashboardPage() {
         <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl border border-white/10 bg-white/5 backdrop-blur-sm text-xs text-gray-400">
           <span className="h-1.5 w-1.5 rounded-full bg-mp-green animate-pulse-slow" />
           Live
+        </div>
+      </div>
+
+      {/* ── Total Net Worth Banner ─────────────────────────────────────── */}
+      <div className="rounded-2xl border border-white/10 bg-white/[0.04] backdrop-blur-sm px-5 py-4 flex flex-col sm:flex-row sm:items-center gap-4">
+        {/* Left: figure */}
+        <div className="flex-1 min-w-0">
+          <p className="text-xs font-semibold text-gray-500 uppercase tracking-widest mb-1">Total Net Worth</p>
+          <p className="text-3xl font-bold text-white leading-none">{formatIDR(totalNetWorth)}</p>
+          <p className="text-sm text-gray-400 mt-1">≈ {formatUSD(totalNetWorth / exchangeRate)}</p>
+        </div>
+
+        {/* Right: breakdown */}
+        <div className="flex-1 min-w-0 flex flex-col gap-2">
+          {/* Bar */}
+          <div className="h-2.5 rounded-full bg-white/[0.06] overflow-hidden flex">
+            <div
+              className="h-full bg-mp-green transition-all duration-700"
+              style={{ width: `${wealthPct}%` }}
+            />
+            <div
+              className="h-full bg-mp-blue transition-all duration-700"
+              style={{ width: `${tradingPct}%` }}
+            />
+          </div>
+          {/* Labels */}
+          <div className="flex items-center justify-between gap-3 flex-wrap">
+            <div className="flex items-center gap-1.5">
+              <span className="h-2 w-2 rounded-full bg-mp-green flex-shrink-0" />
+              <span className="text-xs text-gray-400">
+                Wealth <span className="text-white font-medium">{formatIDR(totalAssetsIDR)}</span>
+                <span className="text-gray-600 ml-1">({wealthPct.toFixed(0)}%)</span>
+              </span>
+            </div>
+            {tradingEquityIDR > 0 ? (
+              <div className="flex items-center gap-1.5">
+                <span className="h-2 w-2 rounded-full bg-mp-blue flex-shrink-0" />
+                <span className="text-xs text-gray-400">
+                  Trading <span className="text-white font-medium">{formatUSD(totalEquityUSD)}</span>
+                  <span className="text-gray-600 ml-1">({tradingPct.toFixed(0)}%)</span>
+                </span>
+              </div>
+            ) : (
+              <span className="text-xs text-gray-600 italic">Add trading accounts to see full picture</span>
+            )}
+          </div>
         </div>
       </div>
 
