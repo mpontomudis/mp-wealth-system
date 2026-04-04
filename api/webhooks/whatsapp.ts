@@ -253,13 +253,7 @@ async function getBalanceSummary(userId: string): Promise<string> {
     return { line: `• ${a.name}: ${fmt}`, currency: a.currency as string, val };
   });
 
-  // Totals per currency
   const totalIDR = assets.filter(a => a.currency !== 'USD').reduce((s, a) => s + Number(a.balance), 0);
-  const totalUSD = assets.filter(a => a.currency === 'USD').reduce((s, a) => s + Number(a.balance), 0);
-
-  const totals: string[] = [];
-  if (totalIDR > 0) totals.push(`🟡 Total IDR  : ${formatRupiah(totalIDR)}`);
-  if (totalUSD > 0) totals.push(`🟡 Total USD  : $${totalUSD.toLocaleString('en-US', { minimumFractionDigits: 2 })}`);
 
   return [
     `💰 *Saldo Aset Kamu:*`,
@@ -267,7 +261,7 @@ async function getBalanceSummary(userId: string): Promise<string> {
     ...lines.map(l => l.line),
     ``,
     `━━━━━━━━━━━━`,
-    ...totals,
+    `🟡 Total IDR  : ${formatRupiah(totalIDR)}`,
   ].join('\n');
 }
 
