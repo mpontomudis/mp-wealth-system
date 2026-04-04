@@ -238,7 +238,7 @@ async function getBalanceSummary(userId: string): Promise<string> {
   console.log(`📊 getBalanceSummary for userId: ${userId}`);
   const { data: assets, error } = await getSupabase()
     .from('assets')
-    .select('name, current_value, currency')
+    .select('name, balance, currency')
     .eq('user_id', userId)
     .is('deleted_at', null);
 
@@ -246,7 +246,7 @@ async function getBalanceSummary(userId: string): Promise<string> {
   if (!assets?.length) return '📊 Belum ada aset yang terdaftar.\n\nTambahkan aset di app MP Wealth System.';
 
   const lines = assets.map(a => {
-    const val = Number(a.current_value);
+    const val = Number(a.balance);
     const fmt = a.currency === 'USD'
       ? `$${val.toLocaleString('en-US', { minimumFractionDigits: 2 })}`
       : formatRupiah(val);
