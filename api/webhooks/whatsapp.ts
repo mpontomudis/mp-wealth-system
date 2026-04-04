@@ -2,22 +2,20 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
 
 // ---------------------------------------------------------------------------
-// Env helper — returns undefined (not throws) so health check still works
+// Env helper — returns '' (not throws) so health check still works
 // ---------------------------------------------------------------------------
 function env(key: string): string {
   return process.env[key] ?? '';
 }
 
 // Lazy supabase client — created on first DB call, not at module load
-// This prevents FUNCTION_INVOCATION_FAILED when env vars aren't set yet
 let _supabase: ReturnType<typeof createClient> | null = null;
 function getSupabase() {
   if (!_supabase) {
-    // Support multiple naming conventions across environments
     const url = env('SUPABASE_URL') || env('VITE_SUPABASE_URL');
     const key = env('SUPABASE_SERVICE_ROLE_KEY')
              || env('VITE_SUPABASE_SERVICE_ROLE_KEY')
-             || env('VITE_SUPABASE_ROLE_KEY');   // ← matches Vercel project var
+             || env('VITE_SUPABASE_ROLE_KEY');
     if (!url || !key) throw new Error('Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY');
     _supabase = createClient(url, key, { auth: { persistSession: false } });
   }
@@ -26,16 +24,15 @@ function getSupabase() {
 
 // ---------------------------------------------------------------------------
 // Fonnte payload — supports v1 and v2 field names
-// Full payload reference: https://docs.fonnte.com/webhook
 // ---------------------------------------------------------------------------
 interface FonntePayload {
-  sender?: string;        // v1
-  from?: string;          // v2
-  message?: string;       // v1 text
-  text?: string;          // v2 text
+  sender?: string;
+  from?: string;
+  message?: string;
+  text?: string;
   id?: string;
   messageId?: string;
-  type?: string;          // 'text' | 'image' | 'audio' | 'video' | 'document'
+  type?: string;
   timestamp?: string | number;
   date?: string | number;
   url?: string;
@@ -44,6 +41,242 @@ interface FonntePayload {
   device?: string;
   [key: string]: unknown;
 }
+
+// ---------------------------------------------------------------------------
+// Parsed command from WhatsApp message
+// ---------------------------------------------------------------------------
+interface ParsedCommand {
+  intent: 'expense' | 'income' | 'transfer' | 'balance' | 'report' | 'help' | 'unknown';
+  amount?: number;
+  description?: string;
+  categoryHint?: string;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// AMOUNT PARSER
+// Handles: 15000, 15rb, 15k, 15ribu, 15jt, 15juta, 1.5jt, 15.000
+// ─────────────────────────────────────────────────────────────────────────────
+function parseAmount(raw: string): number | null {
+  const s = raw.toLowerCase().replace(/rp\.?\s*/g, '').trim();
+  const m = s.match(/(\d+(?:[.,]\d+)?)\s*(rb|ribu|k|jt|juta|m(?:iliar)?|b(?:iliar)?)?/);
+  if (!m) return null;
+
+  let num: number;
+  const digits = m[1].replace(',', '.');
+
+  // "15.000" with 3 decimal digits → thousands separator in Indonesian
+  if (digits.includes('.') && digits.split('.')[1]?.length === 3) {
+    num = parseInt(digits.replace('.', ''));
+  } else {
+    num = parseFloat(digits);
+  }
+
+  const unit = m[2] ?? '';
+  if (['rb', 'ribu', 'k'].includes(unit))   num *= 1_000;
+  else if (['jt', 'juta'].includes(unit))   num *= 1_000_000;
+  else if (/^m/.test(unit) || /^b/.test(unit)) num *= 1_000_000_000;
+
+  return num > 0 ? num : null;
+}
+
+function formatRupiah(amount: number): string {
+  return `Rp ${Math.round(amount).toLocaleString('id-ID')}`;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// COMMAND PARSER  (Indonesian natural language → intent)
+// ─────────────────────────────────────────────────────────────────────────────
+function parseCommand(text: string): ParsedCommand {
+  const t = text.toLowerCase().trim();
+
+  // Info intents
+  if (/^(saldo|cek\s*saldo|balance|cek\s*balance)$/.test(t)) return { intent: 'balance' };
+  if (/^(laporan|report|rekap\w*|summary|ringkasan)/.test(t))  return { intent: 'report' };
+  if (/^(help|bantuan|bantu|panduan|cara|perintah|menu)$/.test(t)) return { intent: 'help' };
+
+  // Find amount anywhere in the text
+  const amtMatch = t.match(/(\d[\d.,]*\s*(?:rb|ribu|k|jt|juta|m(?:iliar)?|b(?:iliar)?)?)/);
+  const amount = amtMatch ? parseAmount(amtMatch[1]) : null;
+  if (!amount) return { intent: 'unknown' };
+
+  // Strip amount from text to isolate description
+  const withoutAmt = t.replace(amtMatch![0], '').replace(/\s+/g, ' ').trim();
+
+  // Income
+  const incomeKw = ['gaji', 'terima', 'dapat', 'pemasukan', 'masuk', 'diterima', 'bonus', 'thr', 'profit', 'dividen', 'income'];
+  for (const kw of incomeKw) {
+    if (t.includes(kw)) {
+      const desc = withoutAmt.replace(new RegExp(kw, 'g'), '').replace(/\s+/g, ' ').trim();
+      return { intent: 'income', amount, description: desc || kw, categoryHint: kw };
+    }
+  }
+
+  // Transfer
+  const transferKw = ['transfer', 'kirim', 'pindah', 'send'];
+  for (const kw of transferKw) {
+    if (t.includes(kw)) {
+      const dest = withoutAmt.replace(new RegExp(kw, 'g'), '').replace(/^ke\s+/, '').trim();
+      return { intent: 'transfer', amount, description: dest ? `Transfer ke ${dest}` : 'Transfer', categoryHint: dest };
+    }
+  }
+
+  // Expense (default when amount is found)
+  const removeWords = /\b(beli|bayar|bayarin|makan|minum|jajan|keluar|habis|spend|untuk|buat|di|ke)\b/g;
+  const categoryHint = withoutAmt;
+  const description  = withoutAmt.replace(removeWords, '').replace(/\s+/g, ' ').trim() || withoutAmt;
+  return { intent: 'expense', amount, description: description || 'Pengeluaran', categoryHint };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CATEGORY LOOKUP
+// ─────────────────────────────────────────────────────────────────────────────
+const EXPENSE_CATEGORY_MAP: Record<string, string[]> = {
+  'Food & Dining':     ['kopi', 'makan', 'minum', 'resto', 'warung', 'cafe', 'nasi', 'soto', 'bakso', 'gorengan', 'jajan', 'snack', 'makanan', 'minuman', 'mie', 'ayam', 'sate', 'pizza', 'burger', 'lunch', 'dinner', 'breakfast', 'sarapan', 'siang', 'malam'],
+  'Transportation':    ['bensin', 'bbm', 'taksi', 'grab', 'gojek', 'ojek', 'parkir', 'tol', 'bus', 'motor', 'mobil', 'sopir', 'bahan bakar', 'ojol'],
+  'Shopping':          ['shopee', 'tokopedia', 'lazada', 'mall', 'supermarket', 'indomaret', 'alfamart', 'belanja', 'toko'],
+  'Entertainment':     ['netflix', 'film', 'bioskop', 'game', 'hiburan', 'spotify', 'youtube', 'nonton'],
+  'Healthcare':        ['dokter', 'obat', 'apotek', 'rumah sakit', 'klinik', 'vitamin', 'kesehatan', 'rs '],
+  'Education':         ['kursus', 'buku', 'sekolah', 'kuliah', 'les', 'seminar', 'training', 'kelas'],
+  'Bills & Utilities': ['listrik', 'air', 'pln', 'internet', 'wifi', 'pulsa', 'token', 'tagihan', 'cicilan', 'kredit'],
+};
+const INCOME_CATEGORY_MAP: Record<string, string[]> = {
+  'Salary':              ['gaji', 'salary', 'upah', 'thr', 'bonus'],
+  'Trading Profit':      ['trading', 'profit', 'saham', 'forex', 'crypto', 'dividen'],
+  'Business Income':     ['bisnis', 'usaha', 'jualan', 'klien', 'client', 'freelance', 'proyek', 'orderan'],
+  'Investment Returns':  ['investasi', 'return', 'bunga', 'deposito', 'reksadana'],
+};
+
+async function findCategoryId(userId: string, type: 'income' | 'expense', hint: string): Promise<string | null> {
+  const lower = (hint ?? '').toLowerCase();
+  const map = type === 'income' ? INCOME_CATEGORY_MAP : EXPENSE_CATEGORY_MAP;
+  const fallback = type === 'income' ? 'Other Income' : 'Other Expenses';
+
+  let bestName = fallback;
+  for (const [catName, keywords] of Object.entries(map)) {
+    if (keywords.some(kw => lower.includes(kw))) { bestName = catName; break; }
+  }
+
+  const { data } = await getSupabase()
+    .from('categories')
+    .select('id, name')
+    .eq('user_id', userId)
+    .eq('type', type)
+    .is('deleted_at', null);
+
+  const rows = data ?? [];
+  const exact = rows.find(r => r.name?.toLowerCase() === bestName.toLowerCase());
+  if (exact) return exact.id;
+
+  // Fallback to the "Other" category
+  const other = rows.find(r => r.name?.toLowerCase().includes('other'));
+  return other?.id ?? null;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// FONNTE REPLY
+// ─────────────────────────────────────────────────────────────────────────────
+async function sendWAReply(to: string, message: string): Promise<void> {
+  const token = env('FONNTE_TOKEN') || env('VITE_WHATSAPP_VERIFY_TOKEN');
+  if (!token) { console.warn('⚠️ No FONNTE_TOKEN — cannot send reply'); return; }
+
+  try {
+    const resp = await fetch('https://api.fonnte.com/send', {
+      method: 'POST',
+      headers: { 'Authorization': token, 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({ target: to, message, delay: '1', countryCode: '62' }).toString(),
+    });
+    const result = await resp.json() as Record<string, unknown>;
+    console.log('📤 WA reply sent:', result);
+  } catch (err) {
+    console.error('❌ Failed to send WA reply:', err);
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// BALANCE SUMMARY
+// ─────────────────────────────────────────────────────────────────────────────
+async function getBalanceSummary(userId: string): Promise<string> {
+  const { data: assets } = await getSupabase()
+    .from('assets')
+    .select('name, current_value, currency')
+    .eq('user_id', userId)
+    .is('deleted_at', null);
+
+  if (!assets?.length) return '📊 Belum ada aset yang terdaftar.\n\nTambahkan aset di app MP Wealth System.';
+
+  const lines = assets.map(a => {
+    const val = Number(a.current_value);
+    const fmt = a.currency === 'USD'
+      ? `$${val.toLocaleString('en-US', { minimumFractionDigits: 2 })}`
+      : formatRupiah(val);
+    return `• ${a.name}: ${fmt}`;
+  });
+
+  return `💰 *Saldo Aset Kamu:*\n${lines.join('\n')}`;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// DAILY REPORT
+// ─────────────────────────────────────────────────────────────────────────────
+async function getDailyReport(userId: string): Promise<string> {
+  const today = new Date().toISOString().split('T')[0];
+  const { data: txns } = await getSupabase()
+    .from('transactions')
+    .select('type, amount, description, transaction_date')
+    .eq('user_id', userId)
+    .eq('transaction_date', today)
+    .is('deleted_at', null)
+    .order('created_at', { ascending: false })
+    .limit(15);
+
+  if (!txns?.length) return `📅 *Laporan Hari Ini (${today}):*\n\nBelum ada transaksi hari ini.`;
+
+  let income = 0, expense = 0;
+  const lines = txns.map(tx => {
+    const amt = Number(tx.amount);
+    const emoji = tx.type === 'income' ? '🟢' : tx.type === 'expense' ? '🔴' : '🔵';
+    if (tx.type === 'income')  income  += amt;
+    if (tx.type === 'expense') expense += amt;
+    return `${emoji} ${tx.description ?? '-'}: ${formatRupiah(amt)}`;
+  });
+
+  const net = income - expense;
+  const netStr = net >= 0 ? `+${formatRupiah(net)}` : `-${formatRupiah(Math.abs(net))}`;
+
+  return [
+    `📅 *Laporan Hari Ini (${today}):*`, '',
+    lines.join('\n'), '',
+    `━━━━━━━━━━━━`,
+    `🟢 Pemasukan : ${formatRupiah(income)}`,
+    `🔴 Pengeluaran: ${formatRupiah(expense)}`,
+    `📈 Net        : ${netStr}`,
+  ].join('\n');
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// HELP MESSAGE
+// ─────────────────────────────────────────────────────────────────────────────
+const HELP_MSG = `📱 *Panduan Perintah WA:*
+
+💸 *Pengeluaran:*
+• beli kopi 15rb
+• makan siang 35000
+• bayar listrik 500rb
+• jajan snack 20rb
+
+💰 *Pemasukan:*
+• gaji masuk 5jt
+• dapat 1jt dari client
+• bonus 500rb
+
+🔄 *Transfer:*
+• transfer 1jt ke BCA
+• kirim 500rb ke tabungan
+
+📊 *Info:*
+• saldo → cek semua aset
+• laporan → rekap hari ini
+• bantu → panduan ini`;
 
 // ---------------------------------------------------------------------------
 // Normalise phone numbers for comparison
@@ -56,9 +289,6 @@ function normalisePhone(phone: string): string {
 // ---------------------------------------------------------------------------
 // Get device owner's user_id.
 // All messages received by the Fonnte device belong to the device owner.
-// Strategy:
-//   1. Match OWNER_PHONE_NUMBER env → lookup user_preferences.whatsapp_number
-//   2. Fallback: first row in user_preferences (single-user app)
 // ---------------------------------------------------------------------------
 async function getDeviceOwnerUserId(): Promise<string | null> {
   const ownerPhone = normalisePhone(process.env['OWNER_PHONE_NUMBER'] ?? '');
@@ -67,32 +297,81 @@ async function getDeviceOwnerUserId(): Promise<string | null> {
     .from('user_preferences')
     .select('user_id, whatsapp_number');
 
-  if (error) {
-    console.error('user_preferences lookup error:', error.message);
-    return null;
-  }
+  if (error) { console.error('user_preferences lookup error:', error.message); return null; }
 
   const rows = data ?? [];
 
-  // Try to match by owner phone number
   if (ownerPhone) {
-    const match = rows.find((row) => {
+    const match = rows.find(row => {
       const stored = normalisePhone(row.whatsapp_number ?? '');
       return stored === ownerPhone || stored === `62${ownerPhone.replace(/^0/, '')}`;
     });
-    if (match?.user_id) {
-      console.log(`✅ Device owner matched by phone → ${match.user_id}`);
-      return match.user_id;
-    }
+    if (match?.user_id) { console.log(`✅ Device owner matched → ${match.user_id}`); return match.user_id; }
   }
 
-  // Fallback: single-user app — use the only user
-  if (rows.length > 0) {
-    console.log(`📌 Fallback to first user → ${rows[0].user_id}`);
-    return rows[0].user_id;
-  }
-
+  if (rows.length > 0) { console.log(`📌 Fallback to first user → ${rows[0].user_id}`); return rows[0].user_id; }
   return null;
+}
+
+// ---------------------------------------------------------------------------
+// Process a parsed command: create transaction / check balance / etc.
+// Returns the reply message string.
+// ---------------------------------------------------------------------------
+async function processCommand(
+  parsed: ParsedCommand,
+  userId: string,
+  waMessageId: string | null,
+): Promise<string> {
+  if (parsed.intent === 'balance') return getBalanceSummary(userId);
+  if (parsed.intent === 'report')  return getDailyReport(userId);
+  if (parsed.intent === 'help')    return HELP_MSG;
+  if (parsed.intent === 'unknown') return `❓ Perintah tidak dikenali.\n\nKetik *bantu* untuk melihat daftar perintah.`;
+
+  if (!parsed.amount) return `⚠️ Nominal tidak ditemukan. Coba: "beli kopi 15rb"`;
+
+  const type = parsed.intent === 'transfer' ? 'transfer'
+             : parsed.intent === 'income'   ? 'income'
+             : 'expense';
+
+  const categoryId = type !== 'transfer'
+    ? await findCategoryId(userId, type as 'income' | 'expense', parsed.categoryHint ?? parsed.description ?? '')
+    : null;
+
+  const today = new Date().toISOString().split('T')[0];
+
+  const { data: tx, error } = await getSupabase()
+    .from('transactions')
+    .insert({
+      user_id:              userId,
+      type,
+      amount:               parsed.amount,
+      currency:             'IDR',
+      description:          parsed.description ?? (type === 'income' ? 'Pemasukan' : type === 'transfer' ? 'Transfer' : 'Pengeluaran'),
+      category_id:          categoryId,
+      source:               'whatsapp',
+      whatsapp_message_id:  waMessageId,
+      transaction_date:     today,
+    })
+    .select('id, type, amount, description')
+    .single();
+
+  if (error) {
+    console.error('❌ Transaction insert error:', error);
+    return `❌ Gagal menyimpan transaksi.\nError: ${error.message}`;
+  }
+
+  const typeEmoji = type === 'income' ? '🟢' : type === 'expense' ? '🔴' : '🔵';
+  const typeLabel = type === 'income' ? 'Pemasukan' : type === 'expense' ? 'Pengeluaran' : 'Transfer';
+
+  return [
+    `${typeEmoji} *${typeLabel} Tersimpan!*`,
+    ``,
+    `📝 ${tx?.description}`,
+    `💰 ${formatRupiah(parsed.amount)}`,
+    `📅 ${today}`,
+    ``,
+    `Ketik *laporan* untuk melihat ringkasan hari ini.`,
+  ].join('\n');
 }
 
 // ---------------------------------------------------------------------------
@@ -111,6 +390,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           SUPABASE_URL:              !!(env('SUPABASE_URL') || env('VITE_SUPABASE_URL')),
           SUPABASE_SERVICE_ROLE_KEY: !!(env('SUPABASE_SERVICE_ROLE_KEY') || env('VITE_SUPABASE_SERVICE_ROLE_KEY') || env('VITE_SUPABASE_ROLE_KEY')),
           OWNER_PHONE_NUMBER:        !!env('OWNER_PHONE_NUMBER'),
+          FONNTE_TOKEN:              !!(env('FONNTE_TOKEN') || env('VITE_WHATSAPP_VERIFY_TOKEN')),
         },
       });
     }
@@ -119,11 +399,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(405).json({ success: false, error: 'Method not allowed' });
     }
 
-    // Log headers so we can see Content-Type Fonnte uses
-    console.log('📨 Headers:', JSON.stringify(req.headers, null, 2));
-
     // Fonnte sometimes sends application/x-www-form-urlencoded, not JSON
-    // Vercel parses both, but we normalise here just in case
     let rawBody: Record<string, unknown> = {};
     if (typeof req.body === 'string') {
       try { rawBody = JSON.parse(req.body); } catch { rawBody = {}; }
@@ -133,9 +409,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const body = rawBody as FonntePayload;
     console.log('📱 RAW Fonnte payload:', JSON.stringify(body, null, 2));
-    console.log('📋 Keys received:', Object.keys(body));
 
-    // Fonnte field normalisation — all known field name variants
+    // Fonnte field normalisation
     const sender      = String(body?.sender ?? body?.from ?? body?.phone ?? body?.number ?? body?.device ?? '').trim();
     const message     = String(body?.message ?? body?.text ?? body?.body ?? body?.content ?? '').trim();
     const whatsappId  = String(body?.id ?? body?.messageId ?? body?.message_id ?? '').trim();
@@ -143,28 +418,22 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const mediaUrl    = (body?.url ?? body?.media_url ?? null) as string | null;
     const mediaType   = (body?.mimeType ?? body?.mimetype ?? body?.media_type ?? null) as string | null;
 
-    // Parse timestamp → ISO string; fall back to now()
     const rawTs      = body?.timestamp ?? body?.date;
     const receivedAt = rawTs
       ? new Date(typeof rawTs === 'number' ? rawTs * 1000 : rawTs).toISOString()
       : new Date().toISOString();
 
-    console.log('📝 Parsed:', { sender, message, whatsappId, messageType });
-
-    // If fields empty, store raw body as text_content for debugging
     const effectiveSender  = sender  || 'unknown';
     const effectiveMessage = message || JSON.stringify(body);
 
-    // user_id = device owner (Marlon), not the sender
-    // All messages to this Fonnte device belong to the device owner
-    const userId = await getDeviceOwnerUserId();
-    if (!userId) {
-      console.warn(`⚠️  No user found for phone: ${effectiveSender}`);
-    } else {
-      console.log(`✅ Matched user_id: ${userId}`);
-    }
+    console.log('📝 Parsed:', { sender: effectiveSender, message: effectiveMessage, messageType });
 
-    // Insert into whatsapp_messages
+    // user_id = device owner (all messages to this Fonnte device belong to the owner)
+    const userId = await getDeviceOwnerUserId();
+    if (!userId) console.warn(`⚠️  No device owner found`);
+    else         console.log(`✅ User: ${userId}`);
+
+    // Store message
     const { data: inserted, error } = await getSupabase()
       .from('whatsapp_messages')
       .insert({
@@ -182,18 +451,35 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       .single();
 
     if (error) {
-      // Log error but still return 200 so Fonnte doesn't disable the webhook
       console.error('❌ Supabase insert error:', error);
       return res.status(200).json({ success: false, stored: false, error: error.message });
     }
 
-    console.log(`✅ WA message stored — ID: ${inserted?.id} | from: ${sender}`);
-    return res.status(200).json({
-      success: true,
-      message_id: inserted?.id ?? null,
-      user_id: userId,
-      processing: 'queued',
-    });
+    const waMessageId = inserted?.id ?? null;
+    console.log(`✅ WA message stored — ID: ${waMessageId}`);
+
+    // Process command only from the device owner
+    const ownerPhone = normalisePhone(env('OWNER_PHONE_NUMBER'));
+    const isOwner    = ownerPhone && normalisePhone(effectiveSender) === ownerPhone;
+
+    if (userId && isOwner && messageType === 'text') {
+      const parsed = parseCommand(effectiveMessage);
+      console.log('🤖 Parsed command:', parsed);
+
+      const reply = await processCommand(parsed, userId, waMessageId);
+
+      // Update processing_status
+      const status = parsed.intent === 'unknown' ? 'failed' : 'processed';
+      await getSupabase()
+        .from('whatsapp_messages')
+        .update({ processing_status: status })
+        .eq('id', waMessageId);
+
+      // Send reply back via Fonnte
+      await sendWAReply(effectiveSender, reply);
+    }
+
+    return res.status(200).json({ success: true, message_id: waMessageId, user_id: userId });
 
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Internal server error';
