@@ -1,8 +1,9 @@
 // src/features/wealth/components/TransactionForm.tsx
 import { useEffect } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { useAuth } from '@/shared/hooks/useAuth';
 import { useTransactions } from '@/features/wealth/hooks/useTransactions';
+import { useAssets } from '@/features/wealth/hooks/useAssets';
 import { Modal } from '@/shared/components/Modal';
 import { Button } from '@/shared/components/Button';
 import { Input } from '@/shared/components/Input';
@@ -27,6 +28,8 @@ type FormData = {
   currency: string;
   description: string;
   transaction_date: string;
+  from_asset_id?: string;
+  to_asset_id?: string;
   notes?: string;
 };
 
@@ -51,12 +54,14 @@ void _ALL_CATEGORY_NAMES; // available for future category-name lookup UI
 export function TransactionForm({ transaction, isOpen, onClose }: TransactionFormProps) {
   const { user } = useAuth();
   const { create, update, remove } = useTransactions(user?.id ?? '');
+  const { assets } = useAssets(user?.id ?? '');
   const isEdit = Boolean(transaction);
 
   const {
     register,
     handleSubmit,
     reset,
+    control,
     formState: { errors },
   } = useForm<FormData>({
     defaultValues: {
@@ -65,6 +70,8 @@ export function TransactionForm({ transaction, isOpen, onClose }: TransactionFor
       transaction_date: new Date().toISOString().split('T')[0],
     },
   });
+
+  const txType = useWatch({ control, name: 'type' });
 
   useEffect(() => {
     if (transaction) {
@@ -76,6 +83,8 @@ export function TransactionForm({ transaction, isOpen, onClose }: TransactionFor
         transaction_date:
           transaction.transaction_date?.split('T')[0] ??
           new Date().toISOString().split('T')[0],
+        from_asset_id: transaction.from_asset_id ?? '',
+        to_asset_id: transaction.to_asset_id ?? '',
         notes: transaction.notes ?? '',
       });
     } else {
@@ -87,22 +96,30 @@ export function TransactionForm({ transaction, isOpen, onClose }: TransactionFor
     }
   }, [transaction, reset]);
 
+  const assetOptions = [
+    { value: '', label: '— None —' },
+    ...(assets ?? []).map((a) => ({
+      value: a.id,
+      label: `${a.name}${a.institution ? ` (${a.institution})` : ''}`,
+    })),
+  ];
+
   const onSubmit = (data: FormData) => {
+    const payload = {
+      ...data,
+      amount: Number(data.amount),
+      from_asset_id: data.from_asset_id || null,
+      to_asset_id: data.to_asset_id || null,
+    };
+
     if (isEdit && transaction) {
       update.mutate(
-        {
-          id: transaction.id,
-          payload: { ...data, amount: Number(data.amount) },
-        },
+        { id: transaction.id, payload },
         { onSuccess: onClose },
       );
     } else {
       create.mutate(
-        {
-          ...data,
-          amount: Number(data.amount),
-          source: 'manual',
-        },
+        { ...payload, source: 'manual' },
         { onSuccess: onClose },
       );
     }
@@ -142,6 +159,37 @@ export function TransactionForm({ transaction, isOpen, onClose }: TransactionFor
           />
           <Select label="Currency" options={CURRENCY_OPTIONS} {...register('currency')} />
         </div>
+
+        {/* From / To Account — shown contextually */}
+        {txType === 'transfer' && (
+          <div className="grid grid-cols-2 gap-3">
+            <Select
+              label="From Account"
+              options={assetOptions}
+              {...register('from_asset_id')}
+            />
+            <Select
+              label="To Account"
+              options={assetOptions}
+              {...register('to_asset_id')}
+            />
+          </div>
+        )}
+        {txType === 'expense' && (
+          <Select
+            label="From Account"
+            options={assetOptions}
+            {...register('from_asset_id')}
+          />
+        )}
+        {txType === 'income' && (
+          <Select
+            label="To Account"
+            options={assetOptions}
+            {...register('to_asset_id')}
+          />
+        )}
+
         <Input
           label="Description"
           placeholder="What was this for?"

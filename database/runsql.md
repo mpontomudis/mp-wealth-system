@@ -396,6 +396,20 @@ CREATE UNIQUE INDEX IF NOT EXISTS unique_active_account_per_broker
 
 ---
 
+## SECTION 7 — Add Transfer From/To Account Columns
+
+**Masalah:** Tabel `transactions` tidak memiliki kolom `from_asset_id` dan `to_asset_id` — tidak bisa melacak alur transfer antar rekening.
+
+**Fix:** Tambah dua kolom FK opsional ke tabel `transactions`.
+
+```sql
+ALTER TABLE transactions
+  ADD COLUMN IF NOT EXISTS from_asset_id UUID REFERENCES assets(id) ON DELETE SET NULL,
+  ADD COLUMN IF NOT EXISTS to_asset_id   UUID REFERENCES assets(id) ON DELETE SET NULL;
+```
+
+---
+
 ## Riwayat Update
 
 | Tanggal | Section | Keterangan |
@@ -404,3 +418,4 @@ CREATE UNIQUE INDEX IF NOT EXISTS unique_active_account_per_broker
 | 2026-04-03 | Section 2 | Rebuild semua RLS policies (15 tabel) |
 | 2026-04-03 | Section 5 | Fix 409 Conflict saat add trading account — ganti UNIQUE constraint dengan partial index |
 | 2026-04-03 | Section 6 | Fix initial balance $0 — tambah INSERT policy untuk account_metrics_snapshots |
+| 2026-04-04 | Section 7 | Add from_asset_id & to_asset_id ke transactions untuk transfer tracking |

@@ -1,8 +1,9 @@
 // src/features/wealth/components/TransactionList.tsx
 import { useState } from 'react';
-import { Cpu } from 'lucide-react';
+import { Cpu, ArrowRight } from 'lucide-react';
 import { useAuth } from '@/shared/hooks/useAuth';
 import { useTransactions } from '@/features/wealth/hooks/useTransactions';
+import { useAssets } from '@/features/wealth/hooks/useAssets';
 import { useDebounce } from '@/shared/hooks/useDebounce';
 import { Badge } from '@/shared/components/Badge';
 import { Input } from '@/shared/components/Input';
@@ -50,12 +51,16 @@ const AMOUNT_PREFIX: Record<TransactionType, string> = {
 export function TransactionList({ limit, showFilters = true }: TransactionListProps) {
   const { user } = useAuth();
   const { transactions, isLoading } = useTransactions(user?.id ?? '');
+  const { assets } = useAssets(user?.id ?? '');
   const [search, setSearch] = useState('');
   const [typeFilter, setTypeFilter] = useState('all');
   const [page, setPage] = useState(1);
   const [editingTx, setEditingTx] = useState<Transaction | null>(null);
 
   const debouncedSearch = useDebounce(search, 300);
+
+  // Build asset name lookup map
+  const assetMap = Object.fromEntries((assets ?? []).map((a) => [a.id, a.name]));
 
   if (isLoading) return <PageLoader />;
 
@@ -157,7 +162,24 @@ export function TransactionList({ limit, showFilters = true }: TransactionListPr
                     {formatDate(tx.transaction_date, 'short')}
                   </td>
                   <td className="py-3 pr-4 text-mp-text-primary max-w-[200px] truncate">
-                    {tx.description ?? '—'}
+                    <div>{tx.description ?? '—'}</div>
+                    {tx.type === 'transfer' && (tx.from_asset_id || tx.to_asset_id) && (
+                      <div className="flex items-center gap-1 mt-0.5 text-xs text-mp-text-muted">
+                        <span>{tx.from_asset_id ? assetMap[tx.from_asset_id] ?? '?' : '—'}</span>
+                        <ArrowRight className="w-3 h-3 shrink-0" />
+                        <span>{tx.to_asset_id ? assetMap[tx.to_asset_id] ?? '?' : '—'}</span>
+                      </div>
+                    )}
+                    {tx.type !== 'transfer' && tx.from_asset_id && (
+                      <div className="text-xs text-mp-text-muted mt-0.5">
+                        from {assetMap[tx.from_asset_id] ?? '?'}
+                      </div>
+                    )}
+                    {tx.type !== 'transfer' && tx.to_asset_id && (
+                      <div className="text-xs text-mp-text-muted mt-0.5">
+                        to {assetMap[tx.to_asset_id] ?? '?'}
+                      </div>
+                    )}
                   </td>
                   <td
                     className={`py-3 pr-4 font-medium text-right whitespace-nowrap ${AMOUNT_COLOR[tx.type as TransactionType] ?? ''}`}

@@ -438,6 +438,8 @@ export type Database = {
           description:         string | null;
           notes:               string | null;
           source:              TransactionSource;
+          from_asset_id:       string | null;
+          to_asset_id:         string | null;
           whatsapp_message_id: string | null;
           ai_log_id:           string | null;
           transaction_date:    string;
@@ -457,6 +459,8 @@ export type Database = {
           description?:         string | null;
           notes?:               string | null;
           source?:              TransactionSource;
+          from_asset_id?:       string | null;
+          to_asset_id?:         string | null;
           whatsapp_message_id?: string | null;
           ai_log_id?:           string | null;
           transaction_date?:    string;
@@ -476,6 +480,8 @@ export type Database = {
           description?:         string | null;
           notes?:               string | null;
           source?:              TransactionSource;
+          from_asset_id?:       string | null;
+          to_asset_id?:         string | null;
           whatsapp_message_id?: string | null;
           ai_log_id?:           string | null;
           transaction_date?:    string;
