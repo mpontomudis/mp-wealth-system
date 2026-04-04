@@ -116,18 +116,18 @@ export function TransactionList({ limit, showFilters = true }: TransactionListPr
       )}
 
       {showFilters && filtered.length > 0 && (
-        <div className="grid grid-cols-3 gap-3 mb-4">
-          <div className="rounded-xl bg-mp-green/10 border border-mp-green/20 px-4 py-3 text-center">
-            <p className="text-xs text-mp-text-muted mb-1">Total Income</p>
-            <p className="text-base font-bold text-mp-green">+{formatIDR(totalIncome)}</p>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-4">
+          <div className="rounded-xl bg-mp-green/10 border border-mp-green/20 px-4 py-3 flex sm:flex-col items-center sm:text-center justify-between sm:justify-center gap-2">
+            <p className="text-xs text-mp-text-muted">Total Income</p>
+            <p className="text-sm font-bold text-mp-green">+{formatIDR(totalIncome)}</p>
           </div>
-          <div className="rounded-xl bg-mp-red/10 border border-mp-red/20 px-4 py-3 text-center">
-            <p className="text-xs text-mp-text-muted mb-1">Total Expenses</p>
-            <p className="text-base font-bold text-mp-red">−{formatIDR(totalExpense)}</p>
+          <div className="rounded-xl bg-mp-red/10 border border-mp-red/20 px-4 py-3 flex sm:flex-col items-center sm:text-center justify-between sm:justify-center gap-2">
+            <p className="text-xs text-mp-text-muted">Total Expenses</p>
+            <p className="text-sm font-bold text-mp-red">−{formatIDR(totalExpense)}</p>
           </div>
-          <div className={`rounded-xl px-4 py-3 text-center border ${net >= 0 ? 'bg-mp-green/10 border-mp-green/20' : 'bg-mp-red/10 border-mp-red/20'}`}>
-            <p className="text-xs text-mp-text-muted mb-1">Net</p>
-            <p className={`text-base font-bold ${net >= 0 ? 'text-mp-green' : 'text-mp-red'}`}>
+          <div className={`rounded-xl px-4 py-3 flex sm:flex-col items-center sm:text-center justify-between sm:justify-center gap-2 border ${net >= 0 ? 'bg-mp-green/10 border-mp-green/20' : 'bg-mp-red/10 border-mp-red/20'}`}>
+            <p className="text-xs text-mp-text-muted">Net Cashflow</p>
+            <p className={`text-sm font-bold ${net >= 0 ? 'text-mp-green' : 'text-mp-red'}`}>
               {net >= 0 ? '+' : '−'}{formatIDR(Math.abs(net))}
             </p>
           </div>
