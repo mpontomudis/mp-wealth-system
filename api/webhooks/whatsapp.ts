@@ -8,6 +8,11 @@ function env(key: string): string {
   return process.env[key] ?? '';
 }
 
+// Title-case helper: "teh pucuk" → "Teh Pucuk"
+function toTitleCase(str: string): string {
+  return str.replace(/\b\w/g, c => c.toUpperCase());
+}
+
 // Lazy supabase client — created on first DB call, not at module load
 let _supabase: ReturnType<typeof createClient> | null = null;
 function getSupabase() {
@@ -165,7 +170,7 @@ function parseCommand(text: string): ParsedCommand {
   for (const kw of incomeKw) {
     if (t.includes(kw)) {
       const desc = withoutAmt.replace(new RegExp(kw, 'g'), '').replace(/\s+/g, ' ').trim();
-      return { intent: 'income', amount, description: desc || kw, categoryHint: kw, fromAssetHint, toAssetHint };
+      return { intent: 'income', amount, description: toTitleCase(desc || kw), categoryHint: kw, fromAssetHint, toAssetHint };
     }
   }
 
@@ -182,7 +187,7 @@ function parseCommand(text: string): ParsedCommand {
   // Expense (default when amount is found)
   const removeWords = /\b(beli|bayar|bayarin|makan|minum|jajan|keluar|habis|spend|untuk|buat|di|ke)\b/g;
   const categoryHint = withoutAmt;
-  const description  = withoutAmt.replace(removeWords, '').replace(/\s+/g, ' ').trim() || withoutAmt;
+  const description  = toTitleCase(withoutAmt.replace(removeWords, '').replace(/\s+/g, ' ').trim() || withoutAmt);
   return { intent: 'expense', amount, description: description || 'Pengeluaran', categoryHint, fromAssetHint, toAssetHint };
 }
 
