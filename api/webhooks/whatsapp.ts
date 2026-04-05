@@ -449,9 +449,15 @@ const HELP_MSG = `📱 *Panduan Perintah WA:*
 • dapat 1jt ke gopay
 • bonus 500rb ke cash
 
-🔄 *Transfer:*
+🔄 *Transfer Antar Aset:*
 • transfer 1jt dari bri ke bca
-• kirim 200rb dari bri ke gopay
+• kirim 200rb dari gopay ke bri
+_(tujuan harus nama aset yang terdaftar)_
+
+💸 *Kirim ke Orang (Pengeluaran):*
+• transfer 50rb ke saudara dari bca
+• kirim 100rb ke mama dari gopay
+_(otomatis masuk pengeluaran jika tujuan bukan aset)_
 
 📈 *Trading:*
 • trading → semua akun trading
@@ -464,7 +470,7 @@ const HELP_MSG = `📱 *Panduan Perintah WA:*
 • bantu → panduan ini
 
 💡 *Tips:*
-Tulis "dari/pakai" + nama aset untuk update saldo otomatis.
+Sistem otomatis membedakan transfer antar aset vs kirim ke orang berdasarkan nama tujuan.
 Nama aset sesuai yang didaftarkan di menu Assets.`;
 
 // ---------------------------------------------------------------------------
@@ -534,18 +540,30 @@ async function processCommand(
 
   if (!parsed.amount) return `⚠️ Nominal tidak ditemukan. Coba: "beli kopi 15rb dari gopay"`;
 
-  const type = parsed.intent === 'transfer' ? 'transfer'
-             : parsed.intent === 'income'   ? 'income'
-             : 'expense';
-
-  // Resolve asset IDs from hints
+  // Resolve asset IDs from hints first — needed to decide if "transfer" is real
   const [fromAssetId, toAssetId] = await Promise.all([
     parsed.fromAssetHint ? findAssetId(userId, parsed.fromAssetHint) : Promise.resolve(null),
     parsed.toAssetHint   ? findAssetId(userId, parsed.toAssetHint)   : Promise.resolve(null),
   ]);
 
+  // Smart transfer detection:
+  // "transfer/kirim ke [aset terdaftar]" → transfer antar aset
+  // "transfer/kirim ke [orang/tidak dikenal]" → pengeluaran
+  let type = parsed.intent === 'income' ? 'income'
+           : parsed.intent === 'transfer' && toAssetId ? 'transfer'
+           : 'expense';
+
+  // If reclassified from transfer → expense, rebuild description using the person/destination name
+  let description = parsed.description;
+  if (parsed.intent === 'transfer' && type === 'expense') {
+    const dest = parsed.toAssetHint ? toTitleCase(parsed.toAssetHint) : null;
+    description = dest
+      ? `Transfer ke ${dest}`
+      : (parsed.description ?? 'Pengeluaran');
+  }
+
   const categoryId = type !== 'transfer'
-    ? await findCategoryId(userId, type as 'income' | 'expense', parsed.categoryHint ?? parsed.description ?? '')
+    ? await findCategoryId(userId, type as 'income' | 'expense', parsed.categoryHint ?? description ?? '')
     : null;
 
   const today = new Date().toISOString().split('T')[0];
@@ -557,10 +575,10 @@ async function processCommand(
       type,
       amount:               parsed.amount,
       currency:             'IDR',
-      description:          parsed.description ?? (type === 'income' ? 'Pemasukan' : type === 'transfer' ? 'Transfer' : 'Pengeluaran'),
+      description:          description ?? (type === 'income' ? 'Pemasukan' : type === 'transfer' ? 'Transfer' : 'Pengeluaran'),
       category_id:          categoryId,
       from_asset_id:        fromAssetId,
-      to_asset_id:          toAssetId,
+      to_asset_id:          type === 'transfer' ? toAssetId : null,
       source:               'whatsapp',
       whatsapp_message_id:  waMessageId,
       transaction_date:     today,

@@ -16,9 +16,10 @@
 7. [Trading — Broker & Portofolio](#7-trading--broker--portofolio)
 8. [Reports — Laporan Bulanan](#8-reports--laporan-bulanan)
 9. [Settings — Pengaturan Akun](#9-settings--pengaturan-akun)
-10. [Urutan Setup yang Benar](#10-urutan-setup-yang-benar)
-11. [Contoh Kasus Penggunaan](#11-contoh-kasus-penggunaan)
-12. [FAQ & Troubleshooting](#12-faq--troubleshooting)
+10. [WhatsApp Bot — Catat via WA](#10-whatsapp-bot--catat-via-wa)
+11. [Urutan Setup yang Benar](#11-urutan-setup-yang-benar)
+12. [Contoh Kasus Penggunaan](#12-contoh-kasus-penggunaan)
+13. [FAQ & Troubleshooting](#13-faq--troubleshooting)
 
 ---
 
@@ -317,7 +318,59 @@ Halaman untuk melihat laporan income vs expenses per bulan.
 
 ---
 
-## 10. Urutan Setup yang Benar
+## 10. WhatsApp Bot — Catat via WA
+
+Kamu bisa mencatat transaksi langsung dari WhatsApp tanpa buka aplikasi.
+
+### 💸 Pengeluaran
+```
+beli kopi 15rb dari gopay
+makan siang 35rb dari bri
+bayar listrik 500rb pakai bca
+jajan snack 20rb
+```
+
+### 💰 Pemasukan
+```
+gaji masuk 5jt ke bri
+dapat 1jt ke gopay
+bonus 500rb ke cash
+```
+
+### 🔄 Transfer Antar Aset
+Gunakan kata `transfer` atau `kirim`, dan pastikan **tujuan adalah nama aset yang terdaftar**:
+```
+transfer 1jt dari bri ke bca
+kirim 200rb dari gopay ke bri
+```
+> ✅ Sistem otomatis mendeteksi ini sebagai **Transfer antar aset** karena `bca` / `bri` terdaftar di Assets.
+
+### 💸 Kirim Uang ke Orang (Pengeluaran)
+Gunakan kata `transfer` atau `kirim`, tujuan adalah nama orang/pihak lain:
+```
+transfer 50rb ke saudara dari bca
+kirim 100rb ke mama dari gopay
+transfer 200rb ke teman dari cash
+```
+> ✅ Sistem otomatis mendeteksi ini sebagai **Pengeluaran** karena `saudara` / `mama` bukan nama aset yang terdaftar.
+
+### 📊 Info & Lainnya
+```
+saldo          → cek semua aset
+laporan        → rekap pengeluaran hari ini
+trading        → ringkasan semua akun trading
+trading exness → khusus akun Exness
+bantu          → tampilkan panduan ini
+```
+
+### 💡 Tips Penting
+- **Nama aset harus sesuai** dengan yang didaftarkan di menu Assets (misal: `bca`, `gopay`, `bri`)
+- Sistem **otomatis membedakan** transfer antar aset vs kirim ke orang — tidak perlu format khusus
+- Deskripsi otomatis diubah ke **Title Case** (contoh: `teh pucuk` → `Teh Pucuk`)
+
+---
+
+## 11. Urutan Setup yang Benar
 
 Agar semua fitur berjalan optimal, ikuti urutan setup berikut saat pertama kali menggunakan aplikasi:
 
@@ -343,7 +396,7 @@ LANGKAH 5: Cek Dashboard untuk melihat ringkasan
 
 ---
 
-## 11. Contoh Kasus Penggunaan
+## 12. Contoh Kasus Penggunaan
 
 ### Kasus A: Alur Gaji Bulanan
 
@@ -393,7 +446,7 @@ LANGKAH 5: Cek Dashboard untuk melihat ringkasan
 
 ---
 
-## 12. FAQ & Troubleshooting
+## 13. FAQ & Troubleshooting
 
 ### ❓ From Account / To Account dropdown kosong
 **Jawab:** Kamu belum menambahkan aset. Buka menu **Assets** terlebih dahulu dan tambahkan rekening/dompet kamu.
