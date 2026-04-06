@@ -11,6 +11,14 @@
     <meta name="apple-mobile-web-app-title" content="MP Wealth" />
     <link rel="apple-touch-icon" href="/icon-192.png" />
     <title>MP Wealth System</title>
+    <!-- Apply saved theme immediately to avoid flash -->
+    <script>
+      (function () {
+        var t = localStorage.getItem('mp-theme');
+        if (t === 'light') document.documentElement.classList.remove('dark');
+        else document.documentElement.classList.add('dark');
+      })();
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link

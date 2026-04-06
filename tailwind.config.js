@@ -43,7 +43,7 @@ export default {
         input: 'hsl(var(--input))',
         ring: 'hsl(var(--ring))',
 
-        // Legacy mp-* tokens (dark theme values)
+        // Legacy mp-* tokens — structural ones use CSS vars for theme switching
         'mp-primary':        '#3b82f6',
         'mp-primary-light':  '#60a5fa',
         'mp-primary-dark':   '#1d4ed8',
@@ -53,12 +53,12 @@ export default {
         'mp-blue':           '#3b82f6',
         'mp-gold':           '#f59e0b',
         'mp-purple':         '#8b5cf6',
-        'mp-background':     '#060b18',
-        'mp-surface':        '#0d1526',
-        'mp-border':         '#1e2d45',
-        'mp-text-primary':   '#f1f5f9',
-        'mp-text-secondary': '#94a3b8',
-        'mp-text-muted':     '#475569',
+        'mp-background':     'hsl(var(--mp-background))',
+        'mp-surface':        'hsl(var(--mp-surface))',
+        'mp-border':         'hsl(var(--mp-border))',
+        'mp-text-primary':   'hsl(var(--mp-text-primary))',
+        'mp-text-secondary': 'hsl(var(--mp-text-secondary))',
+        'mp-text-muted':     'hsl(var(--mp-text-muted))',
       },
       borderRadius: {
         lg: 'var(--radius)',
