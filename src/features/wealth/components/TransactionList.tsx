@@ -160,7 +160,10 @@ export function TransactionList({ limit, showFilters = true }: TransactionListPr
                 <div className="flex-1 min-w-0 overflow-hidden">
                   <p className="text-sm font-medium text-mp-text-primary truncate">{tx.description ?? '—'}</p>
                   <div className="flex items-center gap-1 mt-0.5 min-w-0 overflow-hidden">
-                    <span className="text-xs text-mp-text-muted whitespace-nowrap shrink-0">{formatDate(tx.transaction_date, 'short')}</span>
+                    <span className="text-xs text-mp-text-muted whitespace-nowrap shrink-0">
+                      {formatDate(tx.transaction_date, 'short')}
+                      {tx.created_at && <span className="ml-1 opacity-60">{formatDate(tx.created_at, 'time')}</span>}
+                    </span>
                     {tx.type === 'transfer' && (tx.from_asset_id || tx.to_asset_id) && (
                       <>
                         <span className="text-mp-text-muted shrink-0">·</span>
@@ -214,7 +217,10 @@ export function TransactionList({ limit, showFilters = true }: TransactionListPr
                     className="border-b border-mp-border/50 hover:bg-mp-background/50 cursor-pointer transition-colors"
                   >
                     <td className="py-3 pr-4 text-mp-text-muted whitespace-nowrap">
-                      {formatDate(tx.transaction_date, 'short')}
+                      <div>{formatDate(tx.transaction_date, 'short')}</div>
+                      {tx.created_at && (
+                        <div className="text-xs opacity-60">{formatDate(tx.created_at, 'time')}</div>
+                      )}
                     </td>
                     <td className="py-3 pr-4 text-mp-text-primary max-w-[200px] truncate">
                       <div>{tx.description ?? '—'}</div>

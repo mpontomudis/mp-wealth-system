@@ -74,7 +74,8 @@ export async function getTransactions(
     .select(TRANSACTION_FIELDS)
     .eq('user_id', userId)
     .is('deleted_at' as never, null)
-    .order('transaction_date', { ascending: false });
+    .order('transaction_date', { ascending: false })
+    .order('created_at', { ascending: false });
 
   if (filters?.startDate) {
     query = query.gte('transaction_date', filters.startDate);
