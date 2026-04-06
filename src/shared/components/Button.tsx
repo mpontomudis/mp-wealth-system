@@ -19,11 +19,11 @@ const variantClasses: Record<ButtonVariant, string> = {
   primary:
     'bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-lg shadow-blue-500/20 hover:opacity-90 hover:shadow-blue-500/30',
   secondary:
-    'border border-white/10 bg-white/5 text-mp-text-primary backdrop-blur-sm hover:bg-white/10 hover:border-white/20',
+    'border bg-white text-slate-700 hover:bg-slate-50 hover:border-slate-300 border-slate-200 dark:border-white/10 dark:bg-white/5 dark:text-mp-text-primary dark:hover:bg-white/10 dark:hover:border-white/20',
   danger:
     'bg-mp-red text-white hover:opacity-90 shadow-lg shadow-red-500/20',
   ghost:
-    'text-gray-400 hover:bg-white/5 hover:text-white',
+    'text-slate-500 hover:bg-slate-100 hover:text-slate-900 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-white',
 };
 
 const sizeClasses: Record<ButtonSize, string> = {

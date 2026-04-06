@@ -78,14 +78,17 @@ export function CustomSelect({
         aria-expanded={open}
         className={cn(
           'w-full flex items-center justify-between gap-2 px-3 py-2 rounded-lg text-sm transition-all duration-200',
-          'bg-white/[0.04] border text-left',
-          'focus:outline-none focus:ring-1 focus:ring-mp-primary/60',
+          'border text-left focus:outline-none focus:ring-1 focus:ring-mp-primary/60',
           'disabled:opacity-40 disabled:cursor-not-allowed',
+          // light
+          'bg-white text-slate-900 border-slate-300 hover:border-slate-400',
+          // dark
+          'dark:bg-white/[0.04] dark:text-mp-text-primary',
           error
-            ? 'border-mp-red/50 focus:border-mp-red'
+            ? 'border-red-400 dark:border-mp-red/50 focus:border-red-500 dark:focus:border-mp-red'
             : open
-            ? 'border-mp-primary/60 bg-white/[0.06]'
-            : 'border-white/10 hover:border-white/20 hover:bg-white/[0.06]',
+            ? 'border-blue-400 dark:border-mp-primary/60 dark:bg-white/[0.06]'
+            : 'dark:border-white/10 dark:hover:border-white/20 dark:hover:bg-white/[0.06]',
         )}
       >
         <span className={cn('flex items-center gap-2 truncate', !selected && 'text-mp-text-muted')}>
@@ -102,7 +105,7 @@ export function CustomSelect({
       {open && (
         <div
           role="listbox"
-          className="absolute z-50 w-full mt-1 rounded-xl border border-mp-border bg-mp-surface shadow-card overflow-hidden animate-fade-in"
+          className="absolute z-50 w-full mt-1 rounded-xl border overflow-hidden animate-fade-in bg-white border-slate-200 shadow-lg dark:bg-mp-surface dark:border-mp-border dark:shadow-card"
           style={{ maxHeight: '220px', overflowY: 'auto' }}
         >
           {options.length === 0 && !onAddNew && (
@@ -119,8 +122,8 @@ export function CustomSelect({
               className={cn(
                 'flex items-center gap-3 w-full px-4 py-2.5 text-sm text-left transition-colors',
                 opt.value === value
-                  ? 'bg-mp-primary/15 text-white'
-                  : 'text-mp-text-secondary hover:bg-white/[0.06] hover:text-white',
+                  ? 'bg-blue-50 text-blue-900 dark:bg-mp-primary/15 dark:text-white'
+                  : 'text-slate-700 hover:bg-slate-50 hover:text-slate-900 dark:text-mp-text-secondary dark:hover:bg-white/[0.06] dark:hover:text-white',
               )}
             >
               {opt.prefix && <span className="text-base leading-none w-5 text-center shrink-0">{opt.prefix}</span>}

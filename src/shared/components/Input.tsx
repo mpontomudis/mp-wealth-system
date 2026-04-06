@@ -30,15 +30,19 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
             ref={ref}
             id={inputId}
             className={cn(
-              'w-full rounded-lg border bg-mp-surface/50 backdrop-blur-sm text-mp-text-primary text-sm',
+              'w-full rounded-lg border text-sm text-mp-text-primary',
               'placeholder:text-mp-text-muted transition-all duration-200',
               'focus:outline-none focus:ring-2',
+              // light
+              'bg-white border-slate-300',
+              // dark
+              'dark:bg-mp-surface/50 dark:backdrop-blur-sm dark:border-mp-border',
               leftIcon ? 'pl-9' : 'pl-3',
               rightIcon ? 'pr-9' : 'pr-3',
               'py-2.5',
               error
-                ? 'border-mp-red/60 focus:ring-mp-red/30 focus:border-mp-red'
-                : 'border-mp-border focus:ring-mp-primary/30 focus:border-mp-primary/60',
+                ? 'border-red-400 focus:ring-red-500/30 focus:border-red-500 dark:border-mp-red/60 dark:focus:ring-mp-red/30 dark:focus:border-mp-red'
+                : 'focus:ring-blue-500/30 focus:border-blue-400 dark:focus:ring-mp-primary/30 dark:focus:border-mp-primary/60',
               'disabled:opacity-50 disabled:cursor-not-allowed',
               className,
             )}

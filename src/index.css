@@ -20,20 +20,20 @@
     --muted-foreground: 215 16% 47%;
     --accent: 214 32% 91%;
     --accent-foreground: 222 47% 11%;
-    --destructive: 0 63% 55%;
+    --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
-    --border: 213 32% 87%;
-    --input: 213 32% 87%;
+    --border: 220 13% 86%;
+    --input: 220 13% 86%;
     --ring: 217 91% 60%;
     --radius: 0.75rem;
 
     /* mp-* structural tokens — light */
-    --mp-background: 213 27% 98%;
-    --mp-surface:    0 0% 100%;
-    --mp-border:     213 32% 87%;
-    --mp-text-primary:   222 47% 11%;
-    --mp-text-secondary: 215 25% 27%;
-    --mp-text-muted:     215 16% 47%;
+    --mp-background: 220 20% 96%;   /* #eef2f7 — page bg, distinct from white cards */
+    --mp-surface:    0 0% 100%;     /* #ffffff — card surfaces */
+    --mp-border:     220 13% 86%;   /* #d1d9e6 — visible but soft */
+    --mp-text-primary:   222 47% 8%;   /* #0c1426 — high contrast */
+    --mp-text-secondary: 215 25% 32%;  /* #3d5068 */
+    --mp-text-muted:     215 16% 50%;  /* #6b7fa3 */
   }
 
   /* ── Dark mode ── */

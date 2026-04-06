@@ -60,31 +60,33 @@ export function Modal({ isOpen, onClose, title, children, size = 'md' }: ModalPr
       <div
         className={cn(
           'relative w-full z-10 overflow-hidden flex flex-col',
-          'bg-white/5 backdrop-blur-2xl border border-white/10',
-          'shadow-[0_0_60px_rgba(0,0,0,0.5)]',
-          'rounded-t-2xl sm:rounded-2xl',
+          'border rounded-t-2xl sm:rounded-2xl',
           'max-h-[92dvh] sm:max-h-[90dvh]',
+          // light
+          'bg-white border-slate-200 shadow-[0_0_60px_rgba(0,0,0,0.15)]',
+          // dark
+          'dark:bg-white/5 dark:backdrop-blur-2xl dark:border-white/10 dark:shadow-[0_0_60px_rgba(0,0,0,0.5)]',
           sizeClasses[size],
         )}
       >
         {/* Top highlight */}
         <div
           aria-hidden
-          className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/15 to-transparent pointer-events-none"
+          className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-slate-200 to-transparent dark:via-white/15 pointer-events-none"
         />
 
         {/* Drag handle pill (mobile only) */}
-        <div aria-hidden className="sm:hidden mx-auto mt-2.5 mb-0 w-10 h-1 rounded-full bg-white/20 shrink-0" />
+        <div aria-hidden className="sm:hidden mx-auto mt-2.5 mb-0 w-10 h-1 rounded-full bg-slate-300 dark:bg-white/20 shrink-0" />
 
         {/* Header */}
         {title && (
-          <div className="flex items-center justify-between px-4 sm:px-6 pt-4 sm:pt-5 pb-3 sm:pb-4 border-b border-white/10 shrink-0">
-            <h2 id="modal-title" className="text-base font-semibold text-white">
+          <div className="flex items-center justify-between px-4 sm:px-6 pt-4 sm:pt-5 pb-3 sm:pb-4 border-b border-slate-200 dark:border-white/10 shrink-0">
+            <h2 id="modal-title" className="text-base font-semibold text-slate-900 dark:text-white">
               {title}
             </h2>
             <button
               onClick={onClose}
-              className="p-1.5 rounded-lg text-gray-400 hover:bg-white/10 hover:text-white transition-all duration-200"
+              className="p-1.5 rounded-lg transition-all duration-200 text-slate-400 hover:bg-slate-100 hover:text-slate-900 dark:text-gray-400 dark:hover:bg-white/10 dark:hover:text-white"
               aria-label="Close modal"
             >
               <X size={17} />
@@ -96,7 +98,7 @@ export function Modal({ isOpen, onClose, title, children, size = 'md' }: ModalPr
         {!title && (
           <button
             onClick={onClose}
-            className="absolute top-4 right-4 p-1.5 rounded-lg text-gray-400 hover:bg-white/10 hover:text-white transition-all duration-200 z-10"
+            className="absolute top-4 right-4 p-1.5 rounded-lg transition-all duration-200 z-10 text-slate-400 hover:bg-slate-100 hover:text-slate-900 dark:text-gray-400 dark:hover:bg-white/10 dark:hover:text-white"
             aria-label="Close modal"
           >
             <X size={17} />

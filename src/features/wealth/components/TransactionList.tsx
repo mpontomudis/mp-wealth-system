@@ -117,17 +117,17 @@ export function TransactionList({ limit, showFilters = true }: TransactionListPr
 
       {showFilters && filtered.length > 0 && (
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-4">
-          <div className="rounded-xl bg-mp-green/10 border border-mp-green/20 px-4 py-3 flex sm:flex-col items-center sm:text-center justify-between sm:justify-center gap-2">
-            <p className="text-xs text-mp-text-muted">Total Income</p>
-            <p className="text-sm font-bold text-mp-green">+{formatIDR(totalIncome)}</p>
+          <div className="rounded-xl px-4 py-3 flex sm:flex-col items-center sm:text-center justify-between sm:justify-center gap-2 bg-green-50 border border-green-200 dark:bg-mp-green/10 dark:border-mp-green/20">
+            <p className="text-xs text-slate-500 dark:text-mp-text-muted">Total Income</p>
+            <p className="text-sm font-bold text-green-700 dark:text-mp-green">+{formatIDR(totalIncome)}</p>
           </div>
-          <div className="rounded-xl bg-mp-red/10 border border-mp-red/20 px-4 py-3 flex sm:flex-col items-center sm:text-center justify-between sm:justify-center gap-2">
-            <p className="text-xs text-mp-text-muted">Total Expenses</p>
-            <p className="text-sm font-bold text-mp-red">−{formatIDR(totalExpense)}</p>
+          <div className="rounded-xl px-4 py-3 flex sm:flex-col items-center sm:text-center justify-between sm:justify-center gap-2 bg-red-50 border border-red-200 dark:bg-mp-red/10 dark:border-mp-red/20">
+            <p className="text-xs text-slate-500 dark:text-mp-text-muted">Total Expenses</p>
+            <p className="text-sm font-bold text-red-700 dark:text-mp-red">−{formatIDR(totalExpense)}</p>
           </div>
-          <div className={`rounded-xl px-4 py-3 flex sm:flex-col items-center sm:text-center justify-between sm:justify-center gap-2 border ${net >= 0 ? 'bg-mp-green/10 border-mp-green/20' : 'bg-mp-red/10 border-mp-red/20'}`}>
-            <p className="text-xs text-mp-text-muted">Net Cashflow</p>
-            <p className={`text-sm font-bold ${net >= 0 ? 'text-mp-green' : 'text-mp-red'}`}>
+          <div className={`rounded-xl px-4 py-3 flex sm:flex-col items-center sm:text-center justify-between sm:justify-center gap-2 border ${net >= 0 ? 'bg-green-50 border-green-200 dark:bg-mp-green/10 dark:border-mp-green/20' : 'bg-red-50 border-red-200 dark:bg-mp-red/10 dark:border-mp-red/20'}`}>
+            <p className="text-xs text-slate-500 dark:text-mp-text-muted">Net Cashflow</p>
+            <p className={`text-sm font-bold ${net >= 0 ? 'text-green-700 dark:text-mp-green' : 'text-red-700 dark:text-mp-red'}`}>
               {net >= 0 ? '+' : '−'}{formatIDR(Math.abs(net))}
             </p>
           </div>
@@ -147,7 +147,7 @@ export function TransactionList({ limit, showFilters = true }: TransactionListPr
               <div
                 key={tx.id}
                 onClick={() => setEditingTx(tx)}
-                className="flex items-center gap-3 rounded-xl border border-white/[0.07] bg-white/[0.03] px-3 py-3 cursor-pointer hover:bg-white/[0.06] active:bg-white/[0.08] transition-colors"
+                className="flex items-center gap-3 rounded-xl border px-3 py-3 cursor-pointer transition-colors bg-white border-slate-200 shadow-sm hover:bg-slate-50 hover:border-slate-300 dark:border-white/[0.07] dark:bg-white/[0.03] dark:hover:bg-white/[0.06] dark:active:bg-white/[0.08]"
               >
                 {/* Type icon */}
                 <div className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 text-base ${
@@ -214,7 +214,7 @@ export function TransactionList({ limit, showFilters = true }: TransactionListPr
                   <tr
                     key={tx.id}
                     onClick={() => setEditingTx(tx)}
-                    className="border-b border-mp-border/50 hover:bg-mp-background/50 cursor-pointer transition-colors"
+                    className="border-b border-slate-100 hover:bg-slate-50 dark:border-mp-border/50 dark:hover:bg-mp-background/50 cursor-pointer transition-colors"
                   >
                     <td className="py-3 pr-4 text-mp-text-muted whitespace-nowrap">
                       <div>{formatDate(tx.transaction_date, 'short')}</div>
