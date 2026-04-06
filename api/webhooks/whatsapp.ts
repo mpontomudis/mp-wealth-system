@@ -13,6 +13,24 @@ function toTitleCase(str: string): string {
   return str.replace(/\b\w/g, c => c.toUpperCase());
 }
 
+// Transfer description formatter:
+// connector words (transfer/dari/ke) → Title Case, everything else → UPPERCASE
+// e.g. "transfer dari ocbc" → "Transfer Dari OCBC"
+// e.g. "transfer ke saudara dari bca" → "Transfer Ke SAUDARA Dari BCA"
+const TRANSFER_CONNECTORS = new Set(['transfer', 'dari', 'ke']);
+function formatTransferDesc(str: string): string {
+  return str
+    .split(/\s+/)
+    .filter(Boolean)
+    .map(word => {
+      const lower = word.toLowerCase();
+      return TRANSFER_CONNECTORS.has(lower)
+        ? lower.charAt(0).toUpperCase() + lower.slice(1)
+        : word.toUpperCase();
+    })
+    .join(' ');
+}
+
 // Lazy supabase client — created on first DB call, not at module load
 let _supabase: ReturnType<typeof createClient> | null = null;
 function getSupabase() {
@@ -179,7 +197,7 @@ function parseCommand(text: string): ParsedCommand {
   for (const kw of transferKw) {
     if (t.includes(kw)) {
       const dest = withoutAmt.replace(new RegExp(kw, 'g'), '').replace(/^ke\s+/, '').trim();
-      const desc = toTitleCase(
+      const desc = formatTransferDesc(
         `Transfer${fromAssetHint ? ` Dari ${fromAssetHint}` : ''}${toAssetHint ? ` Ke ${toAssetHint}` : ''}` || 'Transfer'
       );
       return { intent: 'transfer', amount, description: desc, categoryHint: dest, fromAssetHint, toAssetHint };
@@ -555,11 +573,11 @@ async function processCommand(
            : parsed.intent === 'transfer' && toAssetId ? 'transfer'
            : 'expense';
 
-  // If reclassified from transfer → expense, description already built correctly in parseCommand
+  // If reclassified from transfer → expense, rebuild description with correct format
   let description = parsed.description;
   if (parsed.intent === 'transfer' && type === 'expense') {
-    const dest = parsed.toAssetHint ? toTitleCase(parsed.toAssetHint) : null;
-    const from = parsed.fromAssetHint ? toTitleCase(parsed.fromAssetHint) : null;
+    const dest = parsed.toAssetHint ? parsed.toAssetHint.toUpperCase() : null;
+    const from = parsed.fromAssetHint ? parsed.fromAssetHint.toUpperCase() : null;
     description = dest
       ? `Transfer Ke ${dest}${from ? ` Dari ${from}` : ''}`
       : from
