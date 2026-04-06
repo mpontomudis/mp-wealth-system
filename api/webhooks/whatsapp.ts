@@ -179,7 +179,9 @@ function parseCommand(text: string): ParsedCommand {
   for (const kw of transferKw) {
     if (t.includes(kw)) {
       const dest = withoutAmt.replace(new RegExp(kw, 'g'), '').replace(/^ke\s+/, '').trim();
-      const desc = dest ? `Transfer${fromAssetHint ? ` dari ${fromAssetHint}` : ''}${toAssetHint ? ` ke ${toAssetHint}` : ''}` : 'Transfer';
+      const desc = toTitleCase(
+        `Transfer${fromAssetHint ? ` Dari ${fromAssetHint}` : ''}${toAssetHint ? ` Ke ${toAssetHint}` : ''}` || 'Transfer'
+      );
       return { intent: 'transfer', amount, description: desc, categoryHint: dest, fromAssetHint, toAssetHint };
     }
   }
@@ -553,12 +555,15 @@ async function processCommand(
            : parsed.intent === 'transfer' && toAssetId ? 'transfer'
            : 'expense';
 
-  // If reclassified from transfer → expense, rebuild description using the person/destination name
+  // If reclassified from transfer → expense, description already built correctly in parseCommand
   let description = parsed.description;
   if (parsed.intent === 'transfer' && type === 'expense') {
     const dest = parsed.toAssetHint ? toTitleCase(parsed.toAssetHint) : null;
+    const from = parsed.fromAssetHint ? toTitleCase(parsed.fromAssetHint) : null;
     description = dest
-      ? `Transfer ke ${dest}`
+      ? `Transfer Ke ${dest}${from ? ` Dari ${from}` : ''}`
+      : from
+      ? `Transfer Dari ${from}`
       : (parsed.description ?? 'Pengeluaran');
   }
 
