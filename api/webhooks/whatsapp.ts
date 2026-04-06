@@ -168,17 +168,18 @@ function parseCommand(text: string): ParsedCommand {
   const tradingWithBroker = t.match(/^(?:trading|cek\s*trading|posisi)\s+([\w]+(?:\s[\w]+)?)$/);
   if (tradingWithBroker) return { intent: 'trading', brokerHint: tradingWithBroker[1].trim() };
 
-  // Extract asset hints from prepositions BEFORE stripping amount
-  // "dari [X]" or "pakai [X]" or "via [X]" → fromAssetHint
-  const fromAssetHint = t.match(/\b(?:dari|pakai|pake|via|lewat)\s+([\w\s]+?)(?:\s+ke\s|\s+untuk\s|\s*$)/i)?.[1]?.trim();
-  // "ke [X]" at or near end → toAssetHint
-  const toAssetHint = t.match(/\bke\s+([\w]+(?:\s[\w]+)?)\s*$/i)?.[1]?.trim();
-
-  // Extract fee: "fee 2500" / "biaya 2500" / "admin 2500" anywhere in text
+  // Extract fee FIRST so asset hints are parsed from clean text (without trailing "fee 2500")
+  // If fee comes at the end, toAssetHint regex would fail to find "ke [X]" since it's no longer at EOL
   const feeMatch = t.match(/\b(?:fee|biaya|admin|charge)\s+(\d[\d.,]*\s*(?:rb|ribu|k(?![a-z])|jt|juta)?)/i);
   const fee = feeMatch ? parseAmount(feeMatch[1]) : undefined;
-  // Strip fee from text before parsing main amount
+  // Strip fee from text before parsing asset hints and main amount
   const tClean = feeMatch ? t.replace(feeMatch[0], '').replace(/\s+/g, ' ').trim() : t;
+
+  // Extract asset hints from tClean (fee-stripped) so "ke ocbc" is at EOL even when "fee 2500" was appended
+  // "dari [X]" or "pakai [X]" or "via [X]" → fromAssetHint
+  const fromAssetHint = tClean.match(/\b(?:dari|pakai|pake|via|lewat)\s+([\w\s]+?)(?:\s+ke\s|\s+untuk\s|\s*$)/i)?.[1]?.trim();
+  // "ke [X]" at or near end → toAssetHint
+  const toAssetHint = tClean.match(/\bke\s+([\w]+(?:\s[\w]+)?)\s*$/i)?.[1]?.trim();
 
   // Find amount anywhere in the text
   // k(?![a-z]) prevents "ke" from being matched as unit "k" (×1000)
