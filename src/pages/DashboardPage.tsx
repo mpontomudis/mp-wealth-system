@@ -10,6 +10,7 @@ import {
   Legend,
 } from 'recharts';
 import { useAuth } from '@/shared/hooks/useAuth';
+import { useTheme } from '@/shared/contexts/ThemeContext';
 import { usePortfolioTotal } from '@/features/trading/hooks/usePortfolioTotal';
 import { useAssets } from '@/features/wealth/hooks/useAssets';
 import { useTransactions } from '@/features/wealth/hooks/useTransactions';
@@ -36,8 +37,17 @@ const BASE_CHART_MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May'];
 
 export default function DashboardPage() {
   const { user } = useAuth();
+  const { isDark } = useTheme();
   const { portfolio, isLoading: portfolioLoading } = usePortfolioTotal(user?.id ?? '');
   const { assets } = useAssets(user?.id ?? '');
+
+  const chartGrid = isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.07)';
+  const chartTick = isDark ? '#6b7280' : '#64748b';
+  const tooltipContentStyle = isDark
+    ? { backgroundColor: 'rgba(2,6,23,0.95)', border: '1px solid rgba(255,255,255,0.10)', borderRadius: '12px', backdropFilter: 'blur(20px)', boxShadow: '0 8px 32px rgba(0,0,0,0.5)' }
+    : { backgroundColor: 'rgba(255,255,255,0.98)', border: '1px solid rgba(0,0,0,0.10)', borderRadius: '12px', boxShadow: '0 4px 20px rgba(0,0,0,0.12)' };
+  const tooltipLabelStyle = isDark ? { color: '#9ca3af', fontSize: 12 } : { color: '#64748b', fontSize: 12 };
+  const tooltipItemStyle = isDark ? { color: '#e5e7eb' } : { color: '#1e293b' };
 
   // Fetch only this month's transactions for summary stats
   const now = new Date();
@@ -85,33 +95,33 @@ export default function DashboardPage() {
       {/* Header */}
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-white">
+          <h1 className="text-2xl font-semibold text-slate-900 dark:text-white">
             {getGreeting()}, Marlon{' '}
             <span className="inline-block animate-pulse-slow">👋</span>
           </h1>
-          <p className="text-sm text-gray-400 mt-1">
+          <p className="text-sm text-slate-500 dark:text-gray-400 mt-1">
             Here's your financial overview for today.
           </p>
         </div>
-        <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl border border-white/10 bg-white/5 backdrop-blur-sm text-xs text-gray-400">
+        <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl border border-slate-200 bg-white shadow-sm dark:border-white/10 dark:bg-white/5 dark:backdrop-blur-sm text-xs text-slate-500 dark:text-gray-400">
           <span className="h-1.5 w-1.5 rounded-full bg-mp-green animate-pulse-slow" />
           Live
         </div>
       </div>
 
       {/* ── Total Net Worth Banner ─────────────────────────────────────── */}
-      <div className="rounded-2xl border border-white/10 bg-white/[0.04] backdrop-blur-sm px-5 py-4 flex flex-col sm:flex-row sm:items-center gap-4">
+      <div className="rounded-2xl border border-slate-200 bg-white shadow-md dark:border-white/10 dark:bg-white/[0.04] dark:backdrop-blur-sm px-5 py-4 flex flex-col sm:flex-row sm:items-center gap-4">
         {/* Left: figure */}
         <div className="flex-1 min-w-0">
-          <p className="text-xs font-semibold text-gray-500 uppercase tracking-widest mb-1">Total Net Worth</p>
-          <p className="text-3xl font-bold text-white leading-none">{formatIDR(totalNetWorth)}</p>
-          <p className="text-sm text-gray-400 mt-1">≈ {formatUSD(totalNetWorth / exchangeRate)}</p>
+          <p className="text-xs font-semibold text-slate-400 dark:text-gray-500 uppercase tracking-widest mb-1">Total Net Worth</p>
+          <p className="text-3xl font-bold text-slate-900 dark:text-white leading-none">{formatIDR(totalNetWorth)}</p>
+          <p className="text-sm text-slate-500 dark:text-gray-400 mt-1">≈ {formatUSD(totalNetWorth / exchangeRate)}</p>
         </div>
 
         {/* Right: breakdown */}
         <div className="flex-1 min-w-0 flex flex-col gap-2">
           {/* Bar */}
-          <div className="h-2.5 rounded-full bg-white/[0.06] overflow-hidden flex">
+          <div className="h-2.5 rounded-full bg-slate-200 dark:bg-white/[0.06] overflow-hidden flex">
             <div
               className="h-full bg-mp-green transition-all duration-700"
               style={{ width: `${wealthPct}%` }}
@@ -125,21 +135,21 @@ export default function DashboardPage() {
           <div className="flex items-center justify-between gap-3 flex-wrap">
             <div className="flex items-center gap-1.5">
               <span className="h-2 w-2 rounded-full bg-mp-green flex-shrink-0" />
-              <span className="text-xs text-gray-400">
-                Wealth <span className="text-white font-medium">{formatIDR(totalAssetsIDR)}</span>
-                <span className="text-gray-600 ml-1">({wealthPct.toFixed(0)}%)</span>
+              <span className="text-xs text-slate-500 dark:text-gray-400">
+                Wealth <span className="text-slate-800 dark:text-white font-medium">{formatIDR(totalAssetsIDR)}</span>
+                <span className="text-slate-400 dark:text-gray-600 ml-1">({wealthPct.toFixed(0)}%)</span>
               </span>
             </div>
             {tradingEquityIDR > 0 ? (
               <div className="flex items-center gap-1.5">
                 <span className="h-2 w-2 rounded-full bg-mp-blue flex-shrink-0" />
-                <span className="text-xs text-gray-400">
-                  Trading <span className="text-white font-medium">{formatUSD(totalEquityUSD)}</span>
-                  <span className="text-gray-600 ml-1">({tradingPct.toFixed(0)}%)</span>
+                <span className="text-xs text-slate-500 dark:text-gray-400">
+                  Trading <span className="text-slate-800 dark:text-white font-medium">{formatUSD(totalEquityUSD)}</span>
+                  <span className="text-slate-400 dark:text-gray-600 ml-1">({tradingPct.toFixed(0)}%)</span>
                 </span>
               </div>
             ) : (
-              <span className="text-xs text-gray-600 italic">Add trading accounts to see full picture</span>
+              <span className="text-xs text-slate-400 dark:text-gray-600 italic">Add trading accounts to see full picture</span>
             )}
           </div>
         </div>
@@ -147,10 +157,10 @@ export default function DashboardPage() {
 
       {/* Section label */}
       <div className="flex items-center gap-3 -mb-2">
-        <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-widest">
+        <h2 className="text-xs font-semibold text-slate-400 dark:text-gray-500 uppercase tracking-widest">
           Quick Overview
         </h2>
-        <div className="flex-1 h-px bg-white/[0.06]" />
+        <div className="flex-1 h-px bg-slate-200 dark:bg-white/[0.06]" />
       </div>
 
       {/* Stat cards — items-stretch so all rows are same height */}
@@ -191,9 +201,9 @@ export default function DashboardPage() {
 
         <Card title="Wealth — Income vs Expenses">
           {portfolioLoading ? (
-            <div className="h-[300px] flex items-center justify-center text-gray-400 text-sm">
+            <div className="h-[300px] flex items-center justify-center text-mp-text-muted text-sm">
               <div className="flex items-center gap-2">
-                <div className="h-4 w-4 rounded-full border-2 border-white/10 border-t-blue-500 animate-spin" />
+                <div className="h-4 w-4 rounded-full border-2 border-slate-300 dark:border-white/10 border-t-blue-500 animate-spin" />
                 Loading chart…
               </div>
             </div>
@@ -210,28 +220,22 @@ export default function DashboardPage() {
                     <stop offset="100%" stopColor="#f87171" stopOpacity={1} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
-                <XAxis dataKey="month" tick={{ fill: '#6b7280', fontSize: 11 }} axisLine={false} tickLine={false} />
+                <CartesianGrid strokeDasharray="3 3" stroke={chartGrid} />
+                <XAxis dataKey="month" tick={{ fill: chartTick, fontSize: 11 }} axisLine={false} tickLine={false} />
                 <YAxis
-                  tick={{ fill: '#6b7280', fontSize: 11 }}
+                  tick={{ fill: chartTick, fontSize: 11 }}
                   tickFormatter={(v: number) => `${v}M`}
                   axisLine={false}
                   tickLine={false}
                 />
                 <Tooltip
                   formatter={(value: number) => [`Rp ${value.toFixed(1)}M`, '']}
-                  contentStyle={{
-                    backgroundColor: 'rgba(2, 6, 23, 0.95)',
-                    border: '1px solid rgba(255,255,255,0.10)',
-                    borderRadius: '12px',
-                    backdropFilter: 'blur(20px)',
-                    boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
-                  }}
-                  labelStyle={{ color: '#9ca3af', fontSize: 12 }}
-                  itemStyle={{ color: '#e5e7eb' }}
+                  contentStyle={tooltipContentStyle}
+                  labelStyle={tooltipLabelStyle}
+                  itemStyle={tooltipItemStyle}
                 />
                 <Legend
-                  wrapperStyle={{ paddingTop: '16px', fontSize: '12px', color: '#6b7280' }}
+                  wrapperStyle={{ paddingTop: '16px', fontSize: '12px', color: chartTick }}
                 />
                 <Line
                   type="monotone"

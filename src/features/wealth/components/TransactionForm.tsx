@@ -122,8 +122,8 @@ export function TransactionForm({ transaction, isOpen, onClose }: TransactionFor
   };
 
   const inputClass =
-    'w-full bg-white/[0.04] border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-mp-text-muted focus:border-mp-primary focus:outline-none transition-colors';
-  const labelClass = 'block text-xs font-medium text-mp-text-secondary mb-1.5';
+    'w-full bg-white border border-slate-300 text-slate-900 placeholder-slate-400 dark:bg-white/[0.04] dark:border-white/10 dark:text-white dark:placeholder-mp-text-muted rounded-lg px-3 py-2 text-sm focus:border-mp-primary focus:outline-none transition-colors';
+  const labelClass = 'block text-xs font-medium text-slate-600 dark:text-mp-text-secondary mb-1.5';
 
   return (
     <Modal
@@ -247,7 +247,7 @@ export function TransactionForm({ transaction, isOpen, onClose }: TransactionFor
 
         {/* Balance hint */}
         {(txType === 'income' || txType === 'expense') && (
-          <p className="text-xs text-yellow-400/80 -mt-1">
+          <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 -mt-1 dark:text-yellow-400/80 dark:bg-yellow-900/10 dark:border-yellow-500/20">
             ⚠️ Pilih {txType === 'income' ? 'To Account' : 'From Account'} agar saldo aset otomatis terupdate.
           </p>
         )}

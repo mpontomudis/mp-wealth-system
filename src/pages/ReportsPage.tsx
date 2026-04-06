@@ -6,6 +6,7 @@ import {
   LineChart, Line, PieChart, Pie, Cell, Sector,
 } from 'recharts';
 import { useAuth } from '@/shared/hooks/useAuth';
+import { useTheme } from '@/shared/contexts/ThemeContext';
 import { useTransactions } from '@/features/wealth/hooks/useTransactions';
 import { Card } from '@/shared/components/Card';
 import { ExportMenu } from '@/shared/components/ExportMenu';
@@ -137,7 +138,16 @@ function renderActiveShape(props: Record<string, unknown>) {
 
 export default function ReportsPage() {
   const { user } = useAuth();
+  const { isDark } = useTheme();
   const today = new Date().toISOString().split('T')[0];
+
+  const chartGrid = isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.07)';
+  const chartTick = isDark ? '#6b7280' : '#64748b';
+  const tooltipContentStyle = isDark
+    ? { backgroundColor: 'rgba(2,6,23,0.95)', border: '1px solid rgba(255,255,255,0.10)', borderRadius: '8px', fontSize: '12px' }
+    : { backgroundColor: 'rgba(255,255,255,0.98)', border: '1px solid rgba(0,0,0,0.10)', borderRadius: '8px', fontSize: '12px', boxShadow: '0 4px 16px rgba(0,0,0,0.10)' };
+  const tooltipLabelStyle = isDark ? { color: '#9ca3af' } : { color: '#64748b' };
+  const tooltipItemStyle = isDark ? { color: '#e5e7eb' } : { color: '#1e293b' };
 
   const [activeTab, setActiveTab] = useState<TabKey>('overview');
   const [period, setPeriod] = useState<Period>('day');
@@ -241,24 +251,24 @@ export default function ReportsPage() {
 
   const PeriodSelector = (
     <div className="flex items-center gap-2 flex-wrap">
-      <div className="flex items-center gap-1 rounded-xl bg-white/[0.06] border border-white/10 p-1">
+      <div className="flex items-center gap-1 rounded-xl bg-slate-100 border border-slate-200 dark:bg-white/[0.06] dark:border-white/10 p-1">
         {PERIOD_TABS.map(t => (
           <button key={t.key} onClick={() => { setPeriod(t.key); setAnchor(today); }}
-            className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${period === t.key ? 'bg-white/15 text-white shadow' : 'text-mp-text-muted hover:text-white'}`}>
+            className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${period === t.key ? 'bg-white text-slate-900 shadow dark:bg-white/15 dark:text-white dark:shadow' : 'text-slate-500 hover:text-slate-800 dark:text-mp-text-muted dark:hover:text-white'}`}>
             {t.label}
           </button>
         ))}
       </div>
       <div className="flex items-center gap-2">
-        <button onClick={() => navigate(-1)} className="w-8 h-8 rounded-lg border border-white/10 bg-white/[0.04] hover:bg-white/[0.08] flex items-center justify-center text-mp-text-secondary hover:text-white transition-colors text-sm">‹</button>
+        <button onClick={() => navigate(-1)} className="w-8 h-8 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 dark:border-white/10 dark:bg-white/[0.04] dark:hover:bg-white/[0.08] flex items-center justify-center text-slate-500 dark:text-mp-text-secondary hover:text-slate-900 dark:hover:text-white transition-colors text-sm">‹</button>
         {period === 'day' ? (
           <input type="date" value={anchor} onChange={e => setAnchor(e.target.value)}
-            className="bg-white/[0.04] border border-white/10 rounded-lg px-3 py-1.5 text-sm text-white focus:border-mp-primary focus:outline-none" />
+            className="bg-white border border-slate-200 text-slate-900 dark:bg-white/[0.04] dark:border-white/10 dark:text-white rounded-lg px-3 py-1.5 text-sm focus:border-mp-primary focus:outline-none" />
         ) : (
           <span className="text-sm font-medium text-mp-text-primary min-w-[160px] text-center">{label}</span>
         )}
-        <button onClick={() => navigate(1)} disabled={anchor >= today} className="w-8 h-8 rounded-lg border border-white/10 bg-white/[0.04] hover:bg-white/[0.08] flex items-center justify-center text-mp-text-secondary hover:text-white transition-colors text-sm disabled:opacity-30">›</button>
-        <button onClick={() => setAnchor(today)} className="px-3 py-1.5 rounded-lg border border-white/10 bg-white/[0.04] hover:bg-white/[0.08] text-xs text-mp-text-muted hover:text-white transition-colors">Today</button>
+        <button onClick={() => navigate(1)} disabled={anchor >= today} className="w-8 h-8 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 dark:border-white/10 dark:bg-white/[0.04] dark:hover:bg-white/[0.08] flex items-center justify-center text-slate-500 dark:text-mp-text-secondary hover:text-slate-900 dark:hover:text-white transition-colors text-sm disabled:opacity-30">›</button>
+        <button onClick={() => setAnchor(today)} className="px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 dark:border-white/10 dark:bg-white/[0.04] dark:hover:bg-white/[0.08] text-xs text-slate-500 dark:text-mp-text-muted hover:text-slate-900 dark:hover:text-white transition-colors">Today</button>
       </div>
     </div>
   );
@@ -278,10 +288,10 @@ export default function ReportsPage() {
       </div>
 
       {/* Main Tabs */}
-      <div className="flex items-center gap-1 rounded-xl bg-white/[0.06] border border-white/10 p-1 self-start overflow-x-auto">
+      <div className="flex items-center gap-1 rounded-xl bg-slate-100 border border-slate-200 dark:bg-white/[0.06] dark:border-white/10 p-1 self-start overflow-x-auto">
         {TABS.map(t => (
           <button key={t.key} onClick={() => setActiveTab(t.key)}
-            className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${activeTab === t.key ? 'bg-mp-primary text-white shadow' : 'text-mp-text-muted hover:text-white'}`}>
+            className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${activeTab === t.key ? 'bg-mp-primary text-white shadow' : 'text-slate-500 hover:text-slate-900 dark:text-mp-text-muted dark:hover:text-white'}`}>
             {t.label}
           </button>
         ))}
@@ -325,12 +335,15 @@ export default function ReportsPage() {
             ) : (
               <ResponsiveContainer width="100%" height={260}>
                 <BarChart data={barChartData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#1e2a3a" />
-                  <XAxis dataKey="label" tick={{ fill: '#94a3b8', fontSize: 11 }} />
-                  <YAxis tick={{ fill: '#94a3b8', fontSize: 11 }} tickFormatter={(v: number) => `${v.toFixed(1)}M`} />
+                  <CartesianGrid strokeDasharray="3 3" stroke={chartGrid} />
+                  <XAxis dataKey="label" tick={{ fill: chartTick, fontSize: 11 }} />
+                  <YAxis tick={{ fill: chartTick, fontSize: 11 }} tickFormatter={(v: number) => `${v.toFixed(1)}M`} />
                   <Tooltip formatter={(value: number, name: string) => [formatIDR(value * 1_000_000), name === 'income' ? 'Income' : 'Expenses']}
-                    contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #1e293b', borderRadius: '8px', fontSize: '12px' }} />
-                  <Legend formatter={(v) => v === 'income' ? 'Income' : 'Expenses'} />
+                    contentStyle={tooltipContentStyle}
+                    labelStyle={tooltipLabelStyle}
+                    itemStyle={tooltipItemStyle}
+                  />
+                  <Legend formatter={(v) => v === 'income' ? 'Income' : 'Expenses'} wrapperStyle={{ color: chartTick, fontSize: '12px' }} />
                   <Bar dataKey="income" fill="#10b981" name="income" radius={[4,4,0,0]} />
                   <Bar dataKey="expenses" fill="#ef4444" name="expenses" radius={[4,4,0,0]} />
                 </BarChart>
@@ -421,10 +434,10 @@ export default function ReportsPage() {
                           </div>
                           <div className="flex items-center gap-3 shrink-0 ml-2">
                             <span className="text-xs text-mp-text-muted">{pct.toFixed(1)}%</span>
-                            <span className="text-sm font-medium text-white">{formatIDR(cat.value * 1_000_000)}</span>
+                           <span className="text-sm font-medium text-slate-800 dark:text-white">{formatIDR(cat.value * 1_000_000)}</span>
                           </div>
                         </div>
-                        <div className="h-1.5 w-full bg-white/[0.06] rounded-full overflow-hidden">
+                        <div className="h-1.5 w-full bg-slate-100 dark:bg-white/[0.06] rounded-full overflow-hidden">
                           <div className="h-full rounded-full" style={{ width: `${pct}%`, backgroundColor: color }} />
                         </div>
                       </div>
@@ -448,12 +461,12 @@ export default function ReportsPage() {
             <Card title="Income vs Expenses — Last 6 Months">
               <ResponsiveContainer width="100%" height={260}>
                 <LineChart data={trendsData} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#1e2a3a" />
-                  <XAxis dataKey="label" tick={{ fill: '#94a3b8', fontSize: 11 }} />
-                  <YAxis tick={{ fill: '#94a3b8', fontSize: 11 }} tickFormatter={(v: number) => `${v.toFixed(0)}M`} />
+                  <CartesianGrid strokeDasharray="3 3" stroke={chartGrid} />
+                  <XAxis dataKey="label" tick={{ fill: chartTick, fontSize: 11 }} />
+                  <YAxis tick={{ fill: chartTick, fontSize: 11 }} tickFormatter={(v: number) => `${v.toFixed(0)}M`} />
                   <Tooltip formatter={(value: number, name: string) => [formatIDR(value * 1_000_000), name === 'income' ? 'Income' : 'Expenses']}
-                    contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #1e293b', borderRadius: '8px', fontSize: '12px' }} />
-                  <Legend formatter={(v) => v === 'income' ? 'Income' : 'Expenses'} />
+                    contentStyle={tooltipContentStyle} labelStyle={tooltipLabelStyle} itemStyle={tooltipItemStyle} />
+                  <Legend formatter={(v) => v === 'income' ? 'Income' : 'Expenses'} wrapperStyle={{ color: chartTick, fontSize: '12px' }} />
                   <Line type="monotone" dataKey="income" stroke="#10b981" strokeWidth={2.5} dot={{ r: 4, fill: '#10b981' }} name="income" />
                   <Line type="monotone" dataKey="expenses" stroke="#ef4444" strokeWidth={2.5} dot={{ r: 4, fill: '#ef4444' }} name="expenses" />
                 </LineChart>
@@ -463,11 +476,11 @@ export default function ReportsPage() {
             <Card title="Savings Rate — Last 6 Months">
               <ResponsiveContainer width="100%" height={220}>
                 <BarChart data={savingsTrendData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#1e2a3a" />
-                  <XAxis dataKey="label" tick={{ fill: '#94a3b8', fontSize: 11 }} />
-                  <YAxis tick={{ fill: '#94a3b8', fontSize: 11 }} tickFormatter={(v: number) => `${v}%`} />
+                  <CartesianGrid strokeDasharray="3 3" stroke={chartGrid} />
+                  <XAxis dataKey="label" tick={{ fill: chartTick, fontSize: 11 }} />
+                  <YAxis tick={{ fill: chartTick, fontSize: 11 }} tickFormatter={(v: number) => `${v}%`} />
                   <Tooltip formatter={(value: number) => [`${value.toFixed(1)}%`, 'Savings Rate']}
-                    contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #1e293b', borderRadius: '8px', fontSize: '12px' }} />
+                    contentStyle={tooltipContentStyle} labelStyle={tooltipLabelStyle} itemStyle={tooltipItemStyle} />
                   <Bar dataKey="savings" fill="#3b82f6" radius={[4,4,0,0]} name="savings" />
                 </BarChart>
               </ResponsiveContainer>

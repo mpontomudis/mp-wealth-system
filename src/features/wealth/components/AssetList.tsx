@@ -136,14 +136,14 @@ export function AssetList() {
                       <p className="text-xs text-mp-text-muted">≈ {formatUSD(totalUsd)}</p>
                     </div>
                   </div>
-                  <div className="rounded-xl bg-white/[0.04] border border-white/10 px-4 py-3 flex sm:flex-col items-center sm:text-center justify-between sm:justify-center gap-2 sm:gap-0">
+                  <div className="rounded-xl bg-white border border-slate-200 shadow-sm dark:bg-white/[0.04] dark:border-white/10 px-4 py-3 flex sm:flex-col items-center sm:text-center justify-between sm:justify-center gap-2 sm:gap-0">
                     <p className="text-xs text-mp-text-muted">Total Assets</p>
-                    <p className="text-sm font-bold text-white">{assets.length} akun</p>
+                    <p className="text-sm font-bold text-slate-800 dark:text-white">{assets.length} akun</p>
                   </div>
-                  <div className="rounded-xl bg-white/[0.04] border border-white/10 px-4 py-3 flex sm:flex-col items-center sm:text-center justify-between sm:justify-center gap-2 sm:gap-0">
+                  <div className="rounded-xl bg-white border border-slate-200 shadow-sm dark:bg-white/[0.04] dark:border-white/10 px-4 py-3 flex sm:flex-col items-center sm:text-center justify-between sm:justify-center gap-2 sm:gap-0">
                     <p className="text-xs text-mp-text-muted">Terbesar</p>
                     <div className="text-right sm:text-center">
-                      <p className="text-xs text-white font-semibold capitalize">{topType?.[0] ?? '—'}</p>
+                      <p className="text-xs text-slate-800 dark:text-white font-semibold capitalize">{topType?.[0] ?? '—'}</p>
                       <p className="text-xs text-mp-text-muted">{topType ? formatIDR(topType[1]) : '—'}</p>
                     </div>
                   </div>
@@ -167,7 +167,7 @@ export function AssetList() {
                 </div>
                 <div className="flex items-center gap-2">
                   <button
-                    className="p-1 rounded hover:bg-mp-bg-secondary text-mp-text-muted hover:text-blue-400 transition-colors"
+                    className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/10 text-mp-text-muted hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
                     title="Edit"
                     onClick={() => {
                       setValue('name', asset.name ?? '');
@@ -181,7 +181,7 @@ export function AssetList() {
                     <Pencil size={15} />
                   </button>
                   <button
-                    className="p-1 rounded hover:bg-mp-bg-secondary text-mp-text-muted hover:text-red-400 transition-colors"
+                    className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/10 text-mp-text-muted hover:text-red-600 dark:hover:text-red-400 transition-colors"
                     title="Delete"
                     onClick={() => {
                       if (window.confirm(`Delete "${asset.name}"?`)) {
