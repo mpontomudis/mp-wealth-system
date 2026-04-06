@@ -536,3 +536,4 @@ WHERE tgname = 'trg_sync_asset_balance';
 | 2026-04-03 | Section 6 | Fix initial balance $0 — tambah INSERT policy untuk account_metrics_snapshots |
 | 2026-04-04 | Section 7 | Add from_asset_id & to_asset_id ke transactions untuk transfer tracking |
 | 2026-04-04 | Section 8 | Add fee column ke transactions + e_wallet asset type |
+| 2026-04-06 | Section 9 | Auto-sync asset balance via DB trigger saat transaksi INSERT/UPDATE |
