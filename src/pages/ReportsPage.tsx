@@ -140,7 +140,7 @@ export default function ReportsPage() {
   const today = new Date().toISOString().split('T')[0];
 
   const [activeTab, setActiveTab] = useState<TabKey>('overview');
-  const [period, setPeriod] = useState<Period>('month');
+  const [period, setPeriod] = useState<Period>('day');
   const [anchor, setAnchor] = useState(today);
   const [activePieIndex, setActivePieIndex] = useState(0);
 
