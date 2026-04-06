@@ -174,7 +174,8 @@ function parseCommand(text: string): ParsedCommand {
   const toAssetHint = t.match(/\bke\s+([\w]+(?:\s[\w]+)?)\s*$/i)?.[1]?.trim();
 
   // Find amount anywhere in the text
-  const amtMatch = t.match(/(\d[\d.,]*\s*(?:rb|ribu|k|jt|juta|m(?:iliar)?|b(?:iliar)?)?)/);
+  // k(?![a-z]) prevents "ke" from being matched as unit "k" (×1000)
+  const amtMatch = t.match(/(\d[\d.,]*\s*(?:rb|ribu|k(?![a-z])|jt|juta|m(?:iliar)?|b(?:iliar)?)?)/);
   const amount = amtMatch ? parseAmount(amtMatch[1]) : null;
   if (!amount) return { intent: 'unknown' };
 
@@ -187,7 +188,10 @@ function parseCommand(text: string): ParsedCommand {
   const incomeKw = ['gaji', 'terima', 'dapat', 'pemasukan', 'masuk', 'diterima', 'bonus', 'thr', 'profit', 'dividen', 'income'];
   for (const kw of incomeKw) {
     if (t.includes(kw)) {
-      const desc = withoutAmt.replace(new RegExp(kw, 'g'), '').replace(/\s+/g, ' ').trim();
+      // Strip ALL income keywords from desc to avoid noise words like "masuk" remaining
+      let desc = withoutAmt;
+      for (const k of incomeKw) desc = desc.replace(new RegExp(`\\b${k}\\b`, 'g'), '');
+      desc = desc.replace(/\s+/g, ' ').trim();
       return { intent: 'income', amount, description: toTitleCase(desc || kw), categoryHint: kw, fromAssetHint, toAssetHint };
     }
   }
