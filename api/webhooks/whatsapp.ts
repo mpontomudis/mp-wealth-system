@@ -503,7 +503,8 @@ _(otomatis masuk pengeluaran jika tujuan bukan aset)_
 
 💡 *Tips:*
 Sistem otomatis membedakan transfer antar aset vs kirim ke orang berdasarkan nama tujuan.
-Nama aset sesuai yang didaftarkan di menu Assets.`;
+Nama aset sesuai yang didaftarkan di menu Assets.
+Tambahkan "fee [nominal]" untuk mencatat biaya admin/transfer.`;
 
 // ---------------------------------------------------------------------------
 // Normalise phone numbers for comparison

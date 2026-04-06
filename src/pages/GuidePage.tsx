@@ -591,9 +591,10 @@ const sections: Section[] = [
             <Badge color="bg-blue-500/20 text-blue-400">TRANSFER ANTAR ASET</Badge>
             <span className="text-xs text-mp-text-secondary">Tujuan = nama aset yang terdaftar</span>
           </div>
-          <WACmd cmd="transfer 1jt dari bri ke bca"    desc="Transfer Rp 1.000.000 dari BRI ke BCA ✅" />
-          <WACmd cmd="kirim 200rb dari gopay ke bri"   desc="Transfer Rp 200.000 dari GoPay ke BRI ✅" />
-          <p className="text-xs text-blue-300/70 pt-1">💡 Otomatis terdeteksi sebagai Transfer karena <strong>bca</strong> / <strong>bri</strong> terdaftar di Assets.</p>
+          <WACmd cmd="transfer 1jt dari bri ke bca"                desc="Transfer Rp 1.000.000 dari BRI ke BCA ✅" />
+          <WACmd cmd="kirim 200rb dari gopay ke bri"               desc="Transfer Rp 200.000 dari GoPay ke BRI ✅" />
+          <WACmd cmd="transfer 500rb dari bri ke ocbc fee 2500"    desc="Transfer Rp 500.000 + fee Rp 2.500 ✅" />
+          <p className="text-xs text-blue-300/70 pt-1">💡 Tambahkan <code className="bg-black/20 px-1 rounded">fee [nominal]</code> untuk mencatat biaya admin. Kata kunci: <code className="bg-black/20 px-1 rounded">fee</code> / <code className="bg-black/20 px-1 rounded">biaya</code> / <code className="bg-black/20 px-1 rounded">admin</code></p>
         </div>
 
         {/* Kirim ke orang → Pengeluaran */}
