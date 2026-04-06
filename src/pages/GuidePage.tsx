@@ -558,6 +558,8 @@ const sections: Section[] = [
 
         <Warning>
           <strong>Penting:</strong> Tulis nama aset dengan kata kunci <code className="bg-black/20 px-1 rounded">dari</code> / <code className="bg-black/20 px-1 rounded">pakai</code> (expense) atau <code className="bg-black/20 px-1 rounded">ke</code> (income) agar saldo aset otomatis terupdate. Nama aset harus sesuai yang ada di menu <strong>Assets</strong>.
+          <br /><br />
+          <strong>Transfer otomatis terdeteksi:</strong> Jika tujuan <code className="bg-black/20 px-1 rounded">ke [X]</code> adalah <strong>nama aset terdaftar</strong> → dicatat sebagai Transfer antar aset. Jika tujuan adalah <strong>nama orang</strong> → otomatis dicatat sebagai Pengeluaran. Tidak perlu format berbeda!
         </Warning>
 
         {/* Expense */}
@@ -583,14 +585,27 @@ const sections: Section[] = [
           <WACmd cmd="bonus 500rb ke cash"      desc="Income Rp 500.000, masuk ke Cash" />
         </div>
 
-        {/* Transfer */}
+        {/* Transfer antar aset */}
         <div className="rounded-xl border border-blue-500/20 bg-blue-500/[0.04] p-4 space-y-2.5">
           <div className="flex flex-wrap items-center gap-2 mb-1">
-            <Badge color="bg-blue-500/20 text-blue-400">TRANSFER</Badge>
-            <span className="text-xs text-mp-text-secondary">Format: transfer [nominal] dari [aset] ke [aset]</span>
+            <Badge color="bg-blue-500/20 text-blue-400">TRANSFER ANTAR ASET</Badge>
+            <span className="text-xs text-mp-text-secondary">Tujuan = nama aset yang terdaftar</span>
           </div>
-          <WACmd cmd="transfer 1jt dari bri ke bca"    desc="Transfer Rp 1.000.000 dari BRI ke BCA" />
-          <WACmd cmd="kirim 200rb dari bri ke gopay"   desc="Transfer Rp 200.000 dari BRI ke GoPay" />
+          <WACmd cmd="transfer 1jt dari bri ke bca"    desc="Transfer Rp 1.000.000 dari BRI ke BCA ✅" />
+          <WACmd cmd="kirim 200rb dari gopay ke bri"   desc="Transfer Rp 200.000 dari GoPay ke BRI ✅" />
+          <p className="text-xs text-blue-300/70 pt-1">💡 Otomatis terdeteksi sebagai Transfer karena <strong>bca</strong> / <strong>bri</strong> terdaftar di Assets.</p>
+        </div>
+
+        {/* Kirim ke orang → Pengeluaran */}
+        <div className="rounded-xl border border-orange-500/20 bg-orange-500/[0.04] p-4 space-y-2.5">
+          <div className="flex flex-wrap items-center gap-2 mb-1">
+            <Badge color="bg-orange-500/20 text-orange-400">KIRIM KE ORANG → PENGELUARAN</Badge>
+            <span className="text-xs text-mp-text-secondary">Tujuan = nama orang / bukan aset</span>
+          </div>
+          <WACmd cmd="transfer 50rb ke saudara dari bca"  desc="Pengeluaran Rp 50.000 dari BCA 🔴" />
+          <WACmd cmd="kirim 100rb ke mama dari gopay"     desc="Pengeluaran Rp 100.000 dari GoPay 🔴" />
+          <WACmd cmd="transfer 200rb ke teman dari cash"  desc="Pengeluaran Rp 200.000 dari Cash 🔴" />
+          <p className="text-xs text-orange-300/70 pt-1">💡 Otomatis jadi Pengeluaran karena <strong>saudara</strong> / <strong>mama</strong> bukan nama aset yang terdaftar.</p>
         </div>
 
         {/* Info commands */}
