@@ -71,6 +71,7 @@ interface FonntePayload {
 interface ParsedCommand {
   intent: 'expense' | 'income' | 'transfer' | 'balance' | 'report' | 'trading' | 'help' | 'unknown';
   amount?: number;
+  fee?: number;         // transfer fee, e.g. "fee 2500"
   description?: string;
   categoryHint?: string;
   fromAssetHint?: string;  // "dari gopay" / "pakai bri"
@@ -173,14 +174,20 @@ function parseCommand(text: string): ParsedCommand {
   // "ke [X]" at or near end → toAssetHint
   const toAssetHint = t.match(/\bke\s+([\w]+(?:\s[\w]+)?)\s*$/i)?.[1]?.trim();
 
+  // Extract fee: "fee 2500" / "biaya 2500" / "admin 2500" anywhere in text
+  const feeMatch = t.match(/\b(?:fee|biaya|admin|charge)\s+(\d[\d.,]*\s*(?:rb|ribu|k(?![a-z])|jt|juta)?)/i);
+  const fee = feeMatch ? parseAmount(feeMatch[1]) : undefined;
+  // Strip fee from text before parsing main amount
+  const tClean = feeMatch ? t.replace(feeMatch[0], '').replace(/\s+/g, ' ').trim() : t;
+
   // Find amount anywhere in the text
   // k(?![a-z]) prevents "ke" from being matched as unit "k" (×1000)
-  const amtMatch = t.match(/(\d[\d.,]*\s*(?:rb|ribu|k(?![a-z])|jt|juta|m(?:iliar)?|b(?:iliar)?)?)/);
+  const amtMatch = tClean.match(/(\d[\d.,]*\s*(?:rb|ribu|k(?![a-z])|jt|juta|m(?:iliar)?|b(?:iliar)?)?)/);
   const amount = amtMatch ? parseAmount(amtMatch[1]) : null;
   if (!amount) return { intent: 'unknown' };
 
   // Strip amount + asset prepositions to isolate description
-  let withoutAmt = t.replace(amtMatch![0], '').replace(/\s+/g, ' ').trim();
+  let withoutAmt = tClean.replace(amtMatch![0], '').replace(/\s+/g, ' ').trim();
   if (fromAssetHint) withoutAmt = withoutAmt.replace(new RegExp(`(?:dari|pakai|pake|via|lewat)\\s+${fromAssetHint}`, 'i'), '').trim();
   if (toAssetHint)   withoutAmt = withoutAmt.replace(new RegExp(`ke\\s+${toAssetHint}\\s*$`, 'i'), '').trim();
 
@@ -204,7 +211,7 @@ function parseCommand(text: string): ParsedCommand {
       const desc = formatTransferDesc(
         `Transfer${fromAssetHint ? ` Dari ${fromAssetHint}` : ''}${toAssetHint ? ` Ke ${toAssetHint}` : ''}` || 'Transfer'
       );
-      return { intent: 'transfer', amount, description: desc, categoryHint: dest, fromAssetHint, toAssetHint };
+      return { intent: 'transfer', amount, fee, description: desc, categoryHint: dest, fromAssetHint, toAssetHint };
     }
   }
 
@@ -476,6 +483,7 @@ const HELP_MSG = `📱 *Panduan Perintah WA:*
 🔄 *Transfer Antar Aset:*
 • transfer 1jt dari bri ke bca
 • kirim 200rb dari gopay ke bri
+• transfer 500rb dari bri ke ocbc fee 2500
 _(tujuan harus nama aset yang terdaftar)_
 
 💸 *Kirim ke Orang (Pengeluaran):*
@@ -606,6 +614,7 @@ async function processCommand(
       category_id:          categoryId,
       from_asset_id:        (type === 'transfer' || type === 'expense') ? fromAssetId : null,
       to_asset_id:          (type === 'transfer' || type === 'income')  ? toAssetId  : null,
+      fee:                  type === 'transfer' ? (parsed.fee ?? null) : null,
       source:               'whatsapp',
       whatsapp_message_id:  waMessageId,
       transaction_date:     today,
@@ -645,6 +654,7 @@ async function processCommand(
     ``,
     `📝 ${tx?.description}`,
     `💰 ${formatRupiah(parsed.amount)}`,
+    ...(parsed.fee ? [`🏷️ Fee: ${formatRupiah(parsed.fee)}`] : []),
     ...assetLines,
     `📅 ${today}`,
     ``,
