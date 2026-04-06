@@ -14,19 +14,19 @@ function toTitleCase(str: string): string {
 }
 
 // Transfer description formatter:
-// connector words (transfer/dari/ke) → Title Case, everything else → UPPERCASE
-// e.g. "transfer dari ocbc" → "Transfer Dari OCBC"
-// e.g. "transfer ke saudara dari bca" → "Transfer Ke SAUDARA Dari BCA"
-const TRANSFER_CONNECTORS = new Set(['transfer', 'dari', 'ke']);
+// "Transfer" → Title Case, connector words (dari/ke) → lowercase, names → UPPERCASE
+// e.g. "transfer dari ocbc" → "Transfer dari OCBC"
+// e.g. "transfer ke saudara dari bca" → "Transfer ke SAUDARA dari BCA"
+const TRANSFER_LOWERCASE = new Set(['dari', 'ke', 'dan', 'via', 'ke', 'lewat']);
 function formatTransferDesc(str: string): string {
   return str
     .split(/\s+/)
     .filter(Boolean)
-    .map(word => {
+    .map((word, i) => {
       const lower = word.toLowerCase();
-      return TRANSFER_CONNECTORS.has(lower)
-        ? lower.charAt(0).toUpperCase() + lower.slice(1)
-        : word.toUpperCase();
+      if (lower === 'transfer') return 'Transfer';
+      if (TRANSFER_LOWERCASE.has(lower)) return lower;
+      return word.toUpperCase();
     })
     .join(' ');
 }
@@ -579,9 +579,9 @@ async function processCommand(
     const dest = parsed.toAssetHint ? parsed.toAssetHint.toUpperCase() : null;
     const from = parsed.fromAssetHint ? parsed.fromAssetHint.toUpperCase() : null;
     description = dest
-      ? `Transfer Ke ${dest}${from ? ` Dari ${from}` : ''}`
+      ? `Transfer ke ${dest}${from ? ` dari ${from}` : ''}`
       : from
-      ? `Transfer Dari ${from}`
+      ? `Transfer dari ${from}`
       : (parsed.description ?? 'Pengeluaran');
   }
 
