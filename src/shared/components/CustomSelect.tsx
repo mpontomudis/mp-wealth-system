@@ -77,8 +77,8 @@ export function CustomSelect({
         aria-haspopup="listbox"
         aria-expanded={open}
         className={cn(
-          'w-full flex items-center justify-between gap-2 px-3 py-2 rounded-lg text-sm transition-all duration-200',
-          'border text-left focus:outline-none focus:ring-1 focus:ring-mp-primary/60',
+          'w-full flex items-center justify-between gap-2 px-3 py-2 rounded-xl text-sm transition-all duration-200',
+          'border text-left focus:outline-none focus:ring-2 focus:ring-[#4A90E2]/25',
           'disabled:opacity-40 disabled:cursor-not-allowed',
           // light
           'bg-white text-slate-900 border-slate-300 hover:border-slate-400',
@@ -87,7 +87,7 @@ export function CustomSelect({
           error
             ? 'border-red-400 dark:border-mp-red/50 focus:border-red-500 dark:focus:border-mp-red'
             : open
-            ? 'border-blue-400 dark:border-mp-primary/60 dark:bg-white/[0.06]'
+            ? 'border-[#4A90E2] dark:border-[#4A90E2]/60 dark:bg-white/[0.06]'
             : 'dark:border-white/10 dark:hover:border-white/20 dark:hover:bg-white/[0.06]',
         )}
       >
@@ -122,7 +122,7 @@ export function CustomSelect({
               className={cn(
                 'flex items-center gap-3 w-full px-4 py-2.5 text-sm text-left transition-colors',
                 opt.value === value
-                  ? 'bg-blue-50 text-blue-900 dark:bg-mp-primary/15 dark:text-white'
+                  ? 'bg-[#4A90E2]/10 text-[#4A90E2] dark:bg-[#4A90E2]/15 dark:text-white'
                   : 'text-slate-700 hover:bg-slate-50 hover:text-slate-900 dark:text-mp-text-secondary dark:hover:bg-white/[0.06] dark:hover:text-white',
               )}
             >

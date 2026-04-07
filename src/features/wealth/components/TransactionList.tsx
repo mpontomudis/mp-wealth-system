@@ -30,12 +30,6 @@ const TYPE_OPTIONS = [
   { value: 'transfer', label: 'Transfer' },
 ];
 
-const AMOUNT_COLOR: Record<TransactionType, string> = {
-  income: 'text-mp-green',
-  expense: 'text-mp-red',
-  transfer: 'text-mp-blue',
-};
-
 const TYPE_BADGE: Record<TransactionType, 'success' | 'danger' | 'info'> = {
   income: 'success',
   expense: 'danger',
