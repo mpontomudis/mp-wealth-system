@@ -103,7 +103,7 @@ export default function BudgetPage() {
 
       {/* Monthly Summary Banner */}
       {(budgets ?? []).some((b) => b.period === 'monthly') && (
-        <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4">
+        <div className="rounded-xl border border-slate-200 bg-white/80 dark:border-white/10 dark:bg-white/[0.03] p-4">
           <div className="flex items-center justify-between mb-3">
             <p className="text-xs font-semibold text-mp-text-secondary uppercase tracking-widest">
               This Month — Overall
@@ -112,7 +112,7 @@ export default function BudgetPage() {
               {budgetUtilPct.toFixed(0)}% of budget used
             </p>
           </div>
-          <div className="h-2.5 w-full bg-white/[0.06] rounded-full overflow-hidden mb-3">
+          <div className="h-2.5 w-full bg-slate-200 dark:bg-white/[0.06] rounded-full overflow-hidden mb-3">
             <div
               className={`h-full rounded-full transition-all duration-700 ${
                 budgetUtilPct > 100 ? 'bg-mp-red' : budgetUtilPct > 75 ? 'bg-mp-gold' : 'bg-mp-green'
@@ -122,10 +122,10 @@ export default function BudgetPage() {
           </div>
           <div className="flex justify-between text-xs">
             <span className="text-mp-text-muted">
-              Spent: <span className="font-semibold text-white">{formatIDR(totalSpent)}</span>
+              Spent: <span className="font-semibold text-mp-text-primary">{formatIDR(totalSpent)}</span>
             </span>
             <span className="text-mp-text-muted">
-              Budgeted: <span className="font-semibold text-white">{formatIDR(totalBudgeted)}</span>
+              Budgeted: <span className="font-semibold text-mp-text-primary">{formatIDR(totalBudgeted)}</span>
             </span>
           </div>
         </div>

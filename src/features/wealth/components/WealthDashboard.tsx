@@ -12,6 +12,7 @@ import {
 import { useAuth } from '@/shared/hooks/useAuth';
 import { useAssets } from '@/features/wealth/hooks/useAssets';
 import { useTransactions } from '@/features/wealth/hooks/useTransactions';
+import { useTheme } from '@/shared/contexts/ThemeContext';
 import { StatCard } from '@/shared/components/StatCard';
 import { Card } from '@/shared/components/Card';
 import { TransactionList } from './TransactionList';
@@ -22,6 +23,7 @@ const CHART_MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
 
 export function WealthDashboard() {
   const { user } = useAuth();
+  const { isDark } = useTheme();
   const { assets, isLoading: assetsLoading } = useAssets(user?.id ?? '');
 
   // Fetch only this month's transactions for summary stats
@@ -48,6 +50,14 @@ export function WealthDashboard() {
 
   const netCashflow = monthlyIncome - monthlyExpenses;
   const isLoading = assetsLoading || txLoading;
+
+  const chartGrid = isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.07)';
+  const chartTick = isDark ? '#94a3b8' : '#64748b';
+  const tooltipStyle = isDark
+    ? { backgroundColor: 'rgba(2,6,23,0.95)', border: '1px solid rgba(255,255,255,0.10)', borderRadius: '12px', fontSize: 12 }
+    : { backgroundColor: 'rgba(255,255,255,0.98)', border: '1px solid rgba(0,0,0,0.10)', borderRadius: '12px', boxShadow: '0 4px 20px rgba(0,0,0,0.12)', fontSize: 12 };
+  const tooltipLabelStyle = isDark ? { color: '#9ca3af' } : { color: '#64748b' };
+  const tooltipItemStyle  = isDark ? { color: '#e5e7eb' } : { color: '#1e293b' };
 
   // Chart: populate current month only; expand with historical data when multi-month hook is available
   const chartData = CHART_MONTHS.map((month, i) => ({
@@ -96,37 +106,33 @@ export function WealthDashboard() {
         ) : (
           <ResponsiveContainer width="100%" height={300}>
             <LineChart data={chartData} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#1e2a3a" />
-              <XAxis dataKey="month" tick={{ fill: '#94a3b8', fontSize: 12 }} />
+              <defs>
+                <linearGradient id="wealthIncomeGrad" x1="0" y1="0" x2="1" y2="0">
+                  <stop offset="0%" stopColor="#34D399" stopOpacity={0.8} />
+                  <stop offset="100%" stopColor="#10b981" stopOpacity={1} />
+                </linearGradient>
+                <linearGradient id="wealthExpenseGrad" x1="0" y1="0" x2="1" y2="0">
+                  <stop offset="0%" stopColor="#F87171" stopOpacity={0.8} />
+                  <stop offset="100%" stopColor="#ef4444" stopOpacity={1} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke={chartGrid} />
+              <XAxis dataKey="month" tick={{ fill: chartTick, fontSize: 12 }} axisLine={false} tickLine={false} />
               <YAxis
-                tick={{ fill: '#94a3b8', fontSize: 12 }}
+                tick={{ fill: chartTick, fontSize: 12 }}
                 tickFormatter={(v: number) => `${v}M`}
+                axisLine={false}
+                tickLine={false}
               />
               <Tooltip
-                formatter={(value: number) => [`Rp ${value.toFixed(1)}M`, '']}
-                contentStyle={{
-                  backgroundColor: '#0f172a',
-                  border: '1px solid #1e293b',
-                  borderRadius: '8px',
-                }}
+                formatter={(value: number) => [`Rp ${(value as number).toFixed(1)}M`, '']}
+                contentStyle={tooltipStyle}
+                labelStyle={tooltipLabelStyle}
+                itemStyle={tooltipItemStyle}
               />
-              <Legend />
-              <Line
-                type="monotone"
-                dataKey="income"
-                stroke="#10b981"
-                strokeWidth={2}
-                dot={false}
-                name="Income"
-              />
-              <Line
-                type="monotone"
-                dataKey="expenses"
-                stroke="#ef4444"
-                strokeWidth={2}
-                dot={false}
-                name="Expenses"
-              />
+              <Legend wrapperStyle={{ paddingTop: '12px', fontSize: '12px', color: chartTick }} />
+              <Line type="monotone" dataKey="income" stroke="url(#wealthIncomeGrad)" strokeWidth={2.5} dot={false} name="Income" strokeLinecap="round" />
+              <Line type="monotone" dataKey="expenses" stroke="url(#wealthExpenseGrad)" strokeWidth={2.5} dot={false} name="Expenses" strokeLinecap="round" />
             </LineChart>
           </ResponsiveContainer>
         )}

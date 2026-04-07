@@ -46,21 +46,19 @@ export function BalanceOverview() {
   }, {});
 
   return (
-    <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl shadow-[0_0_40px_rgba(0,0,0,0.3)] p-6">
-      {/* Glow */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0 bg-gradient-to-br from-blue-500/5 via-transparent to-purple-500/5"
-      />
+    <div className="relative overflow-hidden rounded-2xl border transition-all duration-300 p-6 bg-white border-slate-200 shadow-[0_1px_4px_rgba(0,0,0,0.06),0_4px_16px_rgba(0,0,0,0.04)] dark:bg-white/5 dark:backdrop-blur-xl dark:border-white/10 dark:shadow-[0_0_40px_rgba(0,0,0,0.3)]">
+      {/* Glow — dark only */}
+      <div aria-hidden className="pointer-events-none absolute inset-0 bg-gradient-to-br from-blue-500/5 via-transparent to-purple-500/5 opacity-0 dark:opacity-100" />
+      <div aria-hidden className="pointer-events-none absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-slate-200/80 to-transparent dark:via-white/10" />
       <div className="relative">
-        <p className="text-sm text-gray-400">Total Net Worth</p>
-        <div className="mt-1 text-3xl font-bold text-white">{formatIDR(totalIDR)}</div>
-        <div className="mt-0.5 text-sm text-gray-400">≈ {formatUSD(totalUSD)}</div>
+        <p className="text-sm text-slate-500 dark:text-gray-400">Total Net Worth</p>
+        <div className="mt-1 text-3xl font-bold text-slate-900 dark:text-white">{formatIDR(totalIDR)}</div>
+        <div className="mt-0.5 text-sm text-slate-500 dark:text-gray-400">≈ {formatUSD(totalUSD)}</div>
         <div className="mt-4 flex flex-wrap gap-2">
           {(Object.entries(byType) as [AssetType, number][]).map(([type, total]) => (
             <span
               key={type}
-              className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium border border-white/10 ${ASSET_TYPE_COLORS[type] ?? 'bg-white/5 text-gray-400'}`}
+              className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium border border-slate-200 dark:border-white/10 ${ASSET_TYPE_COLORS[type] ?? 'bg-slate-100 text-slate-500 dark:bg-white/5 dark:text-gray-400'}`}
             >
               {ASSET_TYPE_LABELS[type] ?? type}: {formatIDR(total)}
             </span>

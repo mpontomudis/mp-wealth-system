@@ -234,12 +234,12 @@ export default function DashboardPage() {
               <LineChart data={chartData} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
                 <defs>
                   <linearGradient id="incomeGradient" x1="0" y1="0" x2="1" y2="0">
-                    <stop offset="0%" stopColor="#4ECDC4" stopOpacity={0.8} />
-                    <stop offset="100%" stopColor="#2BC0B4" stopOpacity={1} />
+                    <stop offset="0%" stopColor="#34D399" stopOpacity={0.8} />
+                    <stop offset="100%" stopColor="#10b981" stopOpacity={1} />
                   </linearGradient>
                   <linearGradient id="expenseGradient" x1="0" y1="0" x2="1" y2="0">
-                    <stop offset="0%" stopColor="#FF8B94" stopOpacity={0.8} />
-                    <stop offset="100%" stopColor="#FF6B76" stopOpacity={1} />
+                    <stop offset="0%" stopColor="#F87171" stopOpacity={0.8} />
+                    <stop offset="100%" stopColor="#ef4444" stopOpacity={1} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke={chartGrid} />

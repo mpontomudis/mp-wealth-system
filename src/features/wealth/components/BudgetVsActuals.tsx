@@ -96,7 +96,7 @@ export function BudgetVsActuals({ budgets, transactions, onEdit, onDelete }: Bud
               'rounded-xl border p-4 transition-all',
               overBudget
                 ? 'border-mp-red/30 bg-mp-red/5'
-                : 'border-white/10 bg-white/[0.03]'
+                : 'border-slate-200 bg-slate-50/50 dark:border-white/10 dark:bg-white/[0.03]'
             )}
           >
             {/* Top row */}
@@ -119,7 +119,7 @@ export function BudgetVsActuals({ budgets, transactions, onEdit, onDelete }: Bud
                 {onEdit && (
                   <button
                     onClick={() => onEdit(budget)}
-                    className="p-1.5 rounded-lg text-mp-text-muted hover:text-white hover:bg-white/10 transition-colors"
+                    className="p-1.5 rounded-lg text-mp-text-muted hover:text-slate-900 hover:bg-slate-100 dark:hover:text-white dark:hover:bg-white/10 transition-colors"
                     title="Edit budget"
                   >
                     <Pencil size={13} />
@@ -138,7 +138,7 @@ export function BudgetVsActuals({ budgets, transactions, onEdit, onDelete }: Bud
             </div>
 
             {/* Progress bar */}
-            <div className="h-2 w-full bg-white/[0.06] rounded-full overflow-hidden mb-2">
+            <div className="h-2 w-full bg-slate-200 dark:bg-white/[0.06] rounded-full overflow-hidden mb-2">
               <div
                 className={cn(
                   'h-full rounded-full transition-all duration-500',
@@ -151,7 +151,7 @@ export function BudgetVsActuals({ budgets, transactions, onEdit, onDelete }: Bud
             {/* Stats row */}
             <div className="flex items-center justify-between text-xs">
               <span className="text-mp-text-muted">
-                Spent: <span className={cn('font-medium', overBudget ? 'text-mp-red' : 'text-white')}>{formatIDR(actual)}</span>
+                Spent: <span className={cn('font-medium', overBudget ? 'text-mp-red' : 'text-mp-text-primary')}>{formatIDR(actual)}</span>
               </span>
               <span className="text-mp-text-muted">
                 {overBudget ? 'Over by ' : 'Remaining: '}
@@ -160,7 +160,7 @@ export function BudgetVsActuals({ budgets, transactions, onEdit, onDelete }: Bud
                 </span>
               </span>
               <span className="text-mp-text-muted">
-                Budget: <span className="font-medium text-white">{formatIDR(budgetAmt)}</span>
+                Budget: <span className="font-medium text-mp-text-primary">{formatIDR(budgetAmt)}</span>
               </span>
             </div>
           </div>
