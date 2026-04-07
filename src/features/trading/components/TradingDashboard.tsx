@@ -14,6 +14,7 @@ import { useTradingAccounts } from '../hooks/useTradingAccounts';
 import { usePortfolioTotal } from '../hooks/usePortfolioTotal';
 import { useEquityChart } from '../hooks/useEquityChart';
 import { useTradeHistory } from '../hooks/useTradeHistory';
+import { useTheme } from '@/shared/contexts/ThemeContext';
 import { formatUSD, formatIDR, formatDate, formatPL, formatLots, formatPercentage } from '@/shared/utils/formatters';
 import type { TradingAccountWithLatestMetrics } from '../services/trading.service';
 import { AddTradingAccountModal } from './AddTradingAccountModal';
@@ -32,20 +33,29 @@ function Card({
 }) {
   return (
     <div
-      className={`relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl shadow-[0_0_40px_rgba(0,0,0,0.3)] p-6 transition-all duration-300 hover:border-white/20 ${className}`}
+      className={[
+        'relative overflow-hidden rounded-2xl border transition-all duration-300 p-6',
+        // light
+        'bg-white border-slate-200 shadow-[0_1px_4px_rgba(0,0,0,0.06),0_4px_16px_rgba(0,0,0,0.04)]',
+        'hover:shadow-[0_4px_20px_rgba(0,0,0,0.1)] hover:border-slate-300',
+        // dark
+        'dark:bg-white/5 dark:backdrop-blur-xl dark:border-white/10',
+        'dark:shadow-[0_0_40px_rgba(0,0,0,0.3)] dark:hover:border-white/20',
+        className,
+      ].join(' ')}
     >
-      {/* Glow overlay */}
+      {/* Glow overlay — dark only */}
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-0 bg-gradient-to-br from-blue-500/5 via-transparent to-purple-500/5"
+        className="pointer-events-none absolute inset-0 bg-gradient-to-br from-blue-500/5 via-transparent to-purple-500/5 opacity-0 dark:opacity-100"
       />
       <div
         aria-hidden
-        className="pointer-events-none absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent"
+        className="pointer-events-none absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-slate-200/80 to-transparent dark:via-white/10"
       />
       <div className="relative">
         {title && (
-          <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wide mb-4">
+          <h3 className="text-sm font-semibold text-slate-500 dark:text-gray-400 uppercase tracking-wide mb-4">
             {title}
           </h3>
         )}
@@ -116,7 +126,7 @@ function StatusBadge({ online }: { online: boolean }) {
       className={`inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full border ${
         online
           ? 'bg-mp-green/10 text-mp-green border-mp-green/20'
-          : 'bg-white/5 text-gray-400 border-white/10'
+          : 'bg-slate-100 text-slate-500 border-slate-200 dark:bg-white/5 dark:text-gray-400 dark:border-white/10'
       }`}
     >
       {online ? (
@@ -133,6 +143,7 @@ function StatusBadge({ online }: { online: boolean }) {
 
 function EquityChartPanel({ accountId }: { accountId: string }) {
   const { chartData, isLoading, error } = useEquityChart(accountId);
+  const { isDark } = useTheme();
 
   if (isLoading) return <LoadingSpinner />;
   if (error) return <EmptyState message="Failed to load chart data." />;
@@ -143,19 +154,25 @@ function EquityChartPanel({ accountId }: { accountId: string }) {
     label: formatDate(p.time, 'short'),
   }));
 
+  const gridColor = isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.07)';
+  const tickColor = isDark ? '#6b7280' : '#64748b';
+  const tooltipStyle = isDark
+    ? { background: 'rgba(2,6,23,0.95)', border: '1px solid rgba(255,255,255,0.10)', borderRadius: 12, fontSize: 12, backdropFilter: 'blur(16px)', boxShadow: '0 8px 32px rgba(0,0,0,0.5)' }
+    : { background: 'rgba(255,255,255,0.98)', border: '1px solid rgba(0,0,0,0.10)', borderRadius: 12, fontSize: 12, boxShadow: '0 4px 20px rgba(0,0,0,0.12)' };
+
   return (
     <ResponsiveContainer width="100%" height={220}>
       <LineChart data={formatted} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
-        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+        <CartesianGrid strokeDasharray="3 3" stroke={gridColor} />
         <XAxis
           dataKey="label"
-          tick={{ fontSize: 11, fill: '#94a3b8' }}
+          tick={{ fontSize: 11, fill: tickColor }}
           tickLine={false}
           axisLine={false}
           interval="preserveStartEnd"
         />
         <YAxis
-          tick={{ fontSize: 11, fill: '#94a3b8' }}
+          tick={{ fontSize: 11, fill: tickColor }}
           tickLine={false}
           axisLine={false}
           tickFormatter={(v: number) => `$${(v / 1000).toFixed(0)}k`}
@@ -167,32 +184,10 @@ function EquityChartPanel({ accountId }: { accountId: string }) {
             name === 'equity' ? 'Equity' : 'Balance',
           ]}
           labelFormatter={(label: string) => `Date: ${label}`}
-          contentStyle={{
-            background: 'rgba(2, 6, 23, 0.95)',
-            border: '1px solid rgba(255,255,255,0.10)',
-            borderRadius: 12,
-            fontSize: 12,
-            backdropFilter: 'blur(16px)',
-            boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
-          }}
+          contentStyle={tooltipStyle}
         />
-        <Line
-          type="monotone"
-          dataKey="equity"
-          stroke="#3b82f6"
-          strokeWidth={2}
-          dot={false}
-          activeDot={{ r: 4 }}
-        />
-        <Line
-          type="monotone"
-          dataKey="balance"
-          stroke="#10b981"
-          strokeWidth={2}
-          dot={false}
-          strokeDasharray="4 2"
-          activeDot={{ r: 4 }}
-        />
+        <Line type="monotone" dataKey="equity" stroke="#4A90E2" strokeWidth={2} dot={false} activeDot={{ r: 4 }} />
+        <Line type="monotone" dataKey="balance" stroke="#4ECDC4" strokeWidth={2} dot={false} strokeDasharray="4 2" activeDot={{ r: 4 }} />
       </LineChart>
     </ResponsiveContainer>
   );
@@ -226,7 +221,7 @@ function TradeHistoryTable({ accountId }: { accountId: string }) {
           {trades.map((trade) => {
             const isProfit = (trade.profit ?? 0) >= 0;
             return (
-              <tr key={trade.id} className="hover:bg-white/[0.03] transition-colors">
+              <tr key={trade.id} className="hover:bg-slate-50 dark:hover:bg-white/[0.03] transition-colors">
                 <td className="py-3 font-medium text-mp-text-primary">{trade.symbol}</td>
                 <td className="py-3">
                   <span
@@ -364,10 +359,10 @@ export function TradingDashboard({ userId }: TradingDashboardProps) {
                     setSelectedAccountId(account.id);
                     setDetailAccount(account);
                   }}
-                  className={`cursor-pointer text-left rounded-xl border p-5 backdrop-blur-sm transition-all duration-300 hover:scale-[1.02] ${
+                  className={`cursor-pointer text-left rounded-xl border p-5 transition-all duration-300 hover:scale-[1.02] ${
                     isSelected
-                      ? 'border-mp-primary/40 bg-mp-primary/10 shadow-[0_0_20px_rgba(59,130,246,0.15)]'
-                      : 'border-white/10 bg-white/5 hover:border-white/20 hover:bg-white/10'
+                      ? 'border-[#4A90E2]/40 bg-[#4A90E2]/10 shadow-[0_0_20px_rgba(74,144,226,0.15)]'
+                      : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50 hover:shadow-md dark:border-white/10 dark:bg-white/5 dark:hover:border-white/20 dark:hover:bg-white/10'
                   }`}
                 >
                   <div className="flex items-start justify-between mb-3">
@@ -389,7 +384,7 @@ export function TradingDashboard({ userId }: TradingDashboardProps) {
                             removeAccount.mutate(account.id);
                           }
                         }}
-                        className="p-1 rounded text-mp-text-muted hover:text-red-400 hover:bg-white/10 transition-colors"
+                        className="p-1 rounded text-mp-text-muted hover:text-red-500 hover:bg-red-50 dark:hover:bg-white/10 transition-colors"
                         title="Delete account"
                       >
                         <Trash2 size={14} />

@@ -30,6 +30,7 @@
     /* mp-* structural tokens — light */
     --mp-background: 210 17% 98%;    /* #F8F9FA — Teofin bg-light */
     --mp-surface:    0 0% 100%;      /* #ffffff — card surfaces */
+    --mp-surface-2:  220 14% 96%;    /* #f1f5f9 — elevated/hover surfaces */
     --mp-border:     220 13% 88%;    /* slightly softer border */
     --mp-text-primary:   222 47% 8%;   /* #0c1426 — high contrast */
     --mp-text-secondary: 215 25% 32%;  /* #3d5068 */
@@ -61,6 +62,7 @@
     /* mp-* structural tokens — dark */
     --mp-background: 222 66% 6%;
     --mp-surface:    220 50% 10%;
+    --mp-surface-2:  220 43% 14%;    /* slightly elevated dark surface */
     --mp-border:     213 40% 19%;
     --mp-text-primary:   214 32% 96%;
     --mp-text-secondary: 214 22% 66%;

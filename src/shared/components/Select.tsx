@@ -31,12 +31,12 @@ export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
           ref={ref}
           id={selectId}
           className={cn(
-            'w-full rounded-lg border text-sm px-3 py-2 transition-all duration-200',
+            'w-full rounded-xl border text-sm px-3 py-2 transition-all duration-200',
             'focus:outline-none focus:ring-2 appearance-none cursor-pointer',
             // light
-            'bg-white text-slate-900 border-slate-300 focus:ring-blue-500/30 focus:border-blue-400',
+            'bg-white text-slate-900 border-slate-300 focus:ring-[#4A90E2]/25 focus:border-[#4A90E2]',
             // dark
-            'dark:bg-[#0f172a] dark:text-white dark:border-white/10 dark:focus:ring-indigo-500/50 dark:focus:border-white/20',
+            'dark:bg-[#0f172a] dark:text-white dark:border-white/10 dark:focus:ring-[#4A90E2]/25 dark:focus:border-[#4A90E2]/70',
             error
               ? 'border-red-400 focus:ring-red-500/30 focus:border-red-500 dark:border-mp-red/60 dark:focus:ring-mp-red/30 dark:focus:border-mp-red'
               : '',

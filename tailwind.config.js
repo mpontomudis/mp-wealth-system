@@ -61,6 +61,7 @@ export default {
         'teofin-purple':     '#A78BFA',
         'mp-background':     'hsl(var(--mp-background))',
         'mp-surface':        'hsl(var(--mp-surface))',
+        'mp-surface-2':      'hsl(var(--mp-surface-2))',
         'mp-border':         'hsl(var(--mp-border))',
         'mp-text-primary':   'hsl(var(--mp-text-primary))',
         'mp-text-secondary': 'hsl(var(--mp-text-secondary))',
