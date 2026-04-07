@@ -4,7 +4,6 @@ import { PlusCircle, Trash2, Pencil } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { useAuth } from '@/shared/hooks/useAuth';
 import { useAssets } from '@/features/wealth/hooks/useAssets';
-import { Card } from '@/shared/components/Card';
 import { Button } from '@/shared/components/Button';
 import { Input } from '@/shared/components/Input';
 import { Select } from '@/shared/components/Select';

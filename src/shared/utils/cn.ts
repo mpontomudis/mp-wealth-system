@@ -1,4 +1,8 @@
 // src/shared/utils/cn.ts
-export function cn(...classes: (string | undefined | null | false)[]): string {
-  return classes.filter(Boolean).join(' ');
+type ClassValue = string | undefined | null | false | ClassValue[];
+
+export function cn(...classes: ClassValue[]): string {
+  return (classes.flat(Infinity) as (string | undefined | null | false)[])
+    .filter(Boolean)
+    .join(' ');
 }
