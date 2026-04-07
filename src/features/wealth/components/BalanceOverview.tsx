@@ -46,7 +46,7 @@ export function BalanceOverview() {
   }, {});
 
   return (
-    <div className="relative overflow-hidden rounded-2xl border transition-all duration-300 p-6 bg-white border-slate-200 shadow-[0_1px_4px_rgba(0,0,0,0.06),0_4px_16px_rgba(0,0,0,0.04)] dark:bg-white/5 dark:backdrop-blur-xl dark:border-white/10 dark:shadow-[0_0_40px_rgba(0,0,0,0.3)]">
+    <div className="relative overflow-hidden rounded-2xl border transition-all duration-300 p-6 bg-white border-slate-200 shadow-[0_1px_4px_rgba(0,0,0,0.06),0_4px_16px_rgba(0,0,0,0.04)] dark:bg-mp-surface dark:border-white/10 dark:shadow-[0_1px_6px_rgba(0,0,0,0.4),0_4px_24px_rgba(0,0,0,0.3)]">
       {/* Glow — dark only */}
       <div aria-hidden className="pointer-events-none absolute inset-0 bg-gradient-to-br from-blue-500/5 via-transparent to-purple-500/5 opacity-0 dark:opacity-100" />
       <div aria-hidden className="pointer-events-none absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-slate-200/80 to-transparent dark:via-white/10" />

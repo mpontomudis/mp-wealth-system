@@ -64,8 +64,8 @@ export function Modal({ isOpen, onClose, title, children, size = 'md' }: ModalPr
           'max-h-[92dvh] sm:max-h-[90dvh]',
           // light
           'bg-white border-slate-200 shadow-[0_0_60px_rgba(0,0,0,0.15)]',
-          // dark
-          'dark:bg-white/5 dark:backdrop-blur-2xl dark:border-white/10 dark:shadow-[0_0_60px_rgba(0,0,0,0.5)]',
+          // dark — solid opaque surface matching Card
+          'dark:bg-mp-surface dark:border-white/10 dark:shadow-[0_0_60px_rgba(0,0,0,0.5)]',
           sizeClasses[size],
         )}
       >

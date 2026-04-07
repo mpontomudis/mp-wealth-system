@@ -166,7 +166,7 @@ export function AssetList() {
             const gradClass = ASSET_GRADIENT[asset.type as AssetType] ?? 'card-gradient-blue';
             const emoji = ASSET_EMOJI[asset.type as AssetType] ?? '💰';
             return (
-              <div key={asset.id} className={`${gradClass} rounded-2xl p-5 relative overflow-hidden transition-transform duration-200 hover:scale-[1.02]`}>
+              <div key={asset.id} className={`${gradClass} rounded-2xl p-5 relative overflow-hidden transition-all duration-200 hover:scale-[1.02] dark:saturate-[0.75] dark:brightness-90`}>
                 {/* Decorative circles */}
                 <div aria-hidden className="absolute -right-6 -top-6 w-24 h-24 rounded-full bg-white/10" />
                 <div aria-hidden className="absolute right-6 bottom-2 w-14 h-14 rounded-full bg-white/10" />

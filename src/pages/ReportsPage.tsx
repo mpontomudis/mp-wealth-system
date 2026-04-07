@@ -142,7 +142,7 @@ export default function ReportsPage() {
   const today = new Date().toISOString().split('T')[0];
 
   const chartGrid = isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.07)';
-  const chartTick = isDark ? '#6b7280' : '#64748b';
+  const chartTick = isDark ? '#94a3b8' : '#64748b';
   const tooltipContentStyle = isDark
     ? { backgroundColor: 'rgba(2,6,23,0.95)', border: '1px solid rgba(255,255,255,0.10)', borderRadius: '8px', fontSize: '12px' }
     : { backgroundColor: 'rgba(255,255,255,0.98)', border: '1px solid rgba(0,0,0,0.10)', borderRadius: '8px', fontSize: '12px', boxShadow: '0 4px 16px rgba(0,0,0,0.10)' };
@@ -336,16 +336,16 @@ export default function ReportsPage() {
               <ResponsiveContainer width="100%" height={260}>
                 <BarChart data={barChartData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke={chartGrid} />
-                  <XAxis dataKey="label" tick={{ fill: chartTick, fontSize: 11 }} />
-                  <YAxis tick={{ fill: chartTick, fontSize: 11 }} tickFormatter={(v: number) => `${v.toFixed(1)}M`} />
+                  <XAxis dataKey="label" tick={{ fill: chartTick, fontSize: 11 }} axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fill: chartTick, fontSize: 11 }} tickFormatter={(v: number) => `${v.toFixed(1)}M`} axisLine={false} tickLine={false} />
                   <Tooltip formatter={(value: number, name: string) => [formatIDR(value * 1_000_000), name === 'income' ? 'Income' : 'Expenses']}
                     contentStyle={tooltipContentStyle}
                     labelStyle={tooltipLabelStyle}
                     itemStyle={tooltipItemStyle}
                   />
                   <Legend formatter={(v) => v === 'income' ? 'Income' : 'Expenses'} wrapperStyle={{ color: chartTick, fontSize: '12px' }} />
-                  <Bar dataKey="income" fill="#10b981" name="income" radius={[4,4,0,0]} />
-                  <Bar dataKey="expenses" fill="#ef4444" name="expenses" radius={[4,4,0,0]} />
+                  <Bar dataKey="income" fill={isDark ? '#34D399' : '#10b981'} name="income" radius={[4,4,0,0]} />
+                  <Bar dataKey="expenses" fill={isDark ? '#F87171' : '#ef4444'} name="expenses" radius={[4,4,0,0]} />
                 </BarChart>
               </ResponsiveContainer>
             )}
@@ -462,13 +462,13 @@ export default function ReportsPage() {
               <ResponsiveContainer width="100%" height={260}>
                 <LineChart data={trendsData} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke={chartGrid} />
-                  <XAxis dataKey="label" tick={{ fill: chartTick, fontSize: 11 }} />
-                  <YAxis tick={{ fill: chartTick, fontSize: 11 }} tickFormatter={(v: number) => `${v.toFixed(0)}M`} />
+                  <XAxis dataKey="label" tick={{ fill: chartTick, fontSize: 11 }} axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fill: chartTick, fontSize: 11 }} tickFormatter={(v: number) => `${v.toFixed(0)}M`} axisLine={false} tickLine={false} />
                   <Tooltip formatter={(value: number, name: string) => [formatIDR(value * 1_000_000), name === 'income' ? 'Income' : 'Expenses']}
                     contentStyle={tooltipContentStyle} labelStyle={tooltipLabelStyle} itemStyle={tooltipItemStyle} />
                   <Legend formatter={(v) => v === 'income' ? 'Income' : 'Expenses'} wrapperStyle={{ color: chartTick, fontSize: '12px' }} />
-                  <Line type="monotone" dataKey="income" stroke="#10b981" strokeWidth={2.5} dot={{ r: 4, fill: '#10b981' }} name="income" />
-                  <Line type="monotone" dataKey="expenses" stroke="#ef4444" strokeWidth={2.5} dot={{ r: 4, fill: '#ef4444' }} name="expenses" />
+                  <Line type="monotone" dataKey="income" stroke={isDark ? '#34D399' : '#10b981'} strokeWidth={2.5} dot={{ r: 4, fill: isDark ? '#34D399' : '#10b981' }} name="income" />
+                  <Line type="monotone" dataKey="expenses" stroke={isDark ? '#F87171' : '#ef4444'} strokeWidth={2.5} dot={{ r: 4, fill: isDark ? '#F87171' : '#ef4444' }} name="expenses" />
                 </LineChart>
               </ResponsiveContainer>
             </Card>
@@ -477,11 +477,11 @@ export default function ReportsPage() {
               <ResponsiveContainer width="100%" height={220}>
                 <BarChart data={savingsTrendData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke={chartGrid} />
-                  <XAxis dataKey="label" tick={{ fill: chartTick, fontSize: 11 }} />
-                  <YAxis tick={{ fill: chartTick, fontSize: 11 }} tickFormatter={(v: number) => `${v}%`} />
+                  <XAxis dataKey="label" tick={{ fill: chartTick, fontSize: 11 }} axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fill: chartTick, fontSize: 11 }} tickFormatter={(v: number) => `${v}%`} axisLine={false} tickLine={false} />
                   <Tooltip formatter={(value: number) => [`${value.toFixed(1)}%`, 'Savings Rate']}
                     contentStyle={tooltipContentStyle} labelStyle={tooltipLabelStyle} itemStyle={tooltipItemStyle} />
-                  <Bar dataKey="savings" fill="#3b82f6" radius={[4,4,0,0]} name="savings" />
+                  <Bar dataKey="savings" fill={isDark ? '#60a5fa' : '#3b82f6'} radius={[4,4,0,0]} name="savings" />
                 </BarChart>
               </ResponsiveContainer>
               <div className="flex flex-wrap gap-4 mt-4 pt-4 border-t border-mp-border">

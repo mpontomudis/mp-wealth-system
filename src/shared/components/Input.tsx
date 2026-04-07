@@ -36,7 +36,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
               // light
               'bg-white border-slate-300',
               // dark
-              'dark:bg-mp-surface/50 dark:backdrop-blur-sm dark:border-mp-border',
+              'dark:bg-mp-surface dark:border-mp-border',
               leftIcon ? 'pl-9' : 'pl-3',
               rightIcon ? 'pr-9' : 'pr-3',
               'py-2.5',

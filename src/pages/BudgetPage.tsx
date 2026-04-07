@@ -146,6 +146,7 @@ export default function BudgetPage() {
             transactions={txWithCategory}
             onEdit={handleEdit}
             onDelete={handleDelete}
+            onAdd={() => { setEditBudget(null); setShowForm(true); }}
           />
         )}
       </Card>

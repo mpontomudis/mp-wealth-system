@@ -52,7 +52,7 @@ export default function DashboardPage() {
   const { assets } = useAssets(user?.id ?? '');
 
   const chartGrid = isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.07)';
-  const chartTick = isDark ? '#6b7280' : '#64748b';
+  const chartTick = isDark ? '#94a3b8' : '#64748b';
   const tooltipContentStyle = isDark
     ? { backgroundColor: 'rgba(2,6,23,0.95)', border: '1px solid rgba(255,255,255,0.10)', borderRadius: '12px', backdropFilter: 'blur(20px)', boxShadow: '0 8px 32px rgba(0,0,0,0.5)' }
     : { backgroundColor: 'rgba(255,255,255,0.98)', border: '1px solid rgba(0,0,0,0.10)', borderRadius: '12px', boxShadow: '0 4px 20px rgba(0,0,0,0.12)' };

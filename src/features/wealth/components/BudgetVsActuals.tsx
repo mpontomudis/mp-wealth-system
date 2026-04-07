@@ -11,6 +11,7 @@ interface BudgetVsActualsProps {
   transactions: TransactionWithCategory[];
   onEdit?: (budget: Budget) => void;
   onDelete?: (budgetId: string) => void;
+  onAdd?: () => void;
 }
 
 const USD_RATE = 15750;
@@ -49,7 +50,7 @@ function getPeriodRange(period: string, _startDate: string): { start: string; en
   };
 }
 
-export function BudgetVsActuals({ budgets, transactions, onEdit, onDelete }: BudgetVsActualsProps) {
+export function BudgetVsActuals({ budgets, transactions, onEdit, onDelete, onAdd }: BudgetVsActualsProps) {
   const items = useMemo(() => {
     return budgets.map((budget) => {
       const { start, end } = getPeriodRange(budget.period, budget.start_date);
@@ -76,8 +77,24 @@ export function BudgetVsActuals({ budgets, transactions, onEdit, onDelete }: Bud
 
   if (items.length === 0) {
     return (
-      <div className="text-center py-10 text-mp-text-muted text-sm">
-        No active budgets. Add one to start tracking.
+      <div className="flex flex-col items-center py-12 px-6 text-center gap-4">
+        <div className="w-16 h-16 rounded-2xl bg-mp-primary/10 border border-mp-primary/20 flex items-center justify-center text-3xl">
+          🎯
+        </div>
+        <div>
+          <h3 className="text-sm font-semibold text-mp-text-primary mb-1">No active budgets</h3>
+          <p className="text-xs text-mp-text-muted max-w-xs leading-relaxed">
+            Set spending limits by category to stay on track. Add a budget to start monitoring your expenses.
+          </p>
+        </div>
+        {onAdd && (
+          <button
+            onClick={onAdd}
+            className="mt-1 inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-mp-primary text-white text-sm font-semibold hover:bg-[#3a80d2] transition-colors shadow-sm"
+          >
+            + Add Budget
+          </button>
+        )}
       </div>
     );
   }
