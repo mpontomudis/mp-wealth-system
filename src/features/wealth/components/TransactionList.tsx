@@ -147,18 +147,18 @@ export function TransactionList({ limit, showFilters = true }: TransactionListPr
               <div
                 key={tx.id}
                 onClick={() => setEditingTx(tx)}
-                className="flex items-center gap-3 rounded-xl border px-3 py-3 cursor-pointer transition-colors bg-white border-slate-200 shadow-sm hover:bg-slate-50 hover:border-slate-300 dark:border-white/[0.07] dark:bg-white/[0.03] dark:hover:bg-white/[0.06] dark:active:bg-white/[0.08]"
+                className="flex items-center gap-3 rounded-2xl border px-3 py-3.5 cursor-pointer transition-all bg-white border-slate-200 shadow-sm hover:shadow-md hover:border-slate-300 dark:border-white/[0.07] dark:bg-white/[0.03] dark:hover:bg-white/[0.06]"
               >
-                {/* Type icon */}
-                <div className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 text-base ${
-                  tx.type === 'income'   ? 'bg-mp-green/15' :
-                  tx.type === 'expense'  ? 'bg-mp-red/15'   : 'bg-mp-blue/15'
+                {/* Teofin-style merchant icon circle */}
+                <div className={`w-11 h-11 rounded-2xl flex items-center justify-center shrink-0 text-xl ${
+                  tx.type === 'income'   ? 'bg-[#4ECDC4]/15' :
+                  tx.type === 'expense'  ? 'bg-[#FF8B94]/15'  : 'bg-[#4A90E2]/15'
                 }`}>
                   {tx.type === 'income' ? '📥' : tx.type === 'expense' ? '📤' : '🔄'}
                 </div>
                 {/* Description + meta */}
                 <div className="flex-1 min-w-0 overflow-hidden">
-                  <p className="text-sm font-medium text-mp-text-primary truncate">{tx.description ?? '—'}</p>
+                  <p className="text-sm font-semibold text-mp-text-primary truncate">{tx.description ?? '—'}</p>
                   <div className="flex items-center gap-1 mt-0.5 min-w-0 overflow-hidden">
                     <span className="text-xs text-mp-text-muted whitespace-nowrap shrink-0">
                       {formatDate(tx.transaction_date, 'short')}
@@ -186,7 +186,10 @@ export function TransactionList({ limit, showFilters = true }: TransactionListPr
                 </div>
                 {/* Amount */}
                 <div className="text-right shrink-0 pl-2">
-                  <p className={`text-xs font-semibold whitespace-nowrap ${AMOUNT_COLOR[tx.type as TransactionType] ?? ''}`}>
+                  <p className={`text-sm font-bold whitespace-nowrap ${
+                    tx.type === 'income'  ? 'text-[#4ECDC4]' :
+                    tx.type === 'expense' ? 'text-[#FF8B94]' : 'text-[#4A90E2]'
+                  }`}>
                     {AMOUNT_PREFIX[tx.type as TransactionType]}{formatIDR(tx.amount)}
                   </p>
                   {tx.fee && tx.fee > 0 && (
@@ -238,7 +241,10 @@ export function TransactionList({ limit, showFilters = true }: TransactionListPr
                         <div className="text-xs text-mp-text-muted mt-0.5">to {assetMap[tx.to_asset_id] ?? '?'}</div>
                       )}
                     </td>
-                    <td className={`py-3 pr-4 font-medium text-right whitespace-nowrap ${AMOUNT_COLOR[tx.type as TransactionType] ?? ''}`}>
+                    <td className={`py-3 pr-4 font-bold text-right whitespace-nowrap ${
+                      tx.type === 'income'  ? 'text-[#4ECDC4]' :
+                      tx.type === 'expense' ? 'text-[#FF8B94]' : 'text-[#4A90E2]'
+                    }`}>
                       {AMOUNT_PREFIX[tx.type as TransactionType]}
                       {formatIDR(tx.amount)}
                       {tx.fee && tx.fee > 0 && (

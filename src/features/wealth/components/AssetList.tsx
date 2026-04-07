@@ -9,7 +9,6 @@ import { Button } from '@/shared/components/Button';
 import { Input } from '@/shared/components/Input';
 import { Select } from '@/shared/components/Select';
 import { Modal } from '@/shared/components/Modal';
-import { Badge } from '@/shared/components/Badge';
 import { PageLoader } from '@/shared/components/LoadingSpinner';
 import { EmptyState } from '@/shared/components/EmptyState';
 import { formatIDR, formatUSD } from '@/shared/utils/formatters';
@@ -29,13 +28,23 @@ const CURRENCY_OPTIONS = [
   { value: 'USD', label: 'USD' },
 ];
 
-const ASSET_TYPE_BADGE: Record<AssetType, 'success' | 'info' | 'neutral' | 'warning' | 'danger'> = {
-  cash: 'success',
-  bank: 'info',
-  e_wallet: 'info',
-  trading: 'neutral',
-  investment: 'warning',
-  crypto: 'danger',
+// Teofin gradient per asset type
+const ASSET_GRADIENT: Record<AssetType, string> = {
+  bank:       'card-gradient-visa',
+  e_wallet:   'card-gradient-teal',
+  cash:       'card-gradient-green',
+  trading:    'card-gradient-blue',
+  investment: 'card-gradient-mastercard',
+  crypto:     'card-gradient-purple',
+};
+
+const ASSET_EMOJI: Record<AssetType, string> = {
+  bank:       '🏦',
+  e_wallet:   '📱',
+  cash:       '💵',
+  trading:    '📈',
+  investment: '💼',
+  crypto:     '🪙',
 };
 
 type AssetFormData = {
@@ -153,61 +162,68 @@ export function AssetList() {
           </div>
 
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {assets.map((asset) => (
-            <Card key={asset.id} className="cursor-pointer hover:shadow-lg transition-shadow">
-              <div className="flex items-start justify-between">
-                <div>
-                  <p className="font-medium text-mp-text-primary">{asset.name}</p>
-                  <Badge
-                    variant={ASSET_TYPE_BADGE[asset.type as AssetType] ?? 'neutral'}
-                    className="mt-1"
-                  >
-                    {asset.type}
-                  </Badge>
+          {assets.map((asset) => {
+            const gradClass = ASSET_GRADIENT[asset.type as AssetType] ?? 'card-gradient-blue';
+            const emoji = ASSET_EMOJI[asset.type as AssetType] ?? '💰';
+            return (
+              <div key={asset.id} className={`${gradClass} rounded-2xl p-5 relative overflow-hidden transition-transform duration-200 hover:scale-[1.02]`}>
+                {/* Decorative circles */}
+                <div aria-hidden className="absolute -right-6 -top-6 w-24 h-24 rounded-full bg-white/10" />
+                <div aria-hidden className="absolute right-6 bottom-2 w-14 h-14 rounded-full bg-white/10" />
+
+                <div className="relative flex items-start justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="text-2xl">{emoji}</span>
+                    <div>
+                      <p className="font-semibold text-white text-sm leading-tight">{asset.name}</p>
+                      <p className="text-xs text-white/70 capitalize mt-0.5">{asset.type.replace('_', '-')}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <button
+                      className="p-1.5 rounded-lg bg-white/15 hover:bg-white/25 text-white transition-colors"
+                      title="Edit"
+                      onClick={() => {
+                        setValue('name', asset.name ?? '');
+                        setValue('type', asset.type as AssetType);
+                        setValue('balance', asset.balance ?? 0);
+                        setValue('currency', asset.currency ?? 'IDR');
+                        setEditingId(asset.id);
+                        setShowModal(true);
+                      }}
+                    >
+                      <Pencil size={13} />
+                    </button>
+                    <button
+                      className="p-1.5 rounded-lg bg-white/15 hover:bg-red-500/40 text-white transition-colors"
+                      title="Delete"
+                      onClick={() => {
+                        if (window.confirm(`Delete "${asset.name}"?`)) {
+                          remove.mutate(asset.id);
+                        }
+                      }}
+                    >
+                      <Trash2 size={13} />
+                    </button>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <button
-                    className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/10 text-mp-text-muted hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
-                    title="Edit"
-                    onClick={() => {
-                      setValue('name', asset.name ?? '');
-                      setValue('type', asset.type as AssetType);
-                      setValue('balance', asset.balance ?? 0);
-                      setValue('currency', asset.currency ?? 'IDR');
-                      setEditingId(asset.id);
-                      setShowModal(true);
-                    }}
-                  >
-                    <Pencil size={15} />
-                  </button>
-                  <button
-                    className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/10 text-mp-text-muted hover:text-red-600 dark:hover:text-red-400 transition-colors"
-                    title="Delete"
-                    onClick={() => {
-                      if (window.confirm(`Delete "${asset.name}"?`)) {
-                        remove.mutate(asset.id);
-                      }
-                    }}
-                  >
-                    <Trash2 size={15} />
-                  </button>
+
+                <div className="relative mt-4">
+                  <p className="text-2xl font-bold text-white leading-tight">
+                    {asset.currency === 'IDR'
+                      ? formatIDR(asset.balance ?? 0)
+                      : formatUSD(asset.balance ?? 0)}
+                  </p>
+                  {asset.balance_usd != null && asset.currency !== 'USD' && (
+                    <p className="text-xs text-white/70 mt-0.5">≈ {formatUSD(asset.balance_usd)}</p>
+                  )}
+                  {asset.institution && (
+                    <p className="text-xs text-white/60 mt-1">{asset.institution}</p>
+                  )}
                 </div>
               </div>
-              <div className="mt-3">
-                <div className="text-xl font-bold text-mp-text-primary">
-                  {asset.currency === 'IDR'
-                    ? formatIDR(asset.balance ?? 0)
-                    : formatUSD(asset.balance ?? 0)}
-                </div>
-                {asset.balance_usd != null && (
-                  <div className="text-sm text-mp-text-muted">≈ {formatUSD(asset.balance_usd)}</div>
-                )}
-                {asset.currency === 'USD' && (
-                  <div className="text-xs text-mp-text-muted mt-1">USD</div>
-                )}
-              </div>
-            </Card>
-          ))}
+            );
+          })}
         </div>
         </>
       )}

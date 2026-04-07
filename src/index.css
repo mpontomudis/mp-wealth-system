@@ -28,9 +28,9 @@
     --radius: 0.75rem;
 
     /* mp-* structural tokens — light */
-    --mp-background: 220 20% 96%;   /* #eef2f7 — page bg, distinct from white cards */
-    --mp-surface:    0 0% 100%;     /* #ffffff — card surfaces */
-    --mp-border:     220 13% 86%;   /* #d1d9e6 — visible but soft */
+    --mp-background: 210 17% 98%;    /* #F8F9FA — Teofin bg-light */
+    --mp-surface:    0 0% 100%;      /* #ffffff — card surfaces */
+    --mp-border:     220 13% 88%;    /* slightly softer border */
     --mp-text-primary:   222 47% 8%;   /* #0c1426 — high contrast */
     --mp-text-secondary: 215 25% 32%;  /* #3d5068 */
     --mp-text-muted:     215 16% 50%;  /* #6b7fa3 */
@@ -179,4 +179,36 @@
     background-size: 200% auto;
     animation: shine 8s ease-in-out infinite;
   }
+
+  /* ── Teofin gradient card surfaces ── */
+  .card-gradient-visa {
+    background: linear-gradient(135deg, #A78BFA 0%, #7DD3FC 100%);
+    color: #fff;
+  }
+  .card-gradient-mastercard {
+    background: linear-gradient(135deg, #FB7185 0%, #FBBF24 100%);
+    color: #fff;
+  }
+  .card-gradient-teal {
+    background: linear-gradient(135deg, #4ECDC4 0%, #44A08D 100%);
+    color: #fff;
+  }
+  .card-gradient-green {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: #fff;
+  }
+  .card-gradient-blue {
+    background: linear-gradient(135deg, #4A90E2 0%, #7B9FE8 100%);
+    color: #fff;
+  }
+  .card-gradient-purple {
+    background: linear-gradient(135deg, #C7A1D9 0%, #7B9FE8 100%);
+    color: #fff;
+  }
+
+  /* ── Teofin quick-action buttons ── */
+  .action-btn-teal   { background: linear-gradient(135deg, #4ECDC4 0%, #2BC0B4 100%); }
+  .action-btn-coral  { background: linear-gradient(135deg, #FF8B94 0%, #FF6B76 100%); }
+  .action-btn-yellow { background: linear-gradient(135deg, #FFD166 0%, #FFC233 100%); }
+  .action-btn-blue   { background: linear-gradient(135deg, #4A90E2 0%, #3a7fce 100%); }
 }

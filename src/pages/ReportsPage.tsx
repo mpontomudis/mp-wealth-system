@@ -119,13 +119,13 @@ function renderActiveShape(props: Record<string, unknown>) {
     props as { cx: number; cy: number; innerRadius: number; outerRadius: number; startAngle: number; endAngle: number; fill: string; payload: { name: string }; percent: number; value: number };
   return (
     <g>
-      <text x={cx} y={cy - 10} textAnchor="middle" fill="#f1f5f9" fontSize={13} fontWeight={600}>
+      <text x={cx} y={cy - 10} textAnchor="middle" fill="currentColor" fontSize={13} fontWeight={600}>
         {payload.name.length > 14 ? payload.name.slice(0,14)+'…' : payload.name}
       </text>
-      <text x={cx} y={cy + 10} textAnchor="middle" fill="#94a3b8" fontSize={11}>
+      <text x={cx} y={cy + 10} textAnchor="middle" fill="#64748b" fontSize={11}>
         {formatIDR(value * 1_000_000)}
       </text>
-      <text x={cx} y={cy + 26} textAnchor="middle" fill="#475569" fontSize={10}>
+      <text x={cx} y={cy + 26} textAnchor="middle" fill="#94a3b8" fontSize={10}>
         {(percent * 100).toFixed(1)}%
       </text>
       <Sector cx={cx} cy={cy} innerRadius={innerRadius} outerRadius={outerRadius + 6} startAngle={startAngle} endAngle={endAngle} fill={fill} />
@@ -302,25 +302,25 @@ export default function ReportsPage() {
         <>
           {PeriodSelector}
 
-          {/* KPI cards */}
+          {/* KPI cards — Teofin palette */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <div className="rounded-xl bg-mp-green/10 border border-mp-green/20 px-4 py-3 flex flex-col gap-1">
+            <div className="rounded-2xl bg-[#4ECDC4]/10 border border-[#4ECDC4]/20 px-4 py-3 flex flex-col gap-1">
               <p className="text-[10px] text-mp-text-muted uppercase tracking-wide">Income</p>
-              <p className="text-sm font-bold text-mp-green">+{formatIDR(totalIncome)}</p>
+              <p className="text-sm font-bold text-[#4ECDC4]">+{formatIDR(totalIncome)}</p>
             </div>
-            <div className="rounded-xl bg-mp-red/10 border border-mp-red/20 px-4 py-3 flex flex-col gap-1">
+            <div className="rounded-2xl bg-[#FF8B94]/10 border border-[#FF8B94]/20 px-4 py-3 flex flex-col gap-1">
               <p className="text-[10px] text-mp-text-muted uppercase tracking-wide">Expenses</p>
-              <p className="text-sm font-bold text-mp-red">−{formatIDR(totalExpense)}</p>
+              <p className="text-sm font-bold text-[#FF8B94]">−{formatIDR(totalExpense)}</p>
             </div>
-            <div className={`rounded-xl px-4 py-3 flex flex-col gap-1 border ${net >= 0 ? 'bg-mp-green/10 border-mp-green/20' : 'bg-mp-red/10 border-mp-red/20'}`}>
+            <div className={`rounded-2xl px-4 py-3 flex flex-col gap-1 border ${net >= 0 ? 'bg-[#4ECDC4]/10 border-[#4ECDC4]/20' : 'bg-[#FF8B94]/10 border-[#FF8B94]/20'}`}>
               <p className="text-[10px] text-mp-text-muted uppercase tracking-wide">Net</p>
-              <p className={`text-sm font-bold ${net >= 0 ? 'text-mp-green' : 'text-mp-red'}`}>
+              <p className={`text-sm font-bold ${net >= 0 ? 'text-[#4ECDC4]' : 'text-[#FF8B94]'}`}>
                 {net >= 0 ? '+' : '−'}{formatIDR(Math.abs(net))}
               </p>
             </div>
-            <div className="rounded-xl bg-mp-blue/10 border border-mp-blue/20 px-4 py-3 flex flex-col gap-1">
+            <div className="rounded-2xl bg-[#4A90E2]/10 border border-[#4A90E2]/20 px-4 py-3 flex flex-col gap-1">
               <p className="text-[10px] text-mp-text-muted uppercase tracking-wide">Savings Rate</p>
-              <p className={`text-sm font-bold ${savingsRate >= 0 ? 'text-mp-blue' : 'text-mp-red'}`}>
+              <p className={`text-sm font-bold ${savingsRate >= 0 ? 'text-[#4A90E2]' : 'text-[#FF8B94]'}`}>
                 {savingsRate.toFixed(1)}%
               </p>
             </div>

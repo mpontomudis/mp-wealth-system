@@ -3,7 +3,7 @@ import React from 'react';
 import { Loader2 } from 'lucide-react';
 import { cn } from '@/shared/utils/cn';
 
-type ButtonVariant = 'primary' | 'secondary' | 'danger' | 'ghost';
+type ButtonVariant = 'primary' | 'secondary' | 'danger' | 'ghost' | 'action-teal' | 'action-coral' | 'action-yellow' | 'action-blue';
 type ButtonSize = 'sm' | 'md' | 'lg';
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
@@ -17,13 +17,21 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 
 const variantClasses: Record<ButtonVariant, string> = {
   primary:
-    'bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-lg shadow-blue-500/20 hover:opacity-90 hover:shadow-blue-500/30',
+    'bg-gradient-to-r from-[#4A90E2] to-[#7B9FE8] text-white shadow-lg shadow-blue-500/20 hover:opacity-90 hover:shadow-blue-500/30',
   secondary:
     'border bg-white text-slate-700 hover:bg-slate-50 hover:border-slate-300 border-slate-200 dark:border-white/10 dark:bg-white/5 dark:text-mp-text-primary dark:hover:bg-white/10 dark:hover:border-white/20',
   danger:
     'bg-mp-red text-white hover:opacity-90 shadow-lg shadow-red-500/20',
   ghost:
     'text-slate-500 hover:bg-slate-100 hover:text-slate-900 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-white',
+  'action-teal':
+    'bg-gradient-to-r from-[#4ECDC4] to-[#2BC0B4] text-white shadow-lg shadow-teal-400/25 hover:opacity-90',
+  'action-coral':
+    'bg-gradient-to-r from-[#FF8B94] to-[#FF6B76] text-white shadow-lg shadow-pink-400/25 hover:opacity-90',
+  'action-yellow':
+    'bg-gradient-to-r from-[#FFD166] to-[#FFC233] text-slate-800 shadow-lg shadow-yellow-400/25 hover:opacity-90',
+  'action-blue':
+    'bg-gradient-to-r from-[#4A90E2] to-[#3a7fce] text-white shadow-lg shadow-blue-400/25 hover:opacity-90',
 };
 
 const sizeClasses: Record<ButtonSize, string> = {

@@ -44,15 +44,21 @@ export default {
         ring: 'hsl(var(--ring))',
 
         // Legacy mp-* tokens — structural ones use CSS vars for theme switching
-        'mp-primary':        '#3b82f6',
-        'mp-primary-light':  '#60a5fa',
-        'mp-primary-dark':   '#1d4ed8',
-        'mp-primary-hover':  '#2563eb',
+        'mp-primary':        '#4A90E2',
+        'mp-primary-light':  '#74b1f0',
+        'mp-primary-dark':   '#2c6db5',
+        'mp-primary-hover':  '#3a7fce',
         'mp-green':          '#10b981',
         'mp-red':            '#ef4444',
-        'mp-blue':           '#3b82f6',
+        'mp-blue':           '#4A90E2',
         'mp-gold':           '#f59e0b',
         'mp-purple':         '#8b5cf6',
+        // Teofin action colors
+        'teofin-teal':       '#4ECDC4',
+        'teofin-coral':      '#FF8B94',
+        'teofin-yellow':     '#FFD166',
+        'teofin-blue':       '#4A90E2',
+        'teofin-purple':     '#A78BFA',
         'mp-background':     'hsl(var(--mp-background))',
         'mp-surface':        'hsl(var(--mp-surface))',
         'mp-border':         'hsl(var(--mp-border))',
@@ -75,6 +81,16 @@ export default {
       backgroundImage: {
         'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
         'glass-gradient': 'linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.01) 100%)',
+        'card-visa':       'linear-gradient(135deg, #A78BFA 0%, #7DD3FC 100%)',
+        'card-mastercard': 'linear-gradient(135deg, #FB7185 0%, #FBBF24 100%)',
+        'card-teal':       'linear-gradient(135deg, #4ECDC4 0%, #44A08D 100%)',
+        'card-green':      'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+        'card-blue':       'linear-gradient(135deg, #4A90E2 0%, #7B9FE8 100%)',
+        'card-purple':     'linear-gradient(135deg, #C7A1D9 0%, #7B9FE8 100%)',
+        'action-teal':     'linear-gradient(135deg, #4ECDC4 0%, #2BC0B4 100%)',
+        'action-coral':    'linear-gradient(135deg, #FF8B94 0%, #FF6B76 100%)',
+        'action-yellow':   'linear-gradient(135deg, #FFD166 0%, #FFBF00 100%)',
+        'action-blue':     'linear-gradient(135deg, #4A90E2 0%, #3a7fce 100%)',
       },
       keyframes: {
         'border-beam': {

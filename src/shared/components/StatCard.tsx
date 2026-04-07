@@ -3,6 +3,8 @@ import React from 'react';
 import { TrendingUp, TrendingDown } from 'lucide-react';
 import { cn } from '@/shared/utils/cn';
 
+type StatCardAccent = 'blue' | 'teal' | 'coral' | 'yellow' | 'green' | 'purple';
+
 interface StatCardProps {
   title: string;
   value: string | number;
@@ -10,9 +12,28 @@ interface StatCardProps {
   icon?: React.ReactNode;
   trend?: number;
   className?: string;
+  accent?: StatCardAccent;
 }
 
-export function StatCard({ title, value, subtitle, icon, trend, className }: StatCardProps) {
+const ACCENT_ICON: Record<StatCardAccent, string> = {
+  blue:   'bg-[#4A90E2]/15 text-[#4A90E2]  dark:bg-[#4A90E2]/20',
+  teal:   'bg-[#4ECDC4]/15 text-[#4ECDC4]  dark:bg-[#4ECDC4]/20',
+  coral:  'bg-[#FF8B94]/15 text-[#FF8B94]  dark:bg-[#FF8B94]/20',
+  yellow: 'bg-[#FFD166]/20 text-[#d49a00]  dark:bg-[#FFD166]/20 dark:text-[#FFD166]',
+  green:  'bg-[#10b981]/15 text-[#10b981]  dark:bg-[#10b981]/20',
+  purple: 'bg-[#A78BFA]/15 text-[#A78BFA]  dark:bg-[#A78BFA]/20',
+};
+
+const ACCENT_BG: Record<StatCardAccent, string> = {
+  blue:   'border-l-4 border-l-[#4A90E2]',
+  teal:   'border-l-4 border-l-[#4ECDC4]',
+  coral:  'border-l-4 border-l-[#FF8B94]',
+  yellow: 'border-l-4 border-l-[#FFD166]',
+  green:  'border-l-4 border-l-[#10b981]',
+  purple: 'border-l-4 border-l-[#A78BFA]',
+};
+
+export function StatCard({ title, value, subtitle, icon, trend, className, accent }: StatCardProps) {
   const isPositive = trend !== undefined && trend >= 0;
 
   return (
@@ -26,7 +47,8 @@ export function StatCard({ title, value, subtitle, icon, trend, className }: Sta
         // dark
         'dark:bg-white/5 dark:backdrop-blur-xl dark:border-white/10',
         'dark:shadow-[0_0_40px_rgba(0,0,0,0.3)]',
-        'dark:hover:scale-[1.01] dark:hover:border-white/20 dark:hover:shadow-[0_0_60px_rgba(0,0,0,0.4)]',
+        'dark:hover:scale-[1.01] dark:hover:border-white/20',
+        accent ? ACCENT_BG[accent] : '',
         className,
       )}
     >
@@ -35,20 +57,22 @@ export function StatCard({ title, value, subtitle, icon, trend, className }: Sta
         aria-hidden
         className="pointer-events-none absolute inset-0 bg-gradient-to-br from-blue-500/10 to-purple-500/10 blur-xl opacity-0 dark:opacity-100"
       />
-      {/* Top highlight line */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-slate-200/80 to-transparent dark:via-white/20"
-      />
 
-      <div className="relative flex items-start justify-between flex-1">
+      <div className="relative flex items-start gap-4 flex-1">
+        {icon && (
+          <div className={cn(
+            'flex items-center justify-center w-12 h-12 rounded-2xl shrink-0',
+            accent ? ACCENT_ICON[accent] : 'bg-slate-100 text-mp-primary dark:bg-white/10 dark:text-mp-primary-light',
+          )}>
+            {icon}
+          </div>
+        )}
         <div className="flex-1 min-w-0 flex flex-col">
-          <p className="text-xs font-semibold text-slate-500 dark:text-gray-400 uppercase tracking-wider mb-2">{title}</p>
-          <p className="text-2xl font-bold text-slate-900 dark:text-white truncate">{value}</p>
+          <p className="text-xs font-semibold text-slate-500 dark:text-gray-400 uppercase tracking-wider mb-1">{title}</p>
+          <p className="text-2xl font-bold text-slate-900 dark:text-white truncate leading-tight">{value}</p>
           {subtitle && (
-            <p className="text-xs text-slate-500 dark:text-gray-400 mt-1">{subtitle}</p>
+            <p className="text-xs text-slate-500 dark:text-gray-400 mt-0.5">{subtitle}</p>
           )}
-          {/* Push trend badge to bottom so all cards have same height */}
           <div className="mt-auto pt-3">
             {trend !== undefined ? (
               <div
@@ -60,21 +84,13 @@ export function StatCard({ title, value, subtitle, icon, trend, className }: Sta
                 )}
               >
                 {isPositive ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
-                <span>
-                  {isPositive ? '+' : ''}
-                  {trend.toFixed(2)}%
-                </span>
+                <span>{isPositive ? '+' : ''}{trend.toFixed(2)}%</span>
               </div>
             ) : (
               <div className="h-[22px]" />
             )}
           </div>
         </div>
-        {icon && (
-          <div className="flex items-center justify-center w-11 h-11 rounded-xl text-mp-primary shrink-0 ml-4 border bg-slate-100 border-slate-200 dark:bg-white/10 dark:border-white/10 dark:backdrop-blur-sm">
-            {icon}
-          </div>
-        )}
       </div>
     </div>
   );
